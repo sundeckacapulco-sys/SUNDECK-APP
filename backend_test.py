@@ -13,7 +13,11 @@ class ProspectosAPITester:
     def run_test(self, name, method, endpoint, expected_status, data=None, files=None):
         """Run a single API test"""
         url = f"{self.base_url}/{endpoint}" if endpoint else self.base_url
-        headers = {'Content-Type': 'application/json'} if not files else {}
+        headers = {}
+        
+        # Don't set Content-Type for multipart requests, let requests handle it
+        if not files and files != []:
+            headers['Content-Type'] = 'application/json'
 
         self.tests_run += 1
         print(f"\n🔍 Testing {name}...")
@@ -23,9 +27,9 @@ class ProspectosAPITester:
             if method == 'GET':
                 response = requests.get(url, headers=headers)
             elif method == 'POST':
-                if files:
+                if files is not None:  # Multipart form data
                     response = requests.post(url, data=data, files=files)
-                else:
+                else:  # JSON data
                     response = requests.post(url, json=data, headers=headers)
             elif method == 'DELETE':
                 response = requests.delete(url, headers=headers)
