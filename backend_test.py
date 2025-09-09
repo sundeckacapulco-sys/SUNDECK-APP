@@ -126,13 +126,16 @@ class ProspectosAPITester:
             'comentario': 'Primera visita realizada exitosamente'
         }
         
+        # Create empty files list for multipart request
+        files = []
+        
         success, response = self.run_test(
             "Add Stage Without Photos",
             "POST",
             f"prospectos/{self.created_prospect_id}/etapas",
             200,
             data=stage_data,
-            files={}  # Empty files dict to trigger multipart
+            files=files
         )
         return success
 
