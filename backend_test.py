@@ -10,7 +10,7 @@ class ProspectosAPITester:
         self.tests_passed = 0
         self.created_prospect_id = None
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, files=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, files=None, params=None):
         """Run a single API test"""
         url = f"{self.base_url}/{endpoint}" if endpoint else self.base_url
         headers = {}
@@ -25,10 +25,12 @@ class ProspectosAPITester:
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers)
+                response = requests.get(url, headers=headers, params=params)
             elif method == 'POST':
                 if files is not None:  # Multipart form data
-                    response = requests.post(url, data=data, files=files)
+                    response = requests.post(url, data=data, files=files, params=params)
+                elif params:  # Query parameters
+                    response = requests.post(url, params=params, headers=headers)
                 else:  # JSON data
                     response = requests.post(url, json=data, headers=headers)
             elif method == 'DELETE':
