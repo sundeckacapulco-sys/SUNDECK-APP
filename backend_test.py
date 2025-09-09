@@ -126,22 +126,18 @@ class ProspectosAPITester:
             print("❌ Skipping - No prospect ID available")
             return False
             
-        # Using form data as the endpoint expects multipart/form-data
-        stage_data = {
+        # Using query parameters as the backend expects
+        stage_params = {
             'nombre_etapa': 'Visita Inicial',
             'comentario': 'Primera visita realizada exitosamente'
         }
-        
-        # Create empty files list for multipart request
-        files = []
         
         success, response = self.run_test(
             "Add Stage Without Photos",
             "POST",
             f"prospectos/{self.created_prospect_id}/etapas",
             200,
-            data=stage_data,
-            files=files
+            params=stage_params
         )
         return success
 
