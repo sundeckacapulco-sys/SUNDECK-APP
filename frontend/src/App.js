@@ -762,6 +762,13 @@ const KanbanDashboard = ({ onUpdate, onNavigate }) => {
       <div className="kanban-header">
         <div className="header-title">
           <h2>🚀 Centro de Comando Sundeck</h2>
+          <button
+            className="btn-config-templates"
+            onClick={() => setShowPlantillasModal(true)}
+            title="Editar plantillas de WhatsApp"
+          >
+            📝 Plantillas WhatsApp
+          </button>
         </div>
         
         <div className="kpis-container">
