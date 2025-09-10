@@ -265,6 +265,47 @@ class TemplateWhatsAppUpdate(BaseModel):
     mensaje: Optional[str] = None
     variables: Optional[List[str]] = None
     activo: Optional[bool] = None
+
+# Modelos para Fase 2 - Reprogramación y Gestión Avanzada
+class MotivosReprogramacion(str, Enum):
+    CLIENTE_NO_DISPONIBLE = "cliente_no_disponible"
+    FALTA_INFORMACION = "falta_informacion"
+    ESPERA_DECISION = "espera_decision"
+    PROBLEMAS_TECNICOS = "problemas_tecnicos"
+    SOLICITUD_CLIENTE = "solicitud_cliente"
+    FERIADO_IMPREVISTO = "feriado_imprevisto"
+    OTRO = "otro"
+
+class ReprogramacionRecordatorio(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    recordatorio_id: str
+    fecha_original: datetime
+    fecha_nueva: datetime
+    motivo: MotivosReprogramacion
+    notas: Optional[str] = None
+    usuario_que_reprograma: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class EscalacionVencido(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    recordatorio_id: str
+    dias_vencido: int
+    accion_tomada: str  # 'escalado_supervisor', 'recordatorio_urgente', 'cambio_responsable'
+    supervisor_asignado: Optional[str] = None
+    fecha_escalacion: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    resuelto: bool = False
+
+class MetricasRendimiento(BaseModel):
+    periodo: str  # 'diario', 'semanal', 'mensual'
+    fecha_inicio: datetime
+    fecha_fin: datetime
+    total_recordatorios: int
+    completados_tiempo: int
+    completados_tarde: int
+    vencidos: int
+    reprogramados: int
+    tasa_cumplimiento: float
+    tiempo_promedio_resolucion: float  # en horas
     archivo_levantamiento_url: Optional[str] = None
 
 # Cloudinary service functions
