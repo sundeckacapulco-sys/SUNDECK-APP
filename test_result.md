@@ -406,6 +406,18 @@ backend:
       - working: true
         agent: "main"
         comment: "✅ Fixed API URL issue in Embudo360.js frontend component. Backend endpoint /api/embudo-360 exists and works correctly. Issue was frontend calling duplicate /api/api/embudo-360 URL."
+
+  - task: "Configure Cloudinary integration for photo uploads"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Cloudinary credentials configured in .env file. Backend integration already exists with upload_to_cloudinary function. Service restarted successfully. Ready for testing."
       - working: true
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED: All Embudo 360 endpoints working perfectly. ✅ GET /api/embudo-360 basic endpoint (200 OK) ✅ Date filters (fecha_inicio, fecha_fin) working correctly ✅ Responsable filter functionality validated ✅ Combined filters support confirmed ✅ GET /api/embudo-360/export endpoint working (200 OK) ✅ Complete response structure validation passed: embudo.etapas (7 stages), embudo.contadores (integer counts), embudo.tiempos_promedio (numeric values), embudo.conversiones (6 conversions), metricas.total_prospectos, metricas.prospectos_activos, metricas.tasa_conversion_general ✅ Export structure validated: datos_etapas, datos_conversiones, metricas_generales, formato, fecha_generacion. Backend endpoint fully functional after frontend URL fix."
