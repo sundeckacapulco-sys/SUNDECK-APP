@@ -599,6 +599,21 @@ async def generar_pedido_desde_medicion(prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generando pedido: {str(e)}")
 
+@api_router.get("/etapas-disponibles")
+async def obtener_etapas_disponibles():
+    """Obtener lista de etapas disponibles para filtros"""
+    return {
+        "etapas": [
+            "Visita Inicial / Medición",
+            "Cotización Aprobada", 
+            "Pedido",
+            "Fabricación",
+            "Instalación en Proceso",
+            "Entrega Final",
+            "Postventa"
+        ]
+    }
+
 @api_router.get("/citas-hoy")
 async def obtener_citas_hoy():
     """Obtener prospectos con cita para hoy"""
