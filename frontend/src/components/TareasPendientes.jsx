@@ -416,7 +416,20 @@ const TareaCompacta = ({
   };
 
   return (
-    <div className={`tarea-individual ${getEstadoClase(recordatorio.fecha_limite)}`}>
+    <div 
+      className={`tarea-individual ${getEstadoClase(recordatorio.fecha_limite)}`}
+      style={{
+        background: 'white',
+        border: '2px solid #e2e8f0',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        marginBottom: '1rem'
+      }}
+    >
       <div className="tarea-info-estructurada">
         <div className="linea-cliente">
           👤 <strong>{recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
