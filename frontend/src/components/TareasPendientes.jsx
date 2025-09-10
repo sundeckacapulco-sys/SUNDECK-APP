@@ -288,17 +288,18 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
                     </h3>
                     <div className={`segmento-contenido ${gruposColapsados.vencidas ? 'collapsed' : ''}`}>
                       {grupos.vencidas.map(recordatorio => (
-                      <TareaCompacta 
-                        key={recordatorio.id} 
-                        recordatorio={recordatorio}
-                        onCompletar={completarRecordatorio}
-                        onExpandir={setMensajeExpandido}
-                        expandido={mensajeExpandido === recordatorio.id}
-                        getAccionDescripcion={getAccionDescripcion}
-                        formatearFechaCompacta={formatearFechaCompacta}
-                        getExtractoMensaje={getExtractoMensaje}
-                        onNavigateToProspecto={onNavigateToProspecto}
-                      />
+                        <TareaCompacta 
+                          key={recordatorio.id} 
+                          recordatorio={recordatorio}
+                          onCompletar={completarRecordatorio}
+                          onReprogramar={abrirModalReprogramar}
+                          onExpandir={setMensajeExpandido}
+                          expandido={mensajeExpandido === recordatorio.id}
+                          getAccionDescripcion={getAccionDescripcion}
+                          formatearFechaCompacta={formatearFechaCompacta}
+                          getExtractoMensaje={getExtractoMensaje}
+                          onNavigateToProspecto={onNavigateToProspecto}
+                        />
                       ))}
                     </div>
                   </div>
