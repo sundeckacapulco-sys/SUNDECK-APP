@@ -4160,7 +4160,7 @@ body {
 .tarea-compacta {
   background: white;
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0.875rem;
   margin-bottom: 0.75rem;
   box-shadow: 0 1px 6px var(--shadow);
   display: flex;
