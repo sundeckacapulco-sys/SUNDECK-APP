@@ -381,15 +381,18 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Dashboard optimizations completed and validated"
-    - "All backend functionality working correctly"
+    - "Kanban 360° system fully implemented and tested"
+    - "All backend endpoints working correctly"
+    - "Performance and serialization validated"
   stuck_tasks: []
   test_all: false
   test_priority: "completed"
 
 agent_communication:
   - agent: "main"
-    message: "✅ OPTIMIZACIÓN DASHBOARD COMPLETADA - Implementadas todas las optimizaciones solicitadas: paginación (12/página), búsqueda tiempo real, filtros dinámicos, vista dual tarjetas/tabla, lazy loading. Backend testing: 47/48 tests ✅ (performance <60ms vs target 500ms). Dashboard escalable para 1000+ prospectos. ¡LISTO PARA PRODUCCIÓN!"
+    message: "✅ KANBAN 360° SYSTEM COMPLETADO - Implementado sistema completo de gestión visual: GET /api/kanban con 7 columnas, sistema de urgencia (0/1/2), POST /api/mover-etapa para movimientos, GET /api/logs-actividad para historial. KPIs dinámicos, metadata enriquecida, performance <200ms, serialización sin ObjectIds. ¡SISTEMA KANBAN LISTO!"
+  - agent: "testing"
+    message: "🎯 KANBAN 360° TESTING COMPLETADO - EXCELENTES RESULTADOS (25/25 tests ✅). ✅ VALIDACIONES CRÍTICAS: Estructura Kanban con 7 columnas correctas ✅ Metadata enriquecida (urgencia, fecha_proxima_accion, columna_actual) ✅ Sistema de urgencia funcionando (0=verde, 1=amarillo, 2=rojo) ✅ Movimientos entre etapas exitosos con logs de actividad ✅ Endpoint logs-actividad con ordenamiento correcto ✅ Performance excelente: 49ms < 200ms target ✅ Serialización JSON sin ObjectIds ✅ Mapeo etapas ↔ columnas Kanban correcto. SISTEMA KANBAN 360° COMPLETAMENTE FUNCIONAL."
   - agent: "testing"
     message: "✅ TESTING COMPLETADO - Backend Pedido functionality PASSED (23/24 tests). Funcionalidades críticas validadas: ✅ Endpoint generar-pedido con regla mínimo 1 m² ✅ Modelos Pydantic con campos de pedido ✅ Validaciones de duplicados ✅ Cálculos comerciales vs reales ✅ Export de mediciones ✅ Creación manual de pedidos. Minor fix aplicado: default_factory → None para compatibilidad con form data. Agregado endpoint /etapas-json para testing con datos complejos."
   - agent: "testing"
