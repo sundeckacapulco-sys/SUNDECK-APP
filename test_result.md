@@ -382,10 +382,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Configure Cloudinary integration for photo uploads"
-    - "Test Cloudinary photo upload functionality"
-    - "Validate complete photo upload workflow"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
