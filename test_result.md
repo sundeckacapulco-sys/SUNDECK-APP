@@ -382,10 +382,15 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Phase 2: Advanced reminder optimizations"
+    - "Smart business days with holidays"
+    - "Reminder rescheduling functionality"
+    - "Automatic overdue management"
+    - "Advanced metrics and reporting"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "phase_2_features"
 
 backend:
   - task: "Fix Embudo 360 API endpoint URL issue"
