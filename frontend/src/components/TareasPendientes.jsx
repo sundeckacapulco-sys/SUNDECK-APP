@@ -318,7 +318,8 @@ const TareaCompacta = ({
   expandido,
   getAccionDescripcion,
   formatearFechaCompacta,
-  getExtractoMensaje
+  getExtractoMensaje,
+  onNavigateToProspecto
 }) => {
   // Determinar el tipo de vista según el tipo de recordatorio
   const getTipoVista = (tipo) => {
