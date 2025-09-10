@@ -626,18 +626,27 @@ async def obtener_kanban_data():
         }
         
         # Obtener todos los prospectos
-        prospectos = await db.prospectos.find().to_list(length=None)
+        prospectos_raw = await db.prospectos.find().to_list(length=None)
         
-        # Procesar fechas
-        for prospecto in prospectos:
+        # Convertir ObjectIds y procesar fechas
+        prospectos = []
+        for prospecto in prospectos_raw:
+            # Convertir _id a string y crear campo id si no existe
+            if '_id' in prospecto:
+                del prospecto['_id']  # Remover _id de MongoDB
+            
+            # Procesar fechas
             if isinstance(prospecto.get('fecha_cita'), str):
                 prospecto['fecha_cita'] = datetime.fromisoformat(prospecto['fecha_cita'])
             if isinstance(prospecto.get('created_at'), str):
                 prospecto['created_at'] = datetime.fromisoformat(prospecto['created_at'])
                 
+            # Procesar etapas
             for etapa in prospecto.get('etapas', []):
                 if isinstance(etapa.get('fecha'), str):
                     etapa['fecha'] = datetime.fromisoformat(etapa['fecha'])
+            
+            prospectos.append(prospecto)
         
         # Organizar prospectos por columnas
         kanban_data = {}
@@ -650,21 +659,31 @@ async def obtener_kanban_data():
         # Clasificar prospectos
         for prospecto in prospectos:
             # Determinar columna basada en la última etapa
+            ultima_etapa_nombre = None
             if prospecto.get('etapas') and len(prospecto['etapas']) > 0:
-                ultima_etapa = prospecto['etapas'][-1]['nombre_etapa']
-                columna = mapeo_etapas.get(ultima_etapa, "Prospectos Nuevos")
+                ultima_etapa_nombre = prospecto['etapas'][-1]['nombre_etapa']
+                columna = mapeo_etapas.get(ultima_etapa_nombre, "Prospectos Nuevos")
             else:
                 columna = "Prospectos Nuevos"
             
             # Enriquecer prospecto con metadata para Kanban
+            urgencia = calcular_urgencia_prospecto(prospecto)
+            fecha_proxima = calcular_fecha_proxima_accion(prospecto)
+            
             prospecto_kanban = {
-                **prospecto,
+                "id": prospecto.get('id', ''),
+                "nombre": prospecto.get('nombre', ''),
+                "telefono": prospecto.get('telefono', ''),
+                "producto_solicitado": prospecto.get('producto_solicitado', ''),
+                "fecha_cita": prospecto.get('fecha_cita').isoformat() if prospecto.get('fecha_cita') else None,
+                "created_at": prospecto.get('created_at').isoformat() if prospecto.get('created_at') else None,
+                "etapas": prospecto.get('etapas', []),
                 "columna_actual": columna,
-                "ultima_etapa": ultima_etapa if prospecto.get('etapas') else None,
-                "fecha_ultima_etapa": prospecto['etapas'][-1]['fecha'] if prospecto.get('etapas') else None,
+                "ultima_etapa": ultima_etapa_nombre,
+                "fecha_ultima_etapa": prospecto['etapas'][-1]['fecha'].isoformat() if prospecto.get('etapas') and len(prospecto['etapas']) > 0 else None,
                 "total_etapas": len(prospecto.get('etapas', [])),
-                "urgencia": calcular_urgencia_prospecto(prospecto),
-                "fecha_proxima_accion": calcular_fecha_proxima_accion(prospecto)
+                "urgencia": urgencia,
+                "fecha_proxima_accion": fecha_proxima.isoformat() if fecha_proxima else None
             }
             
             kanban_data[columna].append(prospecto_kanban)
@@ -674,7 +693,7 @@ async def obtener_kanban_data():
         for columna in kanban_data:
             kanban_data[columna].sort(key=lambda x: (
                 x['urgencia'], 
-                x['fecha_proxima_accion'] or datetime.now(timezone.utc)
+                x['fecha_proxima_accion'] or datetime.now(timezone.utc).isoformat()
             ), reverse=True)
         
         return {
@@ -730,7 +749,13 @@ def calcular_fecha_proxima_accion(prospecto):
                 return ultima_fecha
         
         # Fallback a fecha de creación
-        return prospecto.get('created_at') or datetime.now(timezone.utc)
+        created_at = prospecto.get('created_at')
+        if created_at:
+            if isinstance(created_at, str):
+                return datetime.fromisoformat(created_at)
+            return created_at
+        
+        return datetime.now(timezone.utc)
         
     except:
         return datetime.now(timezone.utc)
