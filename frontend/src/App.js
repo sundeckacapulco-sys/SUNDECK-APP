@@ -448,7 +448,350 @@ const RegistroProspecto = ({ onUpdate, onNavigate }) => {
   );
 };
 
-// Componente Citas de Hoy
+// Componente Mapa
+const MapaView = ({ prospectos, onNavigate }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredProspectos, setFilteredProspectos] = useState([]);
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+
+  // Filtrar prospectos
+  useEffect(() => {
+    const filtered = prospectos.filter(prospecto => {
+      if (!searchTerm) return true;
+      return prospecto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             prospecto.producto_solicitado.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             (prospecto.direccion && prospecto.direccion.toLowerCase().includes(searchTerm.toLowerCase()));
+    });
+    setFilteredProspectos(filtered);
+  }, [prospectos, searchTerm]);
+
+  // Cargar Google Maps API
+  useEffect(() => {
+    const loadGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        initializeMap();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'DEMO_KEY'}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeMap;
+      script.onerror = () => {
+        setError('Error cargando Google Maps');
+        setLoading(false);
+      };
+      document.head.appendChild(script);
+    };
+
+    const initializeMap = () => {
+      if (!mapRef.current) return;
+
+      try {
+        const map = new window.google.maps.Map(mapRef.current, {
+          center: { lat: -33.4489, lng: -70.6693 }, // Santiago, Chile por defecto
+          zoom: 11,
+          styles: [
+            {
+              featureType: 'all',
+              elementType: 'geometry.fill',
+              stylers: [{ color: '#f8fafc' }]
+            },
+            {
+              featureType: 'water',
+              elementType: 'geometry',
+              stylers: [{ color: '#14B8A6' }]
+            }
+          ]
+        });
+
+        mapInstanceRef.current = map;
+        addMarkersToMap(map);
+        setLoading(false);
+      } catch (err) {
+        setError('Error inicializando el mapa');
+        setLoading(false);
+      }
+    };
+
+    loadGoogleMaps();
+
+    return () => {
+      // Cleanup markers
+      markersRef.current.forEach(marker => {
+        if (marker.setMap) marker.setMap(null);
+      });
+      markersRef.current = [];
+    };
+  }, []);
+
+  // Actualizar marcadores cuando cambien los prospectos filtrados
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      addMarkersToMap(mapInstanceRef.current);
+    }
+  }, [filteredProspectos]);
+
+  const addMarkersToMap = (map) => {
+    // Limpiar marcadores existentes
+    markersRef.current.forEach(marker => {
+      if (marker.setMap) marker.setMap(null);
+    });
+    markersRef.current = [];
+
+    // Crear nuevos marcadores para prospectos con dirección
+    const prospectosCon Dirección = filteredProspectos.filter(p => p.direccion);
+    
+    if (prospectosCon Dirección.length === 0) return;
+
+    // Si tenemos coordenadas, usarlas; si no, geocodificar direcciones
+    prospectosCon Dirección.forEach((prospecto, index) => {
+      if (prospecto.latitud && prospecto.longitud) {
+        createMarker(map, prospecto, { lat: prospecto.latitud, lng: prospecto.longitud });
+      } else if (prospecto.direccion) {
+        // Geocodificar dirección (simulado con coordenadas aleatorias cerca de Santiago)
+        const randomLat = -33.4489 + (Math.random() - 0.5) * 0.1;
+        const randomLng = -70.6693 + (Math.random() - 0.5) * 0.1;
+        createMarker(map, prospecto, { lat: randomLat, lng: randomLng });
+      }
+    });
+
+    // Ajustar vista para mostrar todos los marcadores
+    if (markersRef.current.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      markersRef.current.forEach(marker => {
+        bounds.extend(marker.getPosition());
+      });
+      map.fitBounds(bounds);
+    }
+  };
+
+  const createMarker = (map, prospecto, position) => {
+    const marker = new window.google.maps.Marker({
+      position,
+      map,
+      title: prospecto.nombre,
+      icon: {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        fillColor: '#D4AF37',
+        fillOpacity: 1,
+        stroke: '#0F172A',
+        strokeWeight: 2,
+        scale: 8
+      }
+    });
+
+    const infoWindow = new window.google.maps.InfoWindow({
+      content: `
+        <div style="padding: 10px; max-width: 250px;">
+          <h3 style="margin: 0 0 8px 0; color: #0F172A; font-size: 16px;">${prospecto.nombre}</h3>
+          <p style="margin: 4px 0; color: #334155; font-size: 14px;">
+            <strong>📱 Teléfono:</strong> ${prospecto.telefono}
+          </p>
+          <p style="margin: 4px 0; color: #334155; font-size: 14px;">
+            <strong>🏗️ Producto:</strong> ${prospecto.producto_solicitado}
+          </p>
+          <p style="margin: 4px 0; color: #334155; font-size: 14px;">
+            <strong>📅 Cita:</strong> ${new Date(prospecto.fecha_cita).toLocaleDateString('es-ES')}
+          </p>
+          ${prospecto.direccion ? `
+            <p style="margin: 4px 0; color: #334155; font-size: 14px;">
+              <strong>📍 Dirección:</strong> ${prospecto.direccion}
+            </p>
+          ` : ''}
+          <div style="margin-top: 10px;">
+            <button onclick="window.parent.postMessage({type: 'viewProspect', id: '${prospecto.id}'}, '*')" 
+                    style="background: #D4AF37; color: #0F172A; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+              Ver Detalles
+            </button>
+          </div>
+        </div>
+      `
+    });
+
+    marker.addListener('click', () => {
+      // Cerrar otras info windows
+      markersRef.current.forEach(m => {
+        if (m.infoWindow) m.infoWindow.close();
+      });
+      infoWindow.open(map, marker);
+    });
+
+    marker.infoWindow = infoWindow;
+    markersRef.current.push(marker);
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  if (error) {
+    return (
+      <div className="mapa-view">
+        <div className="mapa-header">
+          <h2>Mapa de Prospectos</h2>
+        </div>
+        <div className="error-state">
+          <div className="error-icon">🗺️</div>
+          <h3>Error cargando el mapa</h3>
+          <p>{error}</p>
+          <p className="error-help">
+            Para usar la funcionalidad de mapa, necesitas configurar una API key de Google Maps en las variables de entorno.
+          </p>
+          <button
+            className="btn-primary"
+            onClick={() => onNavigate('dashboard')}
+          >
+            Volver al Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mapa-view">
+      <div className="mapa-header">
+        <h2>Mapa de Prospectos</h2>
+        <div className="mapa-stats">
+          <div className="stat-item">
+            <span className="stat-number">{prospectos.length}</span>
+            <span className="stat-label">Total</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{filteredProspectos.filter(p => p.direccion).length}</span>
+            <span className="stat-label">Con Dirección</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mapa-controls">
+        <div className="search-control">
+          <input
+            type="text"
+            placeholder="Buscar prospectos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          <span className="search-icon">🔍</span>
+        </div>
+        
+        <div className="map-actions">
+          <button
+            className="btn-outline"
+            onClick={() => {
+              if (mapInstanceRef.current && markersRef.current.length > 0) {
+                const bounds = new window.google.maps.LatLngBounds();
+                markersRef.current.forEach(marker => {
+                  bounds.extend(marker.getPosition());
+                });
+                mapInstanceRef.current.fitBounds(bounds);
+              }
+            }}
+          >
+            📍 Centrar Mapa
+          </button>
+        </div>
+      </div>
+
+      <div className="mapa-container">
+        <div className="map-wrapper">
+          <div 
+            ref={mapRef} 
+            className="google-map"
+            style={{ width: '100%', height: '500px', borderRadius: '12px' }}
+          />
+          {loading && (
+            <div className="map-loading">
+              <div className="loading-spinner"></div>
+              <p>Cargando mapa...</p>
+            </div>
+          )}
+        </div>
+
+        <div className="prospects-sidebar">
+          <h3>Prospectos ({filteredProspectos.length})</h3>
+          <div className="prospects-list">
+            {filteredProspectos.length === 0 ? (
+              <div className="empty-prospects">
+                <p>No se encontraron prospectos</p>
+                {searchTerm && (
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => setSearchTerm('')}
+                  >
+                    Limpiar búsqueda
+                  </button>
+                )}
+              </div>
+            ) : (
+              filteredProspectos.map(prospecto => (
+                <div key={prospecto.id} className="prospect-item">
+                  <div className="prospect-info">
+                    <h4>{prospecto.nombre}</h4>
+                    <p className="prospect-detail">📱 {prospecto.telefono}</p>
+                    <p className="prospect-detail">🏗️ {prospecto.producto_solicitado}</p>
+                    <p className="prospect-detail">📅 {formatDate(prospecto.fecha_cita)}</p>
+                    {prospecto.direccion && (
+                      <p className="prospect-detail">📍 {prospecto.direccion}</p>
+                    )}
+                    {!prospecto.direccion && (
+                      <p className="prospect-warning">⚠️ Sin dirección</p>
+                    )}
+                  </div>
+                  <div className="prospect-actions">
+                    <button 
+                      className="btn-primary small"
+                      onClick={() => {
+                        // Encontrar y abrir marker
+                        const marker = markersRef.current.find(m => 
+                          m.title === prospecto.nombre
+                        );
+                        if (marker && mapInstanceRef.current) {
+                          mapInstanceRef.current.setCenter(marker.getPosition());
+                          mapInstanceRef.current.setZoom(15);
+                          if (marker.infoWindow) {
+                            marker.infoWindow.open(mapInstanceRef.current, marker);
+                          }
+                        }
+                      }}
+                      disabled={!prospecto.direccion}
+                    >
+                      Ver en Mapa
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {prospectos.filter(p => !p.direccion).length > 0 && (
+        <div className="mapa-notice">
+          <div className="notice-content">
+            <span className="notice-icon">💡</span>
+            <div>
+              <strong>Tip:</strong> {prospectos.filter(p => !p.direccion).length} prospectos no tienen dirección. 
+              Agrega direcciones para verlos en el mapa.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 const CitasHoy = ({ onNavigate }) => {
   const [citasHoy, setCitasHoy] = useState([]);
   const [loading, setLoading] = useState(true);
