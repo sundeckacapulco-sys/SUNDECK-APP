@@ -2726,7 +2726,8 @@ class ProspectosAPITester:
         )
         
         if success:
-            templates = response.get('templates', [])
+            # Response might be a list directly or have a templates key
+            templates = response if isinstance(response, list) else response.get('templates', [])
             if templates:
                 print(f"   ✅ Found {len(templates)} WhatsApp templates")
                 
