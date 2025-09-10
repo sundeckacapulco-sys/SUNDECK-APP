@@ -375,11 +375,11 @@ const TareaCompacta = ({
         <button 
           className="btn-accion ver"
           onClick={() => {
-            // Navegar al prospecto correspondiente
-            console.log(`Ver ${tipoVista.label.toLowerCase()}:`, recordatorio.prospecto_id);
-            // TODO: Implementar navegación al prospecto específico
-            // Por ahora, vamos al dashboard donde pueden buscar el prospecto
-            window.location.hash = `#prospecto-${recordatorio.prospecto_id}`;
+            if (onNavigateToProspecto) {
+              onNavigateToProspecto(recordatorio.prospecto_id);
+            } else {
+              console.log(`Ver ${tipoVista.label.toLowerCase()}:`, recordatorio.prospecto_id);
+            }
           }}
           title={`Ir a ${tipoVista.label}`}
         >
