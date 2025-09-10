@@ -1510,9 +1510,10 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       ];
       
       piezasMedicion.forEach(pieza => {
-        const m2 = calcularM2Pieza(pieza);
+        const m2Real = calcularM2Pieza(pieza);
+        const m2Comercial = calcularM2Comercial(pieza);
         const precioAplicado = parseFloat(pieza.precio_m2) || parseFloat(precioM2General) || 0;
-        const subtotal = m2 * precioAplicado;
+        const subtotal = m2Comercial * precioAplicado; // Usar m² comercial para subtotal
         
         wsData.push([
           pieza.ubicacion,
@@ -1520,7 +1521,8 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
           pieza.alto,
           pieza.producto_tela,
           pieza.color_acabado,
-          m2.toFixed(2),
+          m2Real.toFixed(2),
+          m2Comercial.toFixed(2),
           precioAplicado > 0 ? `$${precioAplicado.toFixed(2)}` : 'Sin precio',
           precioAplicado > 0 ? `$${subtotal.toFixed(2)}` : 'Sin precio',
           pieza.observaciones,
