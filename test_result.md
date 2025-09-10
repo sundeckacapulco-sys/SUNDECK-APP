@@ -383,13 +383,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Phase 2.1: Smart business days with Mexican holidays"
-    - "Phase 2.1: Complete reminder rescheduling functionality (backend + frontend)"
     - "Phase 2.2: Automatic overdue management with escalation"
     - "Phase 2.2: Advanced metrics and Excel export"
   stuck_tasks: []
   test_all: false
-  test_priority: "phase_2_1_features"
+  test_priority: "phase_2_2_features"
 
 backend:
   - task: "Fix Embudo 360 API endpoint URL issue"
