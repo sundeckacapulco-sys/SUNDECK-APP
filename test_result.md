@@ -473,7 +473,7 @@ frontend:
 
 agent_communication:
   - agent: "main"
-    message: "🎯 PHASE 1 SISTEMA RECORDATORIOS COMPLETADO - Implementado completamente el sistema automático de recordatorios y plantillas WhatsApp: ✅ Backend: 5 modelos Pydantic (Recordatorio, TemplateWhatsApp), 7 endpoints REST, cálculo días hábiles, creación automática de recordatorios en etapas. ✅ Frontend: Componente TareasPendientes.jsx, nueva pestaña 'Tareas' con badge notificación, estilos CSS completos, integración API. ✅ Testing: 27/27 tests backend passed (100%). Sistema listo para producción. Fase 1 TERMINADA exitosamente."
+    message: "🎯 FASE 2.1 SISTEMA RECORDATORIOS AVANZADO COMPLETADO - Implementación completa de días hábiles inteligentes y reprogramación: ✅ Backend: Sistema de feriados mexicanos oficiales (DOF), cálculo inteligente de días hábiles excluyendo fines de semana Y feriados, endpoint POST /recordatorios/{id}/reprogramar con validación automática, modelos ReprogramacionRecordatorio y MotivosReprogramacion. ✅ Frontend: Modal completo de reprogramación con picker de fecha/hora, dropdown de motivos, campo de notas, validación cliente, integrado en todas las categorías de tareas. Fase 2.1 TERMINADA exitosamente - Sistema operativo listo para producción."
   - agent: "main"
     message: "📸 CLOUDINARY INTEGRATION CONFIGURED - Successfully configured Cloudinary with user credentials: cloud_name=dm0jkstgo, api_key=889131198581369, api_secret configured. Backend integration already exists with upload_to_cloudinary function, file upload handling, and photo URL generation. Environment variables updated, backend restarted successfully. Ready for photo upload testing."
   - agent: "main"
