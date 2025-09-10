@@ -1506,7 +1506,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
         ['Unidad de medida:', unidadMedida === 'm' ? 'Metros' : 'Centímetros'],
         [''],
         ['PIEZAS MEDIDAS:'],
-        ['Ubicación', `Ancho (${unidadMedida})`, `Alto (${unidadMedida})`, 'Producto/Tela', 'Color/Acabado', 'm²', 'Precio/m²', 'Subtotal', 'Observaciones', 'Fotos', 'Notas/Video']
+        ['Ubicación', `Ancho (${unidadMedida})`, `Alto (${unidadMedida})`, 'Producto/Tela', 'Color/Acabado', 'm² Real', 'm² Comercial', 'Precio/m²', 'Subtotal', 'Observaciones', 'Fotos', 'Notas/Video']
       ];
       
       piezasMedicion.forEach(pieza => {
