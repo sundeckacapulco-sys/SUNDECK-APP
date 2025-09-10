@@ -1729,15 +1729,23 @@ async def obtener_recordatorios(
             filtro["fecha_limite"] = {"$lt": fecha_actual}
             filtro["estado"] = EstadoRecordatorio.PENDIENTE
         
-        recordatorios = await db.recordatorios.find(filtro).sort("fecha_limite", 1).to_list(length=None)
+        recordatorios_raw = await db.recordatorios.find(filtro).sort("fecha_limite", 1).to_list(length=None)
         
-        # Enriquecer con datos del prospecto
-        for recordatorio in recordatorios:
+        # Clean up ObjectIds and enrich with prospect data
+        recordatorios = []
+        for recordatorio in recordatorios_raw:
+            # Remove MongoDB ObjectId
+            if '_id' in recordatorio:
+                del recordatorio['_id']
+            
+            # Enrich with prospect data
             prospecto = await db.prospectos.find_one({"id": recordatorio["prospecto_id"]})
             if prospecto:
                 recordatorio["prospecto_nombre"] = prospecto.get("nombre", "")
                 recordatorio["prospecto_telefono"] = prospecto.get("telefono", "")
                 recordatorio["prospecto_producto"] = prospecto.get("producto_solicitado", "")
+            
+            recordatorios.append(recordatorio)
         
         # Calcular estadísticas
         total_recordatorios = len(recordatorios)
