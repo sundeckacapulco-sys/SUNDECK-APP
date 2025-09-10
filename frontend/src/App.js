@@ -252,6 +252,162 @@ const Header = ({ currentView, onNavigate }) => {
   );
 };
 
+// Componente para editar plantillas de WhatsApp
+const EditarPlantillasModal = ({ isOpen, onClose, onUpdate }) => {
+  const [plantillas, setPlantillas] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [guardandoPlantillas, setGuardandoPlantillas] = useState(false);
+
+  // Cargar plantillas actuales al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      cargarPlantillas();
+    }
+  }, [isOpen]);
+
+  const cargarPlantillas = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/whatsapp-templates`);
+      setPlantillas(response.data.templates);
+    } catch (error) {
+      console.error('Error cargando plantillas:', error);
+      // Usar plantillas por defecto si hay error
+      setPlantillas({
+        prospecto: whatsappTemplates.prospecto,
+        cita: whatsappTemplates.cita,
+        instalacion: whatsappTemplates.instalacion,
+        postventa: whatsappTemplates.postventa
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const guardarPlantillas = async () => {
+    try {
+      setGuardandoPlantillas(true);
+      await axios.put(`${API}/whatsapp-templates`, plantillas);
+      alert('¡Plantillas de WhatsApp actualizadas exitosamente!');
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error guardando plantillas:', error);
+      alert('Error al guardar las plantillas. Intente nuevamente.');
+    } finally {
+      setGuardandoPlantillas(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content modal-large">
+        <div className="modal-header">
+          <h3>📝 Editar Plantillas de WhatsApp</h3>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-body">
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Cargando plantillas...</p>
+            </div>
+          ) : (
+            <div className="plantillas-form">
+              <div className="plantillas-info">
+                <div className="info-box">
+                  <h4>Variables disponibles:</h4>
+                  <div className="variables-list">
+                    <span className="variable">{nombre}</span>
+                    <span className="variable">{telefono}</span>
+                    <span className="variable">{producto}</span>
+                    <span className="variable">{fecha}</span>
+                    <span className="variable">{hora}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="plantillas-grid">
+                <div className="plantilla-item">
+                  <label htmlFor="prospecto">
+                    <strong>🎯 Prospecto Nuevo</strong>
+                    <small>Para clientes que recién muestran interés</small>
+                  </label>
+                  <textarea
+                    id="prospecto"
+                    value={plantillas.prospecto || ''}
+                    onChange={(e) => setPlantillas({...plantillas, prospecto: e.target.value})}
+                    rows={3}
+                    placeholder="Mensaje para prospectos nuevos..."
+                  />
+                </div>
+
+                <div className="plantilla-item">
+                  <label htmlFor="cita">
+                    <strong>📅 Confirmación de Cita</strong>
+                    <small>Para confirmar citas y fechas programadas</small>
+                  </label>
+                  <textarea
+                    id="cita"
+                    value={plantillas.cita || ''}
+                    onChange={(e) => setPlantillas({...plantillas, cita: e.target.value})}
+                    rows={3}
+                    placeholder="Mensaje para confirmación de citas..."
+                  />
+                </div>
+
+                <div className="plantilla-item">
+                  <label htmlFor="instalacion">
+                    <strong>🔧 Instalación</strong>
+                    <small>Para coordinar instalaciones programadas</small>
+                  </label>
+                  <textarea
+                    id="instalacion"
+                    value={plantillas.instalacion || ''}
+                    onChange={(e) => setPlantillas({...plantillas, instalacion: e.target.value})}
+                    rows={3}
+                    placeholder="Mensaje para instalaciones..."
+                  />
+                </div>
+
+                <div className="plantilla-item">
+                  <label htmlFor="postventa">
+                    <strong>🌟 Postventa</strong>
+                    <small>Para seguimiento post-instalación</small>
+                  </label>
+                  <textarea
+                    id="postventa"
+                    value={plantillas.postventa || ''}
+                    onChange={(e) => setPlantillas({...plantillas, postventa: e.target.value})}
+                    rows={3}
+                    placeholder="Mensaje para postventa..."
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>
+            Cancelar
+          </button>
+          <button 
+            className="btn-primary" 
+            onClick={guardarPlantillas}
+            disabled={guardandoPlantillas}
+          >
+            {guardandoPlantillas ? 'Guardando...' : 'Guardar Plantillas'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Componente Kanban 360°
 const KanbanDashboard = ({ onUpdate, onNavigate }) => {
   // Estados principales del Kanban
