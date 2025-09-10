@@ -378,30 +378,20 @@ class ProspectosAPITester:
             print("❌ Skipping - No prospect ID available")
             return False
             
+        # Simplified pedido data that works with form parameters
         pedido_data = {
             'nombre_etapa': 'Pedido',
             'comentario': 'Pedido manual creado para testing',
-            'monto_total': 150000,
-            'anticipo_recibido': 50000,
-            'saldo_pendiente': 100000,
+            'monto_total': '150000',
+            'anticipo_recibido': '50000',
+            'saldo_pendiente': '100000',
             'forma_pago': 'Transferencia Bancaria',
             'fecha_vencimiento_saldo': '2024-12-31',
             'cotizacion_url': 'https://example.com/cotizacion.pdf',
             'archivo_levantamiento_url': 'https://example.com/levantamiento.xlsx',
-            'piezas_medicion': [
-                {
-                    'id': 'manual-1',
-                    'ubicacion': 'Test Manual',
-                    'ancho': 2.0,
-                    'alto': 2.0,
-                    'producto_tela': 'Test Product',
-                    'color_acabado': 'Test Color',
-                    'observaciones': 'Test manual piece'
-                }
-            ],
-            'precio_m2_general': 25000,
-            'total_m2': 4.0,
-            'total_estimado': 100000
+            'precio_m2_general': '25000',
+            'total_m2': '4.0',
+            'total_estimado': '100000'
         }
         
         # Create a new prospect for manual pedido test
