@@ -1,71 +1,99 @@
 <analysis>
-The AI engineer successfully built the Sundeck client management application incrementally. Initial development established a React/FastAPI/MongoDB stack, product catalog, and basic WhatsApp. A major focus was the Visita Inicial / Medición stage, implementing dynamic measurement tables with precise m² calculations (including a 1m² commercial minimum), flexible pricing, and PDF/Excel quotation generation. The Pedido stage was introduced to streamline the sales flow, automatically inheriting measurement data and enabling payment detail capture. The dashboard evolved from basic optimization (pagination, search, filters) into a comprehensive Kanban 360° Centro de Comando, featuring drag-and-drop, KPIs, and urgency-based coloring. WhatsApp messaging was enhanced with editable JSON templates, and a critical bug in URL encoding was resolved. Most recently, multi-user roles, activity logging, and an Embudo 360 (funnel analysis) view were implemented, though the Embudo 360 currently presents a persistent data loading error, which is the immediate focus of the work.
+The AI engineer successfully completed two high-priority tasks: resolving the Embudo 360 data loading error and integrating Cloudinary. The funnel bug was fixed by correcting a duplicated API prefix in the frontend, while Cloudinary required obtaining and correctly configuring credentials after an Invalid Signature error.
+
+Subsequently, the focus shifted to implementing a multi-phase automated reminder system (Tareas Pendientes). Phase 1, the core implementation, involved extensive backend development (new models, helper functions for business days, API endpoints, and integration into existing  logic) and significant frontend UI/UX work. The frontend iterated through several redesigns based on user feedback to achieve a compact, branded, and actionable task list, including fixing a NaN badge, persistent CSS application issues (addressed with inline styles), broken Ir a Prospecto navigation, and an unexpected modal on dashboard return.
+
+The trajectory concludes with the AI having successfully completed Phase 1, and now actively working on **Phase 2: Optimizaciones Avanzadas del Sistema de Recordatorios**, specifically implementing intelligent business days (Mexican holidays) and rescheduling functionality in the backend.
 </analysis>
 
 <product_requirements>
-The Sundeck application manages customer prospects, tracks installation stages, and monitors project progress. Core modules include: Prospect registration, a main dashboard, customizable installation stages (Visita Inicial / Medición, Cotización Aprobada, Pedido, Fabricación, Instalación en Proceso, Entrega Final, Postventa), today's appointments, and WhatsApp integration.
-Key features include an auto-learning product catalog and a Visita Inicial / Medición stage with a dynamic measurement table, automatic m² calculation (including a 1m² commercial minimum), unit toggles, pricing, and immediate PDF/Excel quotation generation. A new Pedido stage connects Medición to Cotización Aprobada, inheriting data and capturing payment details. The dashboard was transformed into a Kanban 360° Centro de Comando with drag-and-drop functionality, KPIs, urgency coloring, search, filters, and activity logging. WhatsApp messaging uses editable JSON templates. Multi-user roles (Admin, Ventas, Operaciones, Postventa) and an Embudo 360 (sales funnel analysis) view were introduced for scalability and business insight.
+The Sundeck application manages customer prospects, tracks installation stages, and monitors project progress through stages like Visita Inicial / Medición, Cotización Aprobada, and Pedido. Key features include an auto-learning product catalog, dynamic measurement tables with automatic m² calculation (including a 1m² commercial minimum), unit toggles, pricing, and PDF/Excel quotation generation. The Pedido stage links Medición to Cotización Aprobada, inheriting data and capturing payment. The dashboard was transformed into a Kanban 360° Centro de Comando with drag-and-drop, KPIs, urgency coloring, search, filters, and activity logging. WhatsApp messaging uses editable JSON templates. Multi-user roles (Admin, Ventas, Operaciones, Postventa) and an Embudo 360 (sales funnel analysis) view provide scalability and business insight.
+
+Recent additions (Automated Reminder System - Tareas Pendientes):
+**Phase 1:**
+-   **Automated Reminders:** Timely reminders for key actions (e.g., send quotation within 24h, first/second/third follow-ups at 3/7 business days).
+-   **Visible Reminders:** A Tareas pendientes module in the menu, with a notification badge, displaying client, action, due date, and quick action buttons.
+-   **WhatsApp Templates:** Persuasive, dynamic templates (e.g., Confirmación de recepción, Seguimiento) stored in MongoDB/JSON.
+-   **Business Days:** Reminders should only count Monday to Friday.
+**Phase 2 (Pending):**
+-   **Intelligent Business Days:** Incorporate Mexican holidays.
+-   **Rescheduling:** Ability to postpone/reagend tasks.
+-   **Overdue Management:** Automatic escalation.
+-   **Advanced Metrics:** KPIs for productivity/conversion.
+-   **Intelligent Reminders:** Based on client behavior.
 </product_requirements>
 
 <key_technical_concepts>
-- ReactJS (functional components, hooks)
-- FastAPI (backend API, Pydantic models)
-- MongoDB (persistent data storage, Motor ODM)
-- TailwindCSS, Shadcn UI (styling, components)
-- LocalStorage (client-side data persistence)
--  (drag & drop)
-- ,  (PDF/Excel generation)
-- WhatsApp Deep Links (optimized format)
-- Real-time form validation and calculations
-- Multi-user Roles & Permissions
-- Kanban/Funnel visualization
+-   ReactJS (functional components, hooks, Context API)
+-   FastAPI (backend API, Pydantic models, MongoDB integration)
+-   MongoDB (Motor ODM, UUIDs for IDs, ISO strings for DateTime)
+-   TailwindCSS, custom CSS, Shadcn UI
+-   Cloudinary (image/file upload management)
+-   WhatsApp Deep Links (URL generation, encoding)
+-    (for business day calculation)
+-   Kanban/Funnel visualization, Custom UI components
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   :
-    -   **Importance**: Core application logic, API endpoints, and MongoDB interactions.
-    -   **Changes Made**: Expanded  model for Pedido data and . Added  Pydantic model. Implemented  endpoint. Updated  to handle Pedido fields. Modified  for dashboard pagination, search, and filters. Implemented  for Kanban 360° data with urgency, activity logging, and stage movement. Fixed  serialization. Added  GET/PUT endpoints. Introduced  model, user management, , and  for Embudo 360.
--   : Updated with Cloudinary placeholders.
+    -   **Importance**: Handles all API endpoints and MongoDB interactions.
+    -   **Changes Made**:
+        -   **Embudo 360 Fix**: Verified and confirmed the  endpoint definition.
+        -   **Cloudinary**: Updated , ,  in  and confirmed the  library is correctly integrated and used for image uploads.
+        -   **Reminder System (Phase 1 & Phase 2 started)**:
+            -   Added Pydantic models: , , , .
+            -   Implemented helper functions: , , , , .
+            -   Modified  to trigger  based on stage changes.
+            -   New API endpoints: , , , , , .
+-   : Updated with valid Cloudinary credentials during the integration phase.
+-   : Confirmed inclusion of  and .
 -   :
-    -   **Importance**: Main React component, routing, state management.
-    -   **Changes Made**: Integrated new  stage logic in , including m² calculation adjustments (, ) and new form fields. Updated  (reordered), , . Replaced original Dashboard with . Removed Mapa from navigation, added Sundeck 360 (for Kanban) and Embudo 360. Implemented JSON-based WhatsApp template system, replacing old logic. Corrected  for  format, phone normalization, and URL encoding. Integrated  wrapper and  view.
+    -   **Importance**: Main React component managing application views, navigation, and global state.
+    -   **Changes Made**:
+        -   **Embudo 360 Fix**: Corrected the API call URL for  to prevent a duplicate  prefix.
+        -   **Reminder System (Phase 1 UI)**:
+            -   Integrated  component as a new view.
+            -   Implemented  hook for fetching task counts.
+            -   Modified  to display a dynamic Tareas navigation item with an urgency-colored badge.
+            -   Added state  and  function for navigating to a specific prospect's detail from tasks.
+            -   Updated  (defined within ) to highlight a  received as a prop.
+            -   Fixed Volver al Dashboard button by isolating its navigation logic () to prevent conflicts with prospect modals.
 -   :
-    -   **Importance**: Global and component-specific styles.
-    -   **Changes Made**: Added styles for Pedido section, Dashboard optimizations, Kanban 360°, disabled WhatsApp buttons, and Embudo 360.
--   : Added  placeholder.
+    -   **Importance**: Global and component-specific styling.
+    -   **Changes Made**: Extensive CSS additions and modifications for the Tareas Pendientes module, including Sundeck corporate colors, styles for segmented task groups (Vencidas, Hoy, Mañana, Futuras), individual task cards, compact buttons, and responsive design. Inline styles were eventually used in  due to persistent CSS application issues.
 -   :
-    -   **Importance**: Encapsulates WhatsApp link generation.
-    -   **Changes Made**: Enhanced for Mexican phone number validation and visual feedback (enabled/disabled states, tooltips) based on number validity.
--   :
-    -   **Importance**: Renders individual measurement pieces.
-    -   **Changes Made**: Integrates real-time  and  calculation and pricing.
+    -   **Importance**: Displays the sales funnel.
+    -   **Changes Made**: Corrected the API URL used for data fetching.
 -    (new):
-    -   **Importance**: Implements the Kanban 360° view with drag-and-drop, columns, cards, KPIs, and quick actions.
--    (new):
-    -   **Importance**: Provides a UI for editing WhatsApp message templates.
--    (new):
-    -   **Importance**: Visualizes the sales and operations funnel with conversion metrics.
--    (new):
-    -   **Importance**: Manages user-related state and provides it to the React component tree.
--    (new):
-    -   **Importance**: Stores editable WhatsApp message templates for dynamic generation.
+    -   **Importance**: Implements the Tareas Pendientes - Centro de Seguimiento UI.
+    -   **Changes Made**: Developed to display task groups, individual task cards ( internal component), task details (client, action, date, icons), and action buttons (WhatsApp, Completar, Ver Prospecto). Incorporated collapsible sections and used inline styles for visual consistency after external CSS issues.
 </code_architecture>
 
 <pending_tasks>
-- Configure Cloudinary credentials for photo uploads.
-- The Embudo 360 view currently displays a persistent Error cargando datos del embudo that needs to be fully resolved.
+-   Complete Phase 2 of the reminder system:
+    -   Finalize intelligent business days (integrating ).
+    -   Further develop rescheduling functionality.
+    -   Implement automatic escalation for overdue tasks.
+    -   Develop advanced metrics (KPIs) and intelligent reminder logic.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was actively troubleshooting a persistent bug with the Embudo 360 (Funnel 360) view. The user reported ERROR EN EL EMBUDO 360 twice, accompanied by images showing an Error cargando datos del embudo message and a Reintentar button.
+Immediately before this summary request, the AI engineer was actively implementing **Phase 2: Optimizaciones Avanzadas del Sistema de Recordatorios**.
 
-The AI's initial diagnosis was that the  hook was being called outside of its  context. To address this,  was modified to ensure the main application content () was properly wrapped by the . Additionally, the  component was correctly integrated into the  function, and necessary CSS styles were added.
+The work flow was as follows:
+1.  **Preparation**: Updated  to reflect the successful completion of Phase 1 of the reminder system.
+2.  **Defining Scope**: Clearly outlined the features for Phase 2, which include intelligent business days (considering Mexican holidays), rescheduling, automatic overdue management, advanced metrics, and intelligent reminders.
+3.  **Backend Implementation for Phase 2 (in progress)**:
+    -   **Mexican Holidays System**: Started integrating a system to identify and account for Mexican holidays, which will be crucial for accurate business day calculations. This likely involves adding a  file and functions like .
+    -   **Rescheduling Models**: Added necessary Pydantic models in  to support the rescheduling feature (e.g., ).
+    -   **Rescheduling Endpoints**: Implemented the  endpoint in  to handle requests for rescheduling tasks.
+    -   **Current Step**: The AI's last action was , indicating that it is currently writing additional helper functions or logic within  to enable the intelligent reminders aspect of Phase 2.
 
-Despite these fixes, which the AI initially confirmed as resolved, the user subsequently reported that the error still persists. The current state is that the  component is integrated into the frontend, the  context is correctly set up, and the backend has an endpoint () designed to provide the necessary data. However, the frontend is consistently failing to load this data, indicating an underlying issue in the data fetching, API response handling, or backend logic for the funnel data. The AI's last action was to investigate this persistent error, starting with the backend.
+The frontend implementation for these advanced Phase 2 features has not yet begun, as the current focus remains on building the foundational backend logic.
 </current_work>
 
 <optional_next_step>
-Investigate the backend endpoint  to debug the persistent Error cargando datos del embudo.
+Continue implementing **Phase 2** features by adding the  in the backend.
 </optional_next_step>

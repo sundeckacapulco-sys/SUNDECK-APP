@@ -5,7 +5,7 @@ import json
 import time
 
 class ReminderSystemTester:
-    def __init__(self, base_url="https://sunflow-crm.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://tareas-pendientes-2.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0

@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 import time
 
-BASE_URL = "https://sunflow-crm.preview.emergentagent.com/api"
+BASE_URL = "https://tareas-pendientes-2.preview.emergentagent.com/api"
 
 def test_basic_endpoints():
     print("🔍 Testing basic reminder endpoints...")

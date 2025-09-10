@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 def test_cloudinary_simple():
     """Simple test to verify Cloudinary integration is working"""
-    base_url = 'https://sunflow-crm.preview.emergentagent.com/api'
+    base_url = 'https://tareas-pendientes-2.preview.emergentagent.com/api'
     
     print('🔍 Testing Cloudinary Integration - Simple Test')
     print('Verifying corrected credentials work with proper filenames')
