@@ -189,7 +189,7 @@ function App() {
   const renderCurrentView = () => {
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard prospectos={prospectos} onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
+        return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
       case 'registro':
         return <RegistroProspecto onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
       case 'citas':
