@@ -380,21 +380,7 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('NAVEGACIÓN DIRECTA AL DASHBOARD');
-            
-            // Navegación directa sin usar variables externas
-            try {
-              if (typeof onNavigate === 'function') {
-                console.log('Ejecutando onNavigate con dashboard');
-                onNavigate('dashboard');
-              } else {
-                console.log('onNavigate no disponible, recargando página');
-                window.location.href = window.location.origin;
-              }
-            } catch (error) {
-              console.error('Error crítico:', error);
-              window.location.href = window.location.origin;
-            }
+            navegarAlDashboard();
           }}
         >
           ← Volver al Dashboard
