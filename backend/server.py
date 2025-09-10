@@ -77,6 +77,16 @@ class EtapaCreate(BaseModel):
     precio_m2_general: Optional[float] = None  # Precio general por m²
     total_m2: Optional[float] = None  # Total m² calculado
     total_estimado: Optional[float] = None  # Total estimado de la cotización
+    unidad_medida: Optional[str] = "m"  # 'm' o 'cm'
+    # Campos específicos para Pedido
+    monto_total: Optional[float] = None
+    anticipo_recibido: Optional[float] = None
+    saldo_pendiente: Optional[float] = None
+    forma_pago: Optional[str] = None
+    fecha_vencimiento_saldo: Optional[str] = None
+    # Datos heredados de medición para pedido
+    cotizacion_url: Optional[str] = None
+    archivo_levantamiento_url: Optional[str] = None
 
 class Etapa(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
