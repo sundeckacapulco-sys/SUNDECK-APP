@@ -65,12 +65,18 @@ class PiezaMedicion(BaseModel):
     observaciones: Optional[str] = ""
     fotos: List[str] = Field(default_factory=list)
     notas_video_url: Optional[str] = ""
+    metros_cuadrados: Optional[float] = None  # Calculado automáticamente
+    precio_m2: Optional[float] = None  # Precio manual por m²
+    total_pieza: Optional[float] = None  # Total calculado de la pieza
 
 class EtapaCreate(BaseModel):
     nombre_etapa: str
     comentario: str
     # Campos específicos para Visita Inicial / Medición
     piezas_medicion: Optional[List[dict]] = Field(default_factory=list)
+    precio_m2_general: Optional[float] = None  # Precio general por m²
+    total_m2: Optional[float] = None  # Total m² calculado
+    total_estimado: Optional[float] = None  # Total estimado de la cotización
 
 class Etapa(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
