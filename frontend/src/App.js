@@ -4,6 +4,34 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './App.css';
 import whatsappTemplates from './whatsappTemplates.json';
 
+// Función para generar URL de WhatsApp (formato México)
+const generateWhatsAppURL = (telefono, mensaje) => {
+  if (!telefono) return null;
+  
+  // Limpiar el número de teléfono (solo números)
+  let cleanPhone = telefono.replace(/[^\d]/g, '');
+  
+  // Remover cualquier código de país existente si está presente
+  if (cleanPhone.startsWith('52')) {
+    cleanPhone = cleanPhone.substring(2);
+  } else if (cleanPhone.startsWith('1') && cleanPhone.length === 11) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  
+  // Asegurar que tengamos exactamente 10 dígitos
+  if (cleanPhone.length === 10) {
+    // Anteponer 521 (código de México + 1 para celular)
+    const phoneWithCountryCode = `521${cleanPhone}`;
+    
+    // Codificar el mensaje para URL usando encodeURIComponent()
+    const encodedMessage = encodeURIComponent(mensaje);
+    
+    return `https://wa.me/${phoneWithCountryCode}?text=${encodedMessage}`;
+  }
+  
+  return null; // Número inválido
+};
+
 // Función para generar mensaje personalizado usando plantillas JSON
 const generateWhatsAppMessage = (prospecto, tipo = 'prospecto') => {
   const template = whatsappTemplates[tipo] || whatsappTemplates.prospecto;
