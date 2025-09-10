@@ -62,10 +62,11 @@ function App() {
 
 // Componente Header
 const Header = ({ currentView, onNavigate }) => {
-  const navItems = [
+    const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'registro', label: 'Nuevo Prospecto', icon: '➕' },
-    { id: 'citas', label: 'Citas Hoy', icon: '📅' }
+    { id: 'citas', label: 'Citas Hoy', icon: '📅' },
+    { id: 'mapa', label: 'Mapa', icon: '🗺️' }
   ];
 
   return (
