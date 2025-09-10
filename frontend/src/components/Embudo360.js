@@ -22,7 +22,7 @@ const Embudo360 = ({ onNavigate }) => {
         if (filtros[key]) params.append(key, filtros[key]);
       });
       
-      const response = await axios.get(`${API}/embudo-360?${params}`);
+      const response = await axios.get(`${API}/api/embudo-360?${params}`);
       setEmbudoData(response.data);
     } catch (error) {
       console.error('Error cargando datos del embudo:', error);
