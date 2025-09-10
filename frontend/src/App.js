@@ -1612,7 +1612,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
 
   return (
     <div className="modal-overlay">
-      <div className={`modal-content ${esMedicion ? 'modal-large' : 'small-modal'}`}>
+      <div className={`modal-content ${(esMedicion || esPedido) ? 'modal-large' : 'small-modal'}`}>
         <div className="modal-header">
           <h3>Agregar Nueva Etapa</h3>
           <button className="modal-close" onClick={onClose}>×</button>
