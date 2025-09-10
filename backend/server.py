@@ -294,18 +294,64 @@ def generate_thumbnail(public_id: str):
         quality='auto:good'
     )[0]
 
-# Funciones helper para Sistema de Recordatorios
+# Funciones helper para Sistema de Recordatorios - FASE 2 AVANZADO
+
+def obtener_feriados_mexico_2024_2025():
+    """Obtener lista de feriados oficiales de México para 2024-2025"""
+    feriados = [
+        # 2024
+        datetime(2024, 1, 1),   # Año Nuevo
+        datetime(2024, 2, 5),   # Día de la Constitución
+        datetime(2024, 3, 18),  # Natalicio de Benito Juárez
+        datetime(2024, 5, 1),   # Día del Trabajo
+        datetime(2024, 9, 16),  # Día de la Independencia
+        datetime(2024, 11, 18), # Revolución Mexicana
+        datetime(2024, 12, 25), # Navidad
+        
+        # 2025
+        datetime(2025, 1, 1),   # Año Nuevo
+        datetime(2025, 2, 3),   # Día de la Constitución
+        datetime(2025, 3, 17),  # Natalicio de Benito Juárez
+        datetime(2025, 5, 1),   # Día del Trabajo
+        datetime(2025, 9, 16),  # Día de la Independencia
+        datetime(2025, 11, 17), # Revolución Mexicana
+        datetime(2025, 12, 25), # Navidad
+    ]
+    return {f.date() for f in feriados}
+
+def es_dia_habil(fecha: datetime) -> bool:
+    """Verificar si una fecha es día hábil (lunes a viernes, no feriado)"""
+    fecha_date = fecha.date()
+    
+    # Verificar si es fin de semana (sábado=5, domingo=6)
+    if fecha.weekday() >= 5:
+        return False
+    
+    # Verificar si es feriado
+    feriados = obtener_feriados_mexico_2024_2025()
+    if fecha_date in feriados:
+        return False
+    
+    return True
+
 def calcular_dias_habiles(fecha_inicio: datetime, dias: int) -> datetime:
-    """Calcular fecha después de N días hábiles (lunes a viernes)"""
+    """Calcular fecha después de N días hábiles (excluyendo fines de semana y feriados)"""
     fecha_actual = fecha_inicio
     dias_agregados = 0
     
     while dias_agregados < dias:
         fecha_actual += timedelta(days=1)
-        # 0 = lunes, 6 = domingo
-        if fecha_actual.weekday() < 5:  # lunes a viernes
+        
+        if es_dia_habil(fecha_actual):
             dias_agregados += 1
     
+    return fecha_actual
+
+def obtener_siguiente_dia_habil(fecha: datetime) -> datetime:
+    """Obtener el siguiente día hábil disponible"""
+    fecha_actual = fecha
+    while not es_dia_habil(fecha_actual):
+        fecha_actual += timedelta(days=1)
     return fecha_actual
 
 def obtener_template_mensaje(tipo: TipoTemplate, prospecto: dict) -> str:
