@@ -289,15 +289,15 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
                 )}
 
                 {grupos.futuro.length > 0 && (
-                  <div className="grupo-urgencia">
+                  <div className="segmento-contenedor futuras">
                     <h3 
-                      className={`grupo-titulo futuro ${gruposColapsados.futuro ? 'collapsed' : ''}`}
+                      className={`segmento-titulo futuras ${gruposColapsados.futuro ? 'collapsed' : ''}`}
                       onClick={() => toggleGrupo('futuro')}
                     >
                       <span>📅 Futuras ({grupos.futuro.length})</span>
                       <span className="toggle-icon">▼</span>
                     </h3>
-                    <div className={`grupo-contenido ${gruposColapsados.futuro ? 'collapsed' : ''}`}>
+                    <div className={`segmento-contenido ${gruposColapsados.futuro ? 'collapsed' : ''}`}>
                       {grupos.futuro.map(recordatorio => (
                         <TareaCompacta 
                           key={recordatorio.id} 
