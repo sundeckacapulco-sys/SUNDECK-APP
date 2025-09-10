@@ -1213,6 +1213,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   const getEtapaDescription = (etapa) => {
     const descriptions = {
       "Visita Inicial / Medición": "Captación del prospecto y levantamiento de medidas. Documentar medidas, necesidades y especificaciones.",
+      "Pedido": "Formalización del pedido con datos de medición y términos de pago. Registrar anticipo, saldo pendiente y forma de pago.",
       "Cotización Aprobada": "Cliente confirma cotización y deja anticipo. Registrar detalles del acuerdo y forma de pago.",
       "Fabricación": "Pedido subido al sistema y en producción/taller. Adjuntar fotos del taller o confirmación de materiales.",
       "Instalación en Proceso": "Preparación del sitio, montaje, ajustes y acabados. Documentar todo el proceso con fotos.",
