@@ -3690,7 +3690,21 @@ body {
 
 /* ==========================================
    TAREAS PENDIENTES - SISTEMA DE RECORDATORIOS
+   BRANDING SUNDECK PROFESIONAL
    ========================================== */
+
+:root {
+  --sundeck-carbon: #1e293b;      /* Azul carbón para texto */
+  --sundeck-gold: #f59e0b;        /* Dorado para números/acentos */
+  --sundeck-gold-light: #fbbf24;  /* Dorado claro */
+  --sundeck-gold-bg: #fef3c7;     /* Fondo dorado suave */
+  --sundeck-red: #ef4444;         /* Rojo para vencidos */
+  --sundeck-red-bg: #fee2e2;      /* Fondo rojo suave */
+  --sundeck-green: #10b981;       /* Verde para completados */
+  --sundeck-green-bg: #f0fdf4;    /* Fondo verde suave */
+  --sundeck-blue: #3b82f6;        /* Azul para acciones */
+  --sundeck-purple: #8b5cf6;      /* Violeta para ver prospecto */
+}
 
 .tareas-pendientes {
   padding: 2rem;
