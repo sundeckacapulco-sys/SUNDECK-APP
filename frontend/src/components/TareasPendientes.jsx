@@ -262,15 +262,15 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
                 )}
 
                 {grupos.mañana.length > 0 && (
-                  <div className="grupo-urgencia">
+                  <div className="segmento-contenedor manana">
                     <h3 
-                      className={`grupo-titulo manana ${gruposColapsados.mañana ? 'collapsed' : ''}`}
+                      className={`segmento-titulo manana ${gruposColapsados.mañana ? 'collapsed' : ''}`}
                       onClick={() => toggleGrupo('mañana')}
                     >
                       <span>🟢 Mañana ({grupos.mañana.length})</span>
                       <span className="toggle-icon">▼</span>
                     </h3>
-                    <div className={`grupo-contenido ${gruposColapsados.mañana ? 'collapsed' : ''}`}>
+                    <div className={`segmento-contenido ${gruposColapsados.mañana ? 'collapsed' : ''}`}>
                       {grupos.mañana.map(recordatorio => (
                         <TareaCompacta 
                           key={recordatorio.id} 
