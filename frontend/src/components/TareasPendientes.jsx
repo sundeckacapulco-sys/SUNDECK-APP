@@ -208,15 +208,15 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
             return (
               <>
                 {grupos.vencidas.length > 0 && (
-                  <div className="grupo-urgencia">
+                  <div className="segmento-contenedor vencidas">
                     <h3 
-                      className={`grupo-titulo vencido ${gruposColapsados.vencidas ? 'collapsed' : ''}`}
+                      className={`segmento-titulo vencidas ${gruposColapsados.vencidas ? 'collapsed' : ''}`}
                       onClick={() => toggleGrupo('vencidas')}
                     >
                       <span>🔴 Vencidas ({grupos.vencidas.length})</span>
                       <span className="toggle-icon">▼</span>
                     </h3>
-                    <div className={`grupo-contenido ${gruposColapsados.vencidas ? 'collapsed' : ''}`}>
+                    <div className={`segmento-contenido ${gruposColapsados.vencidas ? 'collapsed' : ''}`}>
                       {grupos.vencidas.map(recordatorio => (
                       <TareaCompacta 
                         key={recordatorio.id} 
