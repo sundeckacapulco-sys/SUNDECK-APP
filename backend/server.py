@@ -42,6 +42,9 @@ class Prospecto(BaseModel):
     telefono: str
     producto_solicitado: str
     fecha_cita: datetime
+    direccion: Optional[str] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     etapas: List[dict] = Field(default_factory=list)
 
