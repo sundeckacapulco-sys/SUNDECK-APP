@@ -82,51 +82,58 @@ const TareasPendientes = ({ onNavigate }) => {
     }
   };
 
-  // Formatear fecha
-  const formatearFecha = (fechaStr) => {
+  // Formatear fecha compacta
+  const formatearFechaCompacta = (fechaStr) => {
     try {
       const fecha = new Date(fechaStr);
-      const ahora = new Date();
-      const diffMs = fecha.getTime() - ahora.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      
-      const fechaFormato = fecha.toLocaleDateString('es-ES', {
+      return fecha.toLocaleDateString('es-ES', {
         day: '2-digit',
         month: '2-digit',
-        year: '2-digit',
+        year: '2-digit'
+      }) + ' – ' + fecha.toLocaleTimeString('es-ES', {
         hour: '2-digit',
         minute: '2-digit'
       });
-      
-      if (diffDays < 0) {
-        return `${fechaFormato} (Vencido ${Math.abs(diffDays)} días)`;
-      } else if (diffDays === 0) {
-        return `${fechaFormato} (Hoy)`;
-      } else if (diffDays === 1) {
-        return `${fechaFormato} (Mañana)`;
-      } else {
-        return `${fechaFormato} (En ${diffDays} días)`;
-      }
     } catch {
       return fechaStr;
     }
   };
 
-  // Obtener color de urgencia
-  const getColorUrgencia = (fechaLimite) => {
+  // Obtener estado de urgencia (vencido, hoy, mañana, futuro)
+  const getEstadoUrgencia = (fechaLimite) => {
     try {
       const fecha = new Date(fechaLimite);
       const ahora = new Date();
       const diffMs = fecha.getTime() - ahora.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       
-      if (diffDays < 0) return 'red';      // Vencido
-      if (diffDays === 0) return 'orange'; // Hoy
-      if (diffDays <= 1) return 'yellow';  // Mañana
-      return 'green';                      // Futuro
+      if (diffDays < 0) return 'vencido';
+      if (diffDays === 0) return 'hoy';
+      if (diffDays === 1) return 'mañana';
+      return 'futuro';
     } catch {
-      return 'gray';
+      return 'futuro';
     }
+  };
+
+  // Agrupar tareas por urgencia
+  const agruparTareasPorUrgencia = (tareas) => {
+    const grupos = {
+      vencidas: [],
+      hoy: [],
+      mañana: [],
+      futuro: []
+    };
+    
+    tareas.forEach(tarea => {
+      const estado = getEstadoUrgencia(tarea.fecha_limite);
+      if (estado === 'vencido') grupos.vencidas.push(tarea);
+      else if (estado === 'hoy') grupos.hoy.push(tarea);
+      else if (estado === 'mañana') grupos.mañana.push(tarea);
+      else grupos.futuro.push(tarea);
+    });
+    
+    return grupos;
   };
 
   // Obtener descripción del tipo de recordatorio
