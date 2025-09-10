@@ -103,15 +103,17 @@
 #====================================================================================================
 
 user_problem_statement: |
-  KANBAN 360° SYSTEM - Sistema completo de gestión visual de prospectos
+  TRANSFORMACIÓN KANBAN 360° - Centro de comando operativo completo para Sundeck
   
   Implementar:
-  1. Endpoint GET /api/kanban con organización por 7 columnas Kanban
-  2. Sistema de urgencia (0=verde, 1=amarillo, 2=rojo) basado en fechas
-  3. Endpoint POST /api/mover-etapa para movimiento entre etapas
-  4. Endpoint GET /api/logs-actividad/{id} para historial de actividades
-  5. KPIs dinámicos y metadata enriquecida de prospectos
-  6. Performance optimizada < 200ms y serialización sin ObjectIds
+  1. Panel Kanban con 7 columnas: Prospectos Nuevos → Cotizaciones Activas → Pedidos → Fabricación → Instalación → Entrega → Postventa
+  2. Tarjetas dinámicas con acciones rápidas (WhatsApp, Ver Detalles, Mover Etapa, Comentarios)
+  3. Drag & drop entre columnas con logs de actividad automáticos
+  4. Sistema de colores por urgencia (Verde/Amarillo/Rojo)
+  5. KPIs superiores con contadores dinámicos por columna
+  6. Filtros globales y vista dual Kanban ↔ Tabla
+  7. Persistencia de preferencias en localStorage
+  8. Performance optimizada para 100+ casos activos
 
 backend:
   - task: "Implementar endpoint GET /api/kanban con estructura completa"
