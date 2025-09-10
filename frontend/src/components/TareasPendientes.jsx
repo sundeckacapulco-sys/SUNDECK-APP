@@ -340,7 +340,6 @@ const TareasPendientes = ({ onNavigate }) => {
 // Componente para una tarea compacta
 const TareaCompacta = ({ 
   recordatorio, 
-  onWhatsApp, 
   onCompletar, 
   onExpandir, 
   expandido,
