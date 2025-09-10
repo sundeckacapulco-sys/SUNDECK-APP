@@ -144,10 +144,12 @@ const determinarTipoWhatsApp = (prospecto) => {
   // Determinar tipo según la última etapa
   if (nombreEtapa === 'Visita Inicial / Medición') {
     return 'confirmacion_cita'; // Siguiente paso: confirmar cotización
-  } else if (nombreEtapa === 'Pedido') {
+  } else if (nombreEtapa === 'Cotización Aprobada') {
     return 'confirmacion_cita'; // Confirmar detalles del pedido
-  } else if (nombreEtapa === 'Cotización Aprobada' || nombreEtapa === 'Fabricación') {
-    return 'instalacion'; // En proceso de fabricación/instalación
+  } else if (nombreEtapa === 'Pedido') {
+    return 'confirmacion_cita'; // Confirmar inicio de fabricación
+  } else if (nombreEtapa === 'Fabricación') {
+    return 'instalacion'; // En proceso de fabricación → instalación
   } else if (nombreEtapa === 'Instalación en Proceso' || nombreEtapa === 'Entrega Final') {
     return 'postventa'; // Ya instalado, seguimiento
   } else if (nombreEtapa === 'Postventa') {
