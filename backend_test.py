@@ -1,7 +1,8 @@
 import requests
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
+import uuid
 
 class ProspectosAPITester:
     def __init__(self, base_url="https://tareas-pendientes-2.preview.emergentagent.com/api"):
