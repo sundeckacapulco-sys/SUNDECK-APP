@@ -4256,54 +4256,66 @@ body {
   line-height: 1.5;
 }
 
-/* Acciones de tarea */
+/* Acciones de tarea - Diseño compacto */
 .tarea-acciones {
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
+  align-items: center;
 }
 
 .btn-accion {
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 20px; /* Pill shape */
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: auto;
 }
 
 .btn-accion.whatsapp {
-  background: #25d366;
-  color: white;
+  background: #e8f5e8;
+  color: #25d366;
+  border: 1px solid #25d366;
 }
 
 .btn-accion.whatsapp:hover {
-  background: #20ba5a;
+  background: #25d366;
+  color: white;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);
 }
 
 .btn-accion.completar {
-  background: #10b981;
-  color: white;
-  font-size: 1rem;
+  background: #f0f9f4;
+  color: #059669;
+  border: 1px solid #10b981;
 }
 
 .btn-accion.completar:hover {
-  background: #059669;
+  background: #10b981;
+  color: white;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 
 .btn-accion.ver {
-  background: var(--neutral4);
-  color: var(--primary);
-  border: 1px solid var(--neutral3);
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #f59e0b;
 }
 
 .btn-accion.ver:hover {
-  background: var(--primary);
+  background: #f59e0b;
   color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
 }
 
 /* Badge con colores */
