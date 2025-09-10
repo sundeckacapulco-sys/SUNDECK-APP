@@ -570,7 +570,7 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
           </div>
           <div className="stat-card">
             <div className="stat-number">
-              {prospectos.filter(p => {
+              {prospectosPaginados.filter(p => {
                 const today = new Date().toDateString();
                 const citaDate = new Date(p.fecha_cita).toDateString();
                 return today === citaDate;
@@ -580,9 +580,9 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
           </div>
           <div className="stat-card">
             <div className="stat-number">
-              {prospectos.reduce((sum, p) => sum + (p.etapas?.length || 0), 0)}
+              {prospectosPaginados.reduce((sum, p) => sum + (p.etapas?.length || 0), 0)}
             </div>
-            <div className="stat-label">Total Etapas</div>
+            <div className="stat-label">Etapas Actuales</div>
           </div>
         </div>
       </div>
