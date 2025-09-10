@@ -792,6 +792,8 @@ const MapaView = ({ prospectos, onNavigate }) => {
     </div>
   );
 };
+
+// Componente Citas de Hoy
 const CitasHoy = ({ onNavigate }) => {
   const [citasHoy, setCitasHoy] = useState([]);
   const [loading, setLoading] = useState(true);
