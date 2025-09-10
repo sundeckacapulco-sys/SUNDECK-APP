@@ -114,7 +114,7 @@ user_problem_statement: |
   6. Performance optimizada para 1000+ prospectos
 
 backend:
-  - task: "Crear modelo de datos para etapa Pedido"
+  - task: "Implementar paginación optimizada con metadata"
     implemented: true
     working: true
     file: "server.py"
@@ -124,12 +124,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Modelos Pydantic actualizados con campos específicos de pedido: monto_total, anticipo_recibido, saldo_pendiente, forma_pago, fecha_vencimiento_saldo, cotizacion_url, archivo_levantamiento_url"
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Modelos Pydantic funcionando correctamente. Campos de pedido se guardan y recuperan sin problemas. Fixed default_factory issue for form data compatibility."
+        comment: "✅ Endpoint GET /api/prospectos optimizado con paginación (page, limit), metadata completa, performance 54ms"
 
-  - task: "Implementar endpoint para generar pedido desde medición"
+  - task: "Implementar búsqueda por nombre y teléfono"
     implemented: true
     working: true
     file: "server.py"
@@ -139,12 +136,21 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Endpoint POST /prospectos/{id}/generar-pedido implementado con regla mínimo 1 m² y cálculos comerciales"
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Endpoint /api/prospectos/{id}/generar-pedido funciona perfectamente. Regla mínimo 1 m² aplicada correctamente (6.02 m² real → 6.5 m² comercial). Validaciones de duplicados y medición existente funcionan. Cálculos comerciales precisos: $157,000 total estimado."
+        comment: "✅ Búsqueda case-insensitive con regex MongoDB funcionando, performance 56ms"
 
-  - task: "Agregar campos de anticipo y forma de pago"
+  - task: "Implementar filtro por etapa con aggregation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Filtro por última etapa usando aggregation pipeline, conteo correcto de totales"
+
+  - task: "Implementar filtros por fecha de cita"
     implemented: true
     working: true
     file: "server.py"
@@ -154,10 +160,19 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Campos integrados en modelo y endpoint de agregar etapa"
+        comment: "✅ Filtros fecha_inicio y fecha_fin operativos, combinación con otros filtros funcional"
+
+  - task: "Crear endpoint etapas disponibles"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
       - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Campos de anticipo, saldo pendiente, forma de pago funcionan correctamente. Etapa Pedido manual creada exitosamente con todos los campos requeridos."
+        agent: "main"
+        comment: "✅ GET /api/etapas-disponibles con orden comercial correcto implementado"
 
   - task: "Optimizar endpoint GET /api/prospectos con paginación"
     implemented: true
