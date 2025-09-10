@@ -290,7 +290,8 @@ const RegistroProspecto = ({ onUpdate, onNavigate }) => {
         nombre: '',
         telefono: '',
         producto_solicitado: '',
-        fecha_cita: ''
+        fecha_cita: '',
+        direccion: ''
       });
       
       await onUpdate();
