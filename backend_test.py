@@ -555,7 +555,7 @@ def main():
         tester.test_add_stage_without_photos,
         # NEW PEDIDO TESTS
         tester.test_add_measurement_stage,
-        tester.test_generate_pedido_from_measurement,
+        tester.test_generate_pedido_with_pieces,  # New comprehensive test
         tester.test_generate_pedido_duplicate_validation,
         tester.test_generate_pedido_without_measurement,
         tester.test_add_pedido_stage_manually,
