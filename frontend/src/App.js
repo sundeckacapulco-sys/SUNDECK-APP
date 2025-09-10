@@ -36,6 +36,8 @@ function App() {
         return <RegistroProspecto onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
       case 'citas':
         return <CitasHoy onNavigate={setCurrentView} />;
+      case 'mapa':
+        return <MapaView prospectos={prospectos} onNavigate={setCurrentView} />;
       default:
         return <Dashboard prospectos={prospectos} onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
     }
