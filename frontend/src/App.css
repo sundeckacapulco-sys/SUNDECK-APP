@@ -404,6 +404,20 @@ body {
   text-align: center;
 }
 
+/* Catalog Actions */
+.catalog-actions {
+  padding: 1rem;
+  background: var(--neutral1);
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.catalog-actions button {
+  font-size: 0.85rem !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+}
+
 .prospecto-form {
   display: flex;
   flex-direction: column;
@@ -439,6 +453,15 @@ body {
   outline: none;
   border-color: var(--secondary);
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+/* Datalist styling for better UX */
+.form-group input[list] {
+  background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2'><polyline points='6,9 12,15 18,9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1rem;
+  padding-right: 2.5rem;
 }
 
 .form-actions {
