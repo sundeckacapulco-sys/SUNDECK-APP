@@ -1487,4 +1487,150 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   );
 };
 
+// Componente para cada pieza en la tabla de medición
+const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto }) => {
+  const [showFotos, setShowFotos] = useState(false);
+
+  const handleInputChange = (campo, valor) => {
+    onUpdate(campo, valor);
+  };
+
+  const handleFotoUpload = (e) => {
+    const files = e.target.files;
+    if (files.length > 0) {
+      onUploadFoto(files);
+    }
+  };
+
+  return (
+    <div className="pieza-card">
+      <div className="pieza-header">
+        <h5>Pieza #{index + 1}</h5>
+        <button
+          type="button"
+          className="btn-delete"
+          onClick={onDelete}
+          title="Eliminar pieza"
+        >
+          🗑️
+        </button>
+      </div>
+
+      <div className="pieza-grid">
+        <div className="form-group">
+          <label>Ubicación</label>
+          <input
+            type="text"
+            value={pieza.ubicacion}
+            onChange={(e) => handleInputChange('ubicacion', e.target.value)}
+            placeholder="Ej: Sala, Recámara, Terraza"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Ancho (cm)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={pieza.ancho}
+            onChange={(e) => handleInputChange('ancho', parseFloat(e.target.value) || '')}
+            placeholder="0.0"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Alto (cm)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={pieza.alto}
+            onChange={(e) => handleInputChange('alto', parseFloat(e.target.value) || '')}
+            placeholder="0.0"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Producto / Tela</label>
+          <input
+            type="text"
+            value={pieza.producto_tela}
+            onChange={(e) => handleInputChange('producto_tela', e.target.value)}
+            placeholder="Tipo de producto o tela"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Color / Acabado</label>
+          <input
+            type="text"
+            value={pieza.color_acabado}
+            onChange={(e) => handleInputChange('color_acabado', e.target.value)}
+            placeholder="Color o acabado"
+          />
+        </div>
+
+        <div className="form-group span-2">
+          <label>Observaciones</label>
+          <textarea
+            value={pieza.observaciones}
+            onChange={(e) => handleInputChange('observaciones', e.target.value)}
+            placeholder="Observaciones adicionales..."
+            rows="2"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Fotos</label>
+          <div className="foto-upload">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFotoUpload}
+              className="file-input-small"
+              id={`fotos-${pieza.id}`}
+            />
+            <label htmlFor={`fotos-${pieza.id}`} className="upload-label">
+              📷 Subir Fotos ({pieza.fotos.length})
+            </label>
+            {pieza.fotos.length > 0 && (
+              <button
+                type="button"
+                className="btn-view-fotos"
+                onClick={() => setShowFotos(!showFotos)}
+              >
+                {showFotos ? '👁️ Ocultar' : '👁️ Ver'}
+              </button>
+            )}
+          </div>
+          
+          {showFotos && pieza.fotos.length > 0 && (
+            <div className="fotos-preview">
+              {pieza.fotos.map((foto, i) => (
+                <img
+                  key={i}
+                  src={foto.url}
+                  alt={`Foto ${i + 1}`}
+                  className="foto-thumbnail"
+                  onClick={() => window.open(foto.url, '_blank')}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label>Notas / Video URL</label>
+          <input
+            type="url"
+            value={pieza.notas_video_url}
+            onChange={(e) => handleInputChange('notas_video_url', e.target.value)}
+            placeholder="Link de Drive, Dropbox, video, etc."
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default App;
