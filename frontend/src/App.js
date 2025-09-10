@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import './App.css';
+import './App.css'; // Updated styles
 import whatsappTemplates from './whatsappTemplates.json';
 import { UserProvider, useUser } from './contexts/UserContext';
 import Embudo360 from './components/Embudo360';
