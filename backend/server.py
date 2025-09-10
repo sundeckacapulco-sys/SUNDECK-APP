@@ -1862,10 +1862,23 @@ async def obtener_dashboard_recordatorios():
                 recordatorio["prospecto_telefono"] = prospecto.get("telefono", "")
                 recordatorio["prospecto_producto"] = prospecto.get("producto_solicitado", "")
         
+        # Clean up ObjectIds from recordatorios
+        for recordatorio_list in [pendientes, vencidos, hoy]:
+            for recordatorio in recordatorio_list:
+                if '_id' in recordatorio:
+                    del recordatorio['_id']
+        
+        # Calculate summary by type
+        resumen_por_tipo = {}
+        for recordatorio in pendientes:
+            tipo = recordatorio.get('tipo', 'unknown')
+            resumen_por_tipo[tipo] = resumen_por_tipo.get(tipo, 0) + 1
+        
         return {
-            "total_pendientes": len(pendientes),
-            "total_vencidos": len(vencidos),
-            "total_hoy": len(hoy),
+            "tareas_pendientes": len(pendientes),
+            "tareas_vencidas": len(vencidos),
+            "tareas_hoy": len(hoy),
+            "resumen_por_tipo": resumen_por_tipo,
             "recordatorios_urgentes": vencidos[:5],  # Top 5 más urgentes
             "recordatorios_hoy": hoy
         }
