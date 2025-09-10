@@ -230,4 +230,4 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "Iniciando implementación de nueva etapa Pedido. Plan: Backend primero (modelos y endpoints), luego Frontend (UI y lógica). Prioridad en transferencia automática de datos y regla mínimo 1 m²."
+    message: "✅ IMPLEMENTACIÓN COMPLETADA - Nueva etapa Pedido implementada exitosamente. Backend: modelos actualizados, endpoint generar-pedido con regla mínimo 1 m². Frontend: UI completa con campos de pago, transferencia automática, documentos actualizados. Listo para testing."
