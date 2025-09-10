@@ -1014,7 +1014,15 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{prospecto.nombre}</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <div className="modal-actions">
+            <WhatsAppButton 
+              prospecto={prospecto} 
+              tipo={prospecto.etapas && prospecto.etapas.length > 0 ? 'postventa' : 'prospecto'} 
+              className="btn-whatsapp-header"
+              size="small"
+            />
+            <button className="modal-close" onClick={onClose}>×</button>
+          </div>
         </div>
 
         <div className="modal-body">
