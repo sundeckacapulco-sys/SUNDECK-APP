@@ -4280,18 +4280,7 @@ body {
   min-width: auto;
 }
 
-.btn-accion.whatsapp {
-  background: #e8f5e8;
-  color: #25d366;
-  border: 1px solid #25d366;
-}
 
-.btn-accion.whatsapp:hover {
-  background: #25d366;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);
-}
 
 .btn-accion.completar {
   background: #f0f9f4;
