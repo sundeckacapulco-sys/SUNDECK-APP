@@ -184,13 +184,13 @@ function AppContent() {
   const renderCurrentView = () => {
     switch (currentView) {
       case 'dashboard':
-        return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
+        return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} selectedProspecto={prospectoSelected} onClearSelection={() => setProspectoSelected(null)} />;
       case 'registro':
         return <RegistroProspecto onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
       case 'citas':
         return <CitasHoy onNavigate={setCurrentView} />;
       case 'sundeck360':
-        return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
+        return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} selectedProspecto={prospectoSelected} onClearSelection={() => setProspectoSelected(null)} />;
       case 'embudo360':
         return <Embudo360 onNavigate={setCurrentView} />;
       case 'tareas':
