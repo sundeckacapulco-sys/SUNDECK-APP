@@ -352,7 +352,15 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
       <div className="tareas-navigation">
         <button 
           className="btn-secondary"
-          onClick={() => onNavigate('dashboard')}
+          onClick={() => {
+            console.log('Navegando al dashboard...', onNavigate);
+            if (onNavigate) {
+              onNavigate('dashboard');
+            } else {
+              console.error('onNavigate no está definido');
+              alert('Error de navegación. Recargue la página.');
+            }
+          }}
         >
           ← Volver al Dashboard
         </button>
