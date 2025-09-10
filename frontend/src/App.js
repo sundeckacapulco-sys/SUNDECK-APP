@@ -1206,6 +1206,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   const [fotos, setFotos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [piezasMedicion, setPiezasMedicion] = useState([]);
+  const [precioM2General, setPrecioM2General] = useState('');
 
   // Función para obtener descripción de cada etapa
   const getEtapaDescription = (etapa) => {
@@ -1237,7 +1238,8 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       color_acabado: '',
       observaciones: '',
       fotos: [],
-      notas_video_url: ''
+      notas_video_url: '',
+      precio_m2: null
     };
     setPiezasMedicion([...piezasMedicion, nuevaPieza]);
   };
@@ -1269,6 +1271,27 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     }
   };
 
+  // Calcular totales
+  const calcularTotales = () => {
+    let totalM2 = 0;
+    let totalEstimado = 0;
+    
+    piezasMedicion.forEach(pieza => {
+      const ancho = parseFloat(pieza.ancho) || 0;
+      const alto = parseFloat(pieza.alto) || 0;
+      const m2 = (ancho * alto) / 10000;
+      totalM2 += m2;
+      
+      const precio = parseFloat(pieza.precio_m2 || precioM2General) || 0;
+      totalEstimado += m2 * precio;
+    });
+    
+    return { totalM2, totalEstimado };
+  };
+
+  const { totalM2, totalEstimado } = calcularTotales();
+  const hayPrecio = precioM2General > 0 || piezasMedicion.some(p => p.precio_m2 > 0);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -1278,9 +1301,12 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       formDataToSend.append('nombre_etapa', formData.nombre_etapa);
       formDataToSend.append('comentario', formData.comentario);
       
-      // Para Visita Inicial / Medición, incluir piezas
+      // Para Visita Inicial / Medición, incluir piezas y cálculos
       if (formData.nombre_etapa === 'Visita Inicial / Medición') {
         formDataToSend.append('piezas_medicion', JSON.stringify(piezasMedicion));
+        formDataToSend.append('precio_m2_general', precioM2General || 0);
+        formDataToSend.append('total_m2', totalM2);
+        formDataToSend.append('total_estimado', totalEstimado);
       }
       
       fotos.forEach((foto, index) => {
@@ -1331,21 +1357,37 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
         ['Dirección:', data.prospecto.direccion || 'No especificada'],
         [''],
         ['PIEZAS MEDIDAS:'],
-        ['Ubicación', 'Ancho (cm)', 'Alto (cm)', 'Producto/Tela', 'Color/Acabado', 'Observaciones', 'Fotos', 'Notas/Video']
+        ['Ubicación', 'Ancho (cm)', 'Alto (cm)', 'Producto/Tela', 'Color/Acabado', 'm²', 'Precio/m²', 'Total', 'Observaciones', 'Fotos', 'Notas/Video']
       ];
       
       data.medicion.piezas.forEach(pieza => {
+        const m2 = (pieza.ancho * pieza.alto) / 10000;
+        const precio = pieza.precio_m2 || data.medicion.precio_m2_general || 0;
+        const total = m2 * precio;
+        
         wsData.push([
           pieza.ubicacion,
           pieza.ancho,
           pieza.alto,
           pieza.producto_tela,
           pieza.color_acabado,
+          m2.toFixed(2),
+          precio > 0 ? `$${precio.toFixed(2)}` : 'N/A',
+          precio > 0 ? `$${total.toFixed(2)}` : 'N/A',
           pieza.observaciones,
           pieza.fotos.length + ' foto(s)',
           pieza.notas_video_url || 'Sin notas'
         ]);
       });
+      
+      // Agregar totales
+      wsData.push([]);
+      wsData.push(['TOTALES:']);
+      wsData.push(['Total m²:', totalM2.toFixed(2)]);
+      if (hayPrecio) {
+        wsData.push(['Precio promedio por m²:', `$${(totalEstimado / totalM2).toFixed(2)}`]);
+        wsData.push(['TOTAL ESTIMADO:', `$${totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`]);
+      }
       
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       XLSX.utils.book_append_sheet(wb, ws, 'Medición');
@@ -1354,6 +1396,85 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     } catch (error) {
       console.error('Error exportando medición:', error);
       alert('Error al exportar medición');
+    }
+  };
+
+  const generarCotizacion = async () => {
+    if (!hayPrecio) {
+      alert('Debe agregar un precio por m² para generar la cotización');
+      return;
+    }
+
+    try {
+      // Importar jsPDF dinámicamente
+      const { jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
+      
+      const doc = new jsPDF();
+      
+      // Header con branding Sundeck
+      doc.setFontSize(20);
+      doc.setTextColor(15, 23, 42); // Color primario Sundeck
+      doc.text('SUNDECK', 20, 25);
+      
+      doc.setFontSize(16);
+      doc.setTextColor(212, 175, 55); // Color secundario Sundeck
+      doc.text('COTIZACIÓN', 20, 35);
+      
+      // Información del cliente
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Cliente: ${formData.cliente || 'Cliente de Prueba'}`, 20, 50);
+      doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, 20, 60);
+      
+      // Tabla de piezas
+      const tableData = piezasMedicion.map(pieza => {
+        const m2 = ((parseFloat(pieza.ancho) || 0) * (parseFloat(pieza.alto) || 0)) / 10000;
+        const precio = parseFloat(pieza.precio_m2 || precioM2General) || 0;
+        const total = m2 * precio;
+        
+        return [
+          pieza.ubicacion,
+          `${pieza.ancho} x ${pieza.alto} cm`,
+          pieza.producto_tela,
+          pieza.color_acabado,
+          m2.toFixed(2),
+          `$${precio.toFixed(2)}`,
+          `$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}`
+        ];
+      });
+      
+      doc.autoTable({
+        head: [['Ubicación', 'Medidas', 'Producto', 'Color', 'm²', 'Precio/m²', 'Total']],
+        body: tableData,
+        startY: 70,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [212, 175, 55] }
+      });
+      
+      // Totales
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(12);
+      doc.text(`Total m²: ${totalM2.toFixed(2)}`, 20, finalY);
+      doc.text(`Precio promedio: $${(totalEstimado / totalM2).toFixed(2)}/m²`, 20, finalY + 10);
+      
+      doc.setFontSize(14);
+      doc.setTextColor(212, 175, 55);
+      doc.text(`TOTAL ESTIMADO: $${totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`, 20, finalY + 25);
+      
+      // Términos y condiciones
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Cotización sujeta a confirmación y condiciones de pago.', 20, finalY + 40);
+      doc.text('Válida por 30 días. Precios pueden variar según especificaciones finales.', 20, finalY + 50);
+      
+      // Descargar PDF
+      doc.save(`Cotizacion_Sundeck_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('Error generando cotización:', error);
+      alert('Error al generar la cotización');
     }
   };
 
@@ -1402,16 +1523,45 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
                     + Agregar Pieza
                   </button>
                   {piezasMedicion.length > 0 && (
-                    <button
-                      type="button"
-                      className="btn-outline"
-                      onClick={exportarMedicion}
-                    >
-                      📄 Descargar Levantamiento
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={exportarMedicion}
+                      >
+                        📄 Descargar Levantamiento
+                      </button>
+                      {hayPrecio && (
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={generarCotizacion}
+                        >
+                          💰 Generar Cotización
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
+
+              {/* Campo de precio general */}
+              {piezasMedicion.length > 0 && (
+                <div className="precio-general">
+                  <div className="form-group">
+                    <label htmlFor="precio_m2_general">Precio General por m² (MXN)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="precio_m2_general"
+                      value={precioM2General}
+                      onChange={(e) => setPrecioM2General(parseFloat(e.target.value) || '')}
+                      placeholder="0.00"
+                    />
+                    <small className="field-help">Precio base aplicable a todas las piezas (opcional)</small>
+                  </div>
+                </div>
+              )}
 
               {piezasMedicion.length === 0 ? (
                 <div className="empty-medicion">
@@ -1427,8 +1577,32 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
                       onUpdate={(campo, valor) => actualizarPieza(pieza.id, campo, valor)}
                       onDelete={() => eliminarPieza(pieza.id)}
                       onUploadFoto={(files) => subirFotoPieza(pieza.id, files)}
+                      precioM2General={precioM2General}
                     />
                   ))}
+                  
+                  {/* Totales */}
+                  <div className="totales-section">
+                    <h4>Resumen de Medición</h4>
+                    <div className="totales-grid">
+                      <div className="total-item">
+                        <span className="total-label">Total m²:</span>
+                        <span className="total-value">{totalM2.toFixed(2)} m²</span>
+                      </div>
+                      {hayPrecio && (
+                        <>
+                          <div className="total-item">
+                            <span className="total-label">Precio promedio:</span>
+                            <span className="total-value">${totalM2 > 0 ? (totalEstimado / totalM2).toFixed(2) : '0.00'}/m²</span>
+                          </div>
+                          <div className="total-item primary">
+                            <span className="total-label">TOTAL ESTIMADO:</span>
+                            <span className="total-value">${totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
