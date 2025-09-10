@@ -1205,6 +1205,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   });
   const [fotos, setFotos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [piezasMedicion, setPiezasMedicion] = useState([]);
 
   // Función para obtener descripción de cada etapa
   const getEtapaDescription = (etapa) => {
@@ -1225,6 +1226,49 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     ) : null;
   };
 
+  // Agregar nueva pieza a la tabla
+  const agregarPieza = () => {
+    const nuevaPieza = {
+      id: Date.now().toString(),
+      ubicacion: '',
+      ancho: '',
+      alto: '',
+      producto_tela: '',
+      color_acabado: '',
+      observaciones: '',
+      fotos: [],
+      notas_video_url: ''
+    };
+    setPiezasMedicion([...piezasMedicion, nuevaPieza]);
+  };
+
+  // Eliminar pieza
+  const eliminarPieza = (id) => {
+    setPiezasMedicion(piezasMedicion.filter(p => p.id !== id));
+  };
+
+  // Actualizar pieza
+  const actualizarPieza = (id, campo, valor) => {
+    setPiezasMedicion(piezasMedicion.map(p => 
+      p.id === id ? { ...p, [campo]: valor } : p
+    ));
+  };
+
+  // Subir foto para una pieza específica
+  const subirFotoPieza = async (piezaId, files) => {
+    // Por ahora simular URLs de fotos (integración real con Cloudinary pendiente)
+    const nuevasFotos = Array.from(files).map(file => ({
+      name: file.name,
+      url: URL.createObjectURL(file), // URL temporal para demo
+      file: file
+    }));
+    
+    const piezaActualizada = piezasMedicion.find(p => p.id === piezaId);
+    if (piezaActualizada) {
+      actualizarPieza(piezaId, 'fotos', [...piezaActualizada.fotos, ...nuevasFotos]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -1233,6 +1277,11 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       const formDataToSend = new FormData();
       formDataToSend.append('nombre_etapa', formData.nombre_etapa);
       formDataToSend.append('comentario', formData.comentario);
+      
+      // Para Visita Inicial / Medición, incluir piezas
+      if (formData.nombre_etapa === 'Visita Inicial / Medición') {
+        formDataToSend.append('piezas_medicion', JSON.stringify(piezasMedicion));
+      }
       
       fotos.forEach((foto, index) => {
         formDataToSend.append('fotos', foto);
@@ -1263,9 +1312,56 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     setFotos(files);
   };
 
+  const exportarMedicion = async () => {
+    try {
+      const response = await axios.get(`${API}/prospectos/${prospectoId}/medicion/export`);
+      const data = response.data;
+      
+      // Generar Excel (implementación simplificada)
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+      
+      const wsData = [
+        ['LEVANTAMIENTO DE MEDIDAS - SUNDECK'],
+        [''],
+        ['Cliente:', data.prospecto.nombre],
+        ['Teléfono:', data.prospecto.telefono],
+        ['Producto:', data.prospecto.producto_solicitado],
+        ['Fecha Medición:', new Date(data.medicion.fecha).toLocaleDateString('es-MX')],
+        ['Dirección:', data.prospecto.direccion || 'No especificada'],
+        [''],
+        ['PIEZAS MEDIDAS:'],
+        ['Ubicación', 'Ancho (cm)', 'Alto (cm)', 'Producto/Tela', 'Color/Acabado', 'Observaciones', 'Fotos', 'Notas/Video']
+      ];
+      
+      data.medicion.piezas.forEach(pieza => {
+        wsData.push([
+          pieza.ubicacion,
+          pieza.ancho,
+          pieza.alto,
+          pieza.producto_tela,
+          pieza.color_acabado,
+          pieza.observaciones,
+          pieza.fotos.length + ' foto(s)',
+          pieza.notas_video_url || 'Sin notas'
+        ]);
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Medición');
+      XLSX.writeFile(wb, `Medicion_${data.prospecto.nombre}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      
+    } catch (error) {
+      console.error('Error exportando medición:', error);
+      alert('Error al exportar medición');
+    }
+  };
+
+  const esMedicion = formData.nombre_etapa === 'Visita Inicial / Medición';
+
   return (
     <div className="modal-overlay">
-      <div className="modal-content small-modal">
+      <div className={`modal-content ${esMedicion ? 'modal-large' : 'small-modal'}`}>
         <div className="modal-header">
           <h3>Agregar Nueva Etapa</h3>
           <button className="modal-close" onClick={onClose}>×</button>
@@ -1293,6 +1389,51 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
             </div>
           </div>
 
+          {esMedicion && (
+            <div className="medicion-section">
+              <div className="medicion-header">
+                <h4>📏 Levantamiento de Medidas</h4>
+                <div className="medicion-actions">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={agregarPieza}
+                  >
+                    + Agregar Pieza
+                  </button>
+                  {piezasMedicion.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn-outline"
+                      onClick={exportarMedicion}
+                    >
+                      📄 Descargar Levantamiento
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {piezasMedicion.length === 0 ? (
+                <div className="empty-medicion">
+                  <p>No hay piezas agregadas. Haga clic en "Agregar Pieza" para comenzar.</p>
+                </div>
+              ) : (
+                <div className="medicion-table">
+                  {piezasMedicion.map((pieza, index) => (
+                    <TablaPieza
+                      key={pieza.id}
+                      pieza={pieza}
+                      index={index}
+                      onUpdate={(campo, valor) => actualizarPieza(pieza.id, campo, valor)}
+                      onDelete={() => eliminarPieza(pieza.id)}
+                      onUploadFoto={(files) => subirFotoPieza(pieza.id, files)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="comentario">Comentarios</label>
             <textarea
@@ -1305,22 +1446,24 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="fotos">Fotos (Opcional)</label>
-            <input
-              type="file"
-              id="fotos"
-              accept="image/*"
-              multiple
-              onChange={handleFileChange}
-              className="file-input"
-            />
-            {fotos.length > 0 && (
-              <div className="selected-files">
-                <p>{fotos.length} archivo(s) seleccionado(s)</p>
-              </div>
-            )}
-          </div>
+          {!esMedicion && (
+            <div className="form-group">
+              <label htmlFor="fotos">Fotos (Opcional)</label>
+              <input
+                type="file"
+                id="fotos"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                className="file-input"
+              />
+              {fotos.length > 0 && (
+                <div className="selected-files">
+                  <p>{fotos.length} archivo(s) seleccionado(s)</p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="form-actions">
             <button
