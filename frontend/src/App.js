@@ -1238,18 +1238,16 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
               required
             >
               <option value="">Seleccione una etapa</option>
-              <option value="Visita Inicial">Visita Inicial</option>
-              <option value="Medición y Diseño">Medición y Diseño</option>
+              <option value="Visita Inicial / Medición">Visita Inicial / Medición</option>
               <option value="Cotización Aprobada">Cotización Aprobada</option>
-              <option value="Preparación del Sitio">Preparación del Sitio</option>
-              <option value="Instalación de Estructura">Instalación de Estructura</option>
-              <option value="Instalación de Deck">Instalación de Deck</option>
-              <option value="Acabados Finales">Acabados Finales</option>
+              <option value="Fabricación">Fabricación</option>
+              <option value="Instalación en Proceso">Instalación en Proceso</option>
               <option value="Entrega Final">Entrega Final</option>
-              <option value="Postventa - Revisión">Postventa - Revisión</option>
-              <option value="Postventa - Mantenimiento">Postventa - Mantenimiento</option>
-              <option value="Postventa - Garantía">Postventa - Garantía</option>
+              <option value="Postventa">Postventa</option>
             </select>
+            <div className="etapa-description">
+              {getEtapaDescription(formData.nombre_etapa)}
+            </div>
           </div>
 
           <div className="form-group">
