@@ -98,6 +98,15 @@ class Etapa(BaseModel):
     precio_m2_general: Optional[float] = None
     total_m2: Optional[float] = None
     total_estimado: Optional[float] = None
+    unidad_medida: Optional[str] = "m"
+    # Campos específicos para Pedido
+    monto_total: Optional[float] = None
+    anticipo_recibido: Optional[float] = None
+    saldo_pendiente: Optional[float] = None
+    forma_pago: Optional[str] = None
+    fecha_vencimiento_saldo: Optional[str] = None
+    cotizacion_url: Optional[str] = None
+    archivo_levantamiento_url: Optional[str] = None
 
 # Cloudinary service functions
 def upload_to_cloudinary(file_content, filename: str):
