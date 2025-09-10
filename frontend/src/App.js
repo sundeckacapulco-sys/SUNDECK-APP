@@ -912,7 +912,7 @@ const MapaView = ({ prospectos, onNavigate }) => {
                   <div className="prospect-actions">
                     <WhatsAppButton 
                       prospecto={prospecto} 
-                      tipo="general" 
+                      tipo={determinarTipoWhatsApp(prospecto)} 
                       className="btn-whatsapp-small"
                       size="small"
                     />
