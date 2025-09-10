@@ -1785,6 +1785,170 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
             </div>
           )}
 
+          {esPedido && (
+            <div className="pedido-section">
+              <div className="pedido-header">
+                <div className="pedido-title">
+                  <h4>📄 Gestión de Pedido</h4>
+                  {tieneMedicion && (
+                    <div className="generar-pedido-container">
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={generarPedidoDesdeMedicion}
+                        disabled={loading}
+                      >
+                        ⚡ Generar desde Medición
+                      </button>
+                      <small className="help-text">
+                        Transfiere automáticamente datos de medición con regla mínimo 1 m²
+                      </small>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Campos de información de pago */}
+              <div className="campos-pago">
+                <h4>💰 Información de Pago</h4>
+                <div className="pago-grid">
+                  <div className="form-group">
+                    <label htmlFor="monto_total">Monto Total (MXN)</label>
+                    <input
+                      type="number"
+                      id="monto_total"
+                      value={camposPedido.monto_total}
+                      onChange={(e) => setCamposPedido({...camposPedido, monto_total: e.target.value})}
+                      placeholder="15000.00"
+                      step="0.01"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="anticipo_recibido">Anticipo Recibido (MXN)</label>
+                    <input
+                      type="number"
+                      id="anticipo_recibido"
+                      value={camposPedido.anticipo_recibido}
+                      onChange={(e) => {
+                        const anticipo = parseFloat(e.target.value) || 0;
+                        const total = parseFloat(camposPedido.monto_total) || 0;
+                        setCamposPedido({
+                          ...camposPedido, 
+                          anticipo_recibido: e.target.value,
+                          saldo_pendiente: (total - anticipo).toFixed(2)
+                        });
+                      }}
+                      placeholder="5000.00"
+                      step="0.01"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="saldo_pendiente">Saldo Pendiente (MXN)</label>
+                    <input
+                      type="number"
+                      id="saldo_pendiente"
+                      value={camposPedido.saldo_pendiente}
+                      onChange={(e) => setCamposPedido({...camposPedido, saldo_pendiente: e.target.value})}
+                      placeholder="10000.00"
+                      step="0.01"
+                      readOnly
+                      className="readonly-field"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="forma_pago">Forma de Pago</label>
+                    <select
+                      id="forma_pago"
+                      value={camposPedido.forma_pago}
+                      onChange={(e) => setCamposPedido({...camposPedido, forma_pago: e.target.value})}
+                    >
+                      <option value="">Seleccionar...</option>
+                      <option value="efectivo">Efectivo</option>
+                      <option value="transferencia">Transferencia</option>
+                      <option value="tarjeta">Tarjeta</option>
+                      <option value="cheque">Cheque</option>
+                      <option value="mixto">Mixto</option>
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="fecha_vencimiento_saldo">Fecha Vencimiento Saldo</label>
+                    <input
+                      type="date"
+                      id="fecha_vencimiento_saldo"
+                      value={camposPedido.fecha_vencimiento_saldo}
+                      onChange={(e) => setCamposPedido({...camposPedido, fecha_vencimiento_saldo: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Campos para archivos */}
+              <div className="archivos-pedido">
+                <h4>📎 Archivos del Pedido</h4>
+                <div className="archivos-grid">
+                  <div className="form-group">
+                    <label htmlFor="cotizacion_url">URL Cotización</label>
+                    <input
+                      type="url"
+                      id="cotizacion_url"
+                      value={camposPedido.cotizacion_url}
+                      onChange={(e) => setCamposPedido({...camposPedido, cotizacion_url: e.target.value})}
+                      placeholder="https://drive.google.com/..."
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="archivo_levantamiento_url">URL Levantamiento</label>
+                    <input
+                      type="url"
+                      id="archivo_levantamiento_url"
+                      value={camposPedido.archivo_levantamiento_url}
+                      onChange={(e) => setCamposPedido({...camposPedido, archivo_levantamiento_url: e.target.value})}
+                      placeholder="https://drive.google.com/..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Mostrar resumen de piezas si existen */}
+              {piezasMedicion.length > 0 && (
+                <div className="resumen-piezas-pedido">
+                  <h4>📋 Resumen de Piezas</h4>
+                  <div className="resumen-stats">
+                    <div className="stat-item">
+                      <span className="stat-label">Total piezas:</span>
+                      <span className="stat-value">{piezasMedicion.length}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">m² reales:</span>
+                      <span className="stat-value">{calcularTotales(false).totalM2Real.toFixed(2)} m²</span>
+                    </div>
+                    <div className="stat-item primary">
+                      <span className="stat-label">m² comerciales:</span>
+                      <span className="stat-value">{calcularTotales(true).totalM2Comercial.toFixed(2)} m²</span>
+                    </div>
+                    <div className="stat-item money">
+                      <span className="stat-label">Total estimado:</span>
+                      <span className="stat-value">${calcularTotales(true).totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                    </div>
+                  </div>
+                  <div className="regla-minimo-info">
+                    <div className="info-box">
+                      <span className="info-icon">⚖️</span>
+                      <span className="info-text">
+                        <strong>Regla aplicada:</strong> Piezas menores a 1 m² se cobran como 1 m² mínimo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="comentario">Comentarios</label>
             <textarea
