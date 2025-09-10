@@ -294,6 +294,198 @@ def generate_thumbnail(public_id: str):
         quality='auto:good'
     )[0]
 
+# Funciones helper para Sistema de Recordatorios
+def calcular_dias_habiles(fecha_inicio: datetime, dias: int) -> datetime:
+    """Calcular fecha después de N días hábiles (lunes a viernes)"""
+    fecha_actual = fecha_inicio
+    dias_agregados = 0
+    
+    while dias_agregados < dias:
+        fecha_actual += timedelta(days=1)
+        # 0 = lunes, 6 = domingo
+        if fecha_actual.weekday() < 5:  # lunes a viernes
+            dias_agregados += 1
+    
+    return fecha_actual
+
+def obtener_template_mensaje(tipo: TipoTemplate, prospecto: dict) -> str:
+    """Obtener mensaje de template con variables reemplazadas"""
+    templates_default = {
+        TipoTemplate.CONFIRMACION_RECEPCION: "Hola {nombre}, le compartimos la cotización de {producto} con Sundeck. ¿Tuvo oportunidad de revisarla? Estoy disponible para resolver cualquier duda y ayudarle a tomar la mejor decisión.",
+        TipoTemplate.SEGUIMIENTO_3_DIAS: "Hola {nombre}, hace unos días le compartimos la propuesta de Sundeck para {producto}. Muchos clientes en su misma situación ya están disfrutando el cambio. ¿Quiere que agendemos una visita de demostración o un ajuste en la propuesta?",
+        TipoTemplate.SEGUIMIENTO_CIERRE: "Hola {nombre}, queremos ayudarle a concretar su proyecto con Sundeck. Si confirma esta semana, podemos garantizarle fecha de instalación y aplicar la promoción vigente. ¿Desea que avancemos con su pedido?",
+        TipoTemplate.RECONTACTO_SIN_RESPUESTA: "Hola {nombre}, seguimos interesados en apoyarle con su proyecto de {producto}. Queremos asegurarnos de que no pierda la oportunidad de aprovechar nuestra propuesta. ¿Desea que retomemos la conversación?",
+        TipoTemplate.COBRO_ANTICIPO: "Hola {nombre}, para avanzar con la instalación de {producto}, necesitamos confirmar su pedido con el anticipo correspondiente. ¿Podemos ayudarle a procesar su pago hoy mismo y asegurar su lugar en la agenda de instalación?"
+    }
+    
+    mensaje = templates_default.get(tipo, "Mensaje no encontrado")
+    
+    # Reemplazar variables
+    mensaje = mensaje.replace("{nombre}", prospecto.get("nombre", ""))
+    mensaje = mensaje.replace("{producto}", prospecto.get("producto_solicitado", ""))
+    
+    # Formatear fecha si está disponible
+    if "{fecha}" in mensaje and prospecto.get("fecha_cita"):
+        try:
+            fecha_cita = datetime.fromisoformat(prospecto["fecha_cita"]) if isinstance(prospecto["fecha_cita"], str) else prospecto["fecha_cita"]
+            fecha_formateada = fecha_cita.strftime("%d de %B de %Y")
+            mensaje = mensaje.replace("{fecha}", fecha_formateada)
+        except:
+            mensaje = mensaje.replace("{fecha}", "fecha programada")
+    
+    if "{hora}" in mensaje and prospecto.get("fecha_cita"):
+        try:
+            fecha_cita = datetime.fromisoformat(prospecto["fecha_cita"]) if isinstance(prospecto["fecha_cita"], str) else prospecto["fecha_cita"]
+            hora_formateada = fecha_cita.strftime("%H:%M")
+            mensaje = mensaje.replace("{hora}", hora_formateada)
+        except:
+            mensaje = mensaje.replace("{hora}", "hora programada")
+    
+    return mensaje
+
+async def crear_recordatorios_automaticos(prospecto_id: str, etapa_nombre: str):
+    """Crear recordatorios automáticos basados en la etapa"""
+    try:
+        # Obtener prospecto para información adicional
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            return
+        
+        fecha_actual = datetime.now(timezone.utc)
+        recordatorios_crear = []
+        
+        if etapa_nombre == "Visita Inicial / Medición":
+            # Recordatorio para crear cotización en 24 horas
+            fecha_limite = fecha_actual + timedelta(hours=24)
+            recordatorios_crear.append({
+                "prospecto_id": prospecto_id,
+                "tipo": TipoRecordatorio.COTIZACION_24H,
+                "fecha_limite": fecha_limite.isoformat(),
+                "mensaje_sugerido": obtener_template_mensaje(TipoTemplate.CONFIRMACION_RECEPCION, prospecto),
+                "etapa_relacionada": etapa_nombre,
+                "estado": EstadoRecordatorio.PENDIENTE,
+                "created_at": fecha_actual.isoformat(),
+                "updated_at": fecha_actual.isoformat()
+            })
+        
+        elif etapa_nombre == "Cotización Aprobada":
+            # Primer seguimiento: inmediato
+            recordatorios_crear.append({
+                "prospecto_id": prospecto_id,
+                "tipo": TipoRecordatorio.PRIMER_SEGUIMIENTO,
+                "fecha_limite": fecha_actual.isoformat(),
+                "mensaje_sugerido": obtener_template_mensaje(TipoTemplate.CONFIRMACION_RECEPCION, prospecto),
+                "etapa_relacionada": etapa_nombre,
+                "estado": EstadoRecordatorio.PENDIENTE,
+                "created_at": fecha_actual.isoformat(),
+                "updated_at": fecha_actual.isoformat()
+            })
+            
+            # Segundo seguimiento: 3 días hábiles
+            fecha_segundo = calcular_dias_habiles(fecha_actual, 3)
+            recordatorios_crear.append({
+                "prospecto_id": prospecto_id,
+                "tipo": TipoRecordatorio.SEGUNDO_SEGUIMIENTO,
+                "fecha_limite": fecha_segundo.isoformat(),
+                "mensaje_sugerido": obtener_template_mensaje(TipoTemplate.SEGUIMIENTO_3_DIAS, prospecto),
+                "etapa_relacionada": etapa_nombre,
+                "estado": EstadoRecordatorio.PENDIENTE,
+                "created_at": fecha_actual.isoformat(),
+                "updated_at": fecha_actual.isoformat()
+            })
+            
+            # Tercer seguimiento: 7 días hábiles
+            fecha_tercer = calcular_dias_habiles(fecha_actual, 7)
+            recordatorios_crear.append({
+                "prospecto_id": prospecto_id,
+                "tipo": TipoRecordatorio.TERCER_SEGUIMIENTO,
+                "fecha_limite": fecha_tercer.isoformat(),
+                "mensaje_sugerido": obtener_template_mensaje(TipoTemplate.SEGUIMIENTO_CIERRE, prospecto),
+                "etapa_relacionada": etapa_nombre,
+                "estado": EstadoRecordatorio.PENDIENTE,
+                "created_at": fecha_actual.isoformat(),
+                "updated_at": fecha_actual.isoformat()
+            })
+        
+        # Insertar recordatorios en lote
+        if recordatorios_crear:
+            for recordatorio in recordatorios_crear:
+                recordatorio["id"] = str(uuid.uuid4())
+            await db.recordatorios.insert_many(recordatorios_crear)
+            print(f"✅ Creados {len(recordatorios_crear)} recordatorios para prospecto {prospecto_id}")
+    
+    except Exception as e:
+        print(f"❌ Error creando recordatorios automáticos: {str(e)}")
+
+async def inicializar_templates_whatsapp():
+    """Inicializar plantillas WhatsApp por defecto"""
+    try:
+        # Verificar si ya existen templates
+        count = await db.templates_whatsapp.count_documents({})
+        if count > 0:
+            return  # Ya están inicializados
+        
+        templates_default = [
+            {
+                "id": str(uuid.uuid4()),
+                "tipo": TipoTemplate.CONFIRMACION_RECEPCION,
+                "nombre": "Confirmación de Recepción",
+                "mensaje": "Hola {nombre}, le compartimos la cotización de {producto} con Sundeck. ¿Tuvo oportunidad de revisarla? Estoy disponible para resolver cualquier duda y ayudarle a tomar la mejor decisión.",
+                "variables": ["nombre", "producto"],
+                "activo": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "tipo": TipoTemplate.SEGUIMIENTO_3_DIAS,
+                "nombre": "Seguimiento a 3 Días",
+                "mensaje": "Hola {nombre}, hace unos días le compartimos la propuesta de Sundeck para {producto}. Muchos clientes en su misma situación ya están disfrutando el cambio. ¿Quiere que agendemos una visita de demostración o un ajuste en la propuesta?",
+                "variables": ["nombre", "producto"],
+                "activo": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "tipo": TipoTemplate.SEGUIMIENTO_CIERRE,
+                "nombre": "Seguimiento de Cierre",
+                "mensaje": "Hola {nombre}, queremos ayudarle a concretar su proyecto con Sundeck. Si confirma esta semana, podemos garantizarle fecha de instalación y aplicar la promoción vigente. ¿Desea que avancemos con su pedido?",
+                "variables": ["nombre"],
+                "activo": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "tipo": TipoTemplate.RECONTACTO_SIN_RESPUESTA,
+                "nombre": "Recontacto por Falta de Respuesta",
+                "mensaje": "Hola {nombre}, seguimos interesados en apoyarle con su proyecto de {producto}. Queremos asegurarnos de que no pierda la oportunidad de aprovechar nuestra propuesta. ¿Desea que retomemos la conversación?",
+                "variables": ["nombre", "producto"],
+                "activo": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "tipo": TipoTemplate.COBRO_ANTICIPO,
+                "nombre": "Cobro de Anticipo",
+                "mensaje": "Hola {nombre}, para avanzar con la instalación de {producto}, necesitamos confirmar su pedido con el anticipo correspondiente. ¿Podemos ayudarle a procesar su pago hoy mismo y asegurar su lugar en la agenda de instalación?",
+                "variables": ["nombre", "producto"],
+                "activo": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        ]
+        
+        await db.templates_whatsapp.insert_many(templates_default)
+        print("✅ Templates WhatsApp inicializados correctamente")
+        
+    except Exception as e:
+        print(f"❌ Error inicializando templates WhatsApp: {str(e)}")
+
+# Importar timedelta para los cálculos de fechas
+from datetime import timedelta
 # Routes
 @api_router.get("/")
 async def root():
