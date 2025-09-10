@@ -408,11 +408,11 @@ backend:
 
   - task: "Configure Cloudinary integration for photo uploads"
     implemented: true
-    working: true
+    working: false
     file: "server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -420,6 +420,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED: All Embudo 360 endpoints working perfectly. ✅ GET /api/embudo-360 basic endpoint (200 OK) ✅ Date filters (fecha_inicio, fecha_fin) working correctly ✅ Responsable filter functionality validated ✅ Combined filters support confirmed ✅ GET /api/embudo-360/export endpoint working (200 OK) ✅ Complete response structure validation passed: embudo.etapas (7 stages), embudo.contadores (integer counts), embudo.tiempos_promedio (numeric values), embudo.conversiones (6 conversions), metricas.total_prospectos, metricas.prospectos_activos, metricas.tasa_conversion_general ✅ Export structure validated: datos_etapas, datos_conversiones, metricas_generales, formato, fecha_generacion. Backend endpoint fully functional after frontend URL fix."
+      - working: false
+        agent: "testing"
+        comment: "❌ CLOUDINARY INTEGRATION FAILED: Comprehensive testing revealed that the provided Cloudinary credentials are invalid. ✅ Backend integration code is correct and properly configured ✅ POST /api/prospectos/{id}/etapas endpoint accepts multipart form data correctly ✅ File upload handling works (files are received and processed) ✅ Stage creation without photos works perfectly ❌ CRITICAL ISSUE: All photo uploads fail with 'Invalid Signature' error from Cloudinary API ❌ Tested credentials: cloud_name=dm0jkstgo, api_key=889131198581369, api_secret=3.hYS25CWyVbMveJLuYgZPqpVOoyA ❌ Error persists with both SHA-1 and SHA-256 signature algorithms ❌ Even minimal uploads without custom parameters fail ❌ All 8 photo upload tests failed due to invalid Cloudinary credentials. RESOLUTION NEEDED: User must provide valid Cloudinary API credentials or verify the existing ones in their Cloudinary dashboard."
 
 frontend:
   - task: "Fix Embudo 360 frontend API calls"
