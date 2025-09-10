@@ -171,13 +171,96 @@ async def crear_prospecto(prospecto_data: ProspectoCreate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating prospecto: {str(e)}")
 
-@api_router.get("/prospectos", response_model=List[Prospecto])
-async def obtener_prospectos():
-    """Obtener todos los prospectos"""
+@api_router.get("/prospectos", response_model=dict)
+async def obtener_prospectos(
+    page: int = 1,
+    limit: int = 12,
+    search: str = None,
+    etapa_filter: str = None,
+    fecha_inicio: str = None,
+    fecha_fin: str = None
+):
+    """Obtener prospectos con paginación, búsqueda y filtros"""
     try:
-        prospectos = await db.prospectos.find().to_list(length=None)
+        # Calcular skip para paginación
+        skip = (page - 1) * limit
         
-        # Convert string dates back to datetime objects
+        # Construir filtro de búsqueda
+        search_filter = {}
+        
+        # Búsqueda por nombre o teléfono
+        if search and search.strip():
+            search_filter["$or"] = [
+                {"nombre": {"$regex": search.strip(), "$options": "i"}},
+                {"telefono": {"$regex": search.strip(), "$options": "i"}}
+            ]
+        
+        # Filtro por etapa (buscar en la última etapa)
+        if etapa_filter and etapa_filter.strip():
+            # Necesitamos usar aggregation para filtrar por última etapa
+            pass
+        
+        # Filtro por fecha de cita
+        if fecha_inicio or fecha_fin:
+            date_filter = {}
+            if fecha_inicio:
+                date_filter["$gte"] = fecha_inicio
+            if fecha_fin:
+                date_filter["$lte"] = fecha_fin
+            if date_filter:
+                search_filter["fecha_cita"] = date_filter
+        
+        # Si tenemos filtro de etapa, usar aggregation pipeline
+        if etapa_filter and etapa_filter.strip():
+            pipeline = [
+                {"$match": search_filter},
+                {
+                    "$addFields": {
+                        "ultima_etapa": {
+                            "$cond": {
+                                "if": {"$gt": [{"$size": "$etapas"}, 0]},
+                                "then": {"$arrayElemAt": ["$etapas.nombre_etapa", -1]},
+                                "else": None
+                            }
+                        }
+                    }
+                },
+                {"$match": {"ultima_etapa": etapa_filter}},
+                {"$sort": {"created_at": -1}},
+                {"$skip": skip},
+                {"$limit": limit}
+            ]
+            
+            prospectos_cursor = db.prospectos.aggregate(pipeline)
+            prospectos = await prospectos_cursor.to_list(length=None)
+            
+            # Contar total con filtros
+            count_pipeline = [
+                {"$match": search_filter},
+                {
+                    "$addFields": {
+                        "ultima_etapa": {
+                            "$cond": {
+                                "if": {"$gt": [{"$size": "$etapas"}, 0]},
+                                "then": {"$arrayElemAt": ["$etapas.nombre_etapa", -1]},
+                                "else": None
+                            }
+                        }
+                    }
+                },
+                {"$match": {"ultima_etapa": etapa_filter}},
+                {"$count": "total"}
+            ]
+            
+            count_result = await db.prospectos.aggregate(count_pipeline).to_list(length=1)
+            total_count = count_result[0]["total"] if count_result else 0
+            
+        else:
+            # Consulta simple sin filtro de etapa
+            prospectos = await db.prospectos.find(search_filter).sort("created_at", -1).skip(skip).limit(limit).to_list(length=None)
+            total_count = await db.prospectos.count_documents(search_filter)
+        
+        # Convertir dates back to datetime objects
         for prospecto in prospectos:
             if isinstance(prospecto.get('fecha_cita'), str):
                 prospecto['fecha_cita'] = datetime.fromisoformat(prospecto['fecha_cita'])
@@ -189,7 +272,22 @@ async def obtener_prospectos():
                 if isinstance(etapa.get('fecha'), str):
                     etapa['fecha'] = datetime.fromisoformat(etapa['fecha'])
         
-        return [Prospecto(**prospecto) for prospecto in prospectos]
+        # Calcular metadatos de paginación
+        total_pages = (total_count + limit - 1) // limit
+        has_next = page < total_pages
+        has_prev = page > 1
+        
+        return {
+            "prospectos": [Prospecto(**prospecto) for prospecto in prospectos],
+            "pagination": {
+                "current_page": page,
+                "total_pages": total_pages,
+                "total_count": total_count,
+                "page_size": limit,
+                "has_next": has_next,
+                "has_prev": has_prev
+            }
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving prospectos: {str(e)}")
