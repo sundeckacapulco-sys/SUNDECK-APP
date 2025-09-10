@@ -194,7 +194,7 @@ function AppContent() {
       case 'embudo360':
         return <Embudo360 onNavigate={setCurrentView} />;
       case 'tareas':
-        return <TareasPendientes onNavigate={setCurrentView} />;
+        return <TareasPendientes onNavigate={setCurrentView} onNavigateToProspecto={navegarAProspecto} />;
       default:
         return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
     }
