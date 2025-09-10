@@ -257,7 +257,12 @@ const Header = ({ currentView, onNavigate }) => {
               className={`nav-button ${currentView === item.id ? 'active' : ''}`}
               onClick={() => onNavigate(item.id)}
             >
-              <span className="nav-icon">{item.icon}</span>
+              <div className="notification-badge">
+                <span className="nav-icon">{item.icon}</span>
+                {item.badge && item.badge > 0 && (
+                  <span className="badge">{item.badge}</span>
+                )}
+              </div>
               <span className="nav-label">{item.label}</span>
             </button>
           ))}
