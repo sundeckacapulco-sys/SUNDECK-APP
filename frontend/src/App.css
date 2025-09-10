@@ -2853,14 +2853,7 @@ body {
   transform: translateY(-1px);
 }
 
-.btn-kanban-action.whatsapp-action {
-  background: #25d366;
-  color: white;
-}
 
-.btn-kanban-action.whatsapp-action:hover {
-  background: #128c7e;
-}
 
 .btn-cargar-mas {
   background: linear-gradient(135deg, var(--accent) 0%, #0ea5e9 100%);
