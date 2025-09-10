@@ -390,7 +390,7 @@ class CloudinaryTester:
             "POST",
             f"prospectos/{self.created_prospect_id}/etapas",
             200,  # Should still return 200 but handle the error
-            data=stage_data,
+            params=stage_data,
             files=files
         )
         
