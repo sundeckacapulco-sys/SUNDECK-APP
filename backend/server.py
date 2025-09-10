@@ -36,6 +36,98 @@ app = FastAPI(title="Gestión de Prospectos - Sundeck", version="1.0.0")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Definir roles del sistema
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    VENTAS = "ventas" 
+    OPERACIONES = "operaciones"
+    POSTVENTA = "postventa"
+
+# Permisos por rol
+ROLE_PERMISSIONS = {
+    UserRole.ADMIN: {
+        "create_prospect": True,
+        "edit_prospect": True,
+        "delete_prospect": True,
+        "view_all_prospects": True,
+        "move_to_any_stage": True,
+        "view_analytics": True,
+        "manage_users": True,
+        "export_data": True
+    },
+    UserRole.VENTAS: {
+        "create_prospect": True,
+        "edit_prospect": True,
+        "delete_prospect": False,
+        "view_all_prospects": True,
+        "move_to_any_stage": False,
+        "view_analytics": True,
+        "manage_users": False,
+        "export_data": True,
+        "allowed_stages": ["Visita Inicial / Medición", "Cotización Aprobada", "Pedido"]
+    },
+    UserRole.OPERACIONES: {
+        "create_prospect": False,
+        "edit_prospect": True,
+        "delete_prospect": False,
+        "view_all_prospects": True,
+        "move_to_any_stage": False,
+        "view_analytics": False,
+        "manage_users": False,
+        "export_data": False,
+        "allowed_stages": ["Fabricación", "Instalación en Proceso", "Entrega Final"]
+    },
+    UserRole.POSTVENTA: {
+        "create_prospect": False,
+        "edit_prospect": True,
+        "delete_prospect": False,
+        "view_all_prospects": True,
+        "move_to_any_stage": False,
+        "view_analytics": False,
+        "manage_users": False,
+        "export_data": False,
+        "allowed_stages": ["Postventa"]
+    }
+}
+
+# Modelo de Usuario
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nombre: str
+    email: str
+    telefono: Optional[str] = None
+    role: UserRole = UserRole.VENTAS
+    activo: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_login: Optional[datetime] = None
+
+class UserCreate(BaseModel):
+    nombre: str
+    email: str
+    telefono: Optional[str] = None
+    role: UserRole = UserRole.VENTAS
+
+# Modelo de Log de Actividad
+class ActivityLog(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    user_name: str
+    action: str  # "create_prospect", "move_stage", "edit_prospect", etc.
+    target_type: str  # "prospect", "stage", "user", etc.
+    target_id: str
+    description: str
+    metadata: Optional[dict] = Field(default_factory=dict)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ActivityLogCreate(BaseModel):
+    user_id: str
+    user_name: str
+    action: str
+    target_type: str
+    target_id: str
+    description: str
+    metadata: Optional[dict] = Field(default_factory=dict)
+
 # Models
 class Prospecto(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
