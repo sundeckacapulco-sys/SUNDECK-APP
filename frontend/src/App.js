@@ -4,11 +4,11 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './App.css';
 import whatsappTemplates from './whatsappTemplates.json';
 
-// Función para generar URL de WhatsApp (formato México)
+// Función para generar URL de WhatsApp (formato México limpio)
 const generateWhatsAppURL = (telefono, mensaje) => {
   if (!telefono) return null;
   
-  // Limpiar el número de teléfono (solo números)
+  // Normalizar teléfono a solo dígitos
   let cleanPhone = telefono.replace(/[^\d]/g, '');
   
   // Remover cualquier código de país existente si está presente
@@ -18,18 +18,19 @@ const generateWhatsAppURL = (telefono, mensaje) => {
     cleanPhone = cleanPhone.substring(1);
   }
   
-  // Asegurar que tengamos exactamente 10 dígitos
-  if (cleanPhone.length === 10) {
-    // Anteponer 521 (código de México + 1 para celular)
-    const phoneWithCountryCode = `521${cleanPhone}`;
-    
-    // Codificar el mensaje para URL usando encodeURIComponent()
-    const encodedMessage = encodeURIComponent(mensaje);
-    
-    return `https://wa.me/${phoneWithCountryCode}?text=${encodedMessage}`;
+  // Validar que tengamos exactamente 10 dígitos para México
+  if (cleanPhone.length !== 10) {
+    return null; // Número inválido
   }
   
-  return null; // Número inválido
+  // Construir número internacional: 521 + 10 dígitos
+  const numeroInternacional = `521${cleanPhone}`;
+  
+  // Aplicar encodeURIComponent al mensaje completo
+  const mensajeCodificado = encodeURIComponent(mensaje);
+  
+  // Formato limpio sin parámetros extra
+  return `https://wa.me/${numeroInternacional}?text=${mensajeCodificado}`;
 };
 
 // Función para generar mensaje personalizado usando plantillas JSON
