@@ -1,0 +1,9 @@
+{
+  "prospecto": "Hola {nombre}, gracias por su interés en Sundeck. Queremos acompañarle en su proyecto de decoración. ¿Cuándo sería un buen momento para agendar una visita?",
+  
+  "cita": "Hola {nombre}, le confirmamos su cita con Sundeck el {fecha} a las {hora}. ¿Se mantiene la cita programada?",
+  
+  "instalacion": "Hola {nombre}, su instalación de {producto} está programada para el {fecha} a las {hora}. Nuestro equipo acudirá puntualmente. ¡Gracias por confiar en Sundeck!",
+  
+  "postventa": "Hola {nombre}, esperamos que disfrute su nueva instalación de Sundeck. Queremos asegurarnos de que todo esté funcionando perfectamente. ¿Podría confirmarnos su satisfacción o si requiere algún ajuste?"
+}
