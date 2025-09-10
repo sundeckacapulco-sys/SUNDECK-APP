@@ -237,11 +237,24 @@ const Header = ({ currentView, onNavigate }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Determinar color del badge según urgencia
+  const getBadgeColor = (count) => {
+    if (count === 0) return 'green';
+    if (count <= 3) return 'yellow';  // Pocas tareas
+    return 'red';  // Muchas tareas urgentes
+  };
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'registro', label: 'Nuevo Prospecto', icon: '➕' },
     { id: 'citas', label: 'Citas Hoy', icon: '📅' },
-    { id: 'tareas', label: 'Tareas', icon: '🔔', badge: recordatoriosPendientes },
+    { 
+      id: 'tareas', 
+      label: 'Tareas', 
+      icon: '🔔', 
+      badge: recordatoriosPendientes,
+      badgeColor: getBadgeColor(recordatoriosPendientes)
+    },
     { id: 'sundeck360', label: 'Sundeck 360', icon: '🎯' },
     { id: 'embudo360', label: 'Embudo 360', icon: '📈' }
   ];
