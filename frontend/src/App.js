@@ -183,8 +183,10 @@ function AppContent() {
         return <CitasHoy onNavigate={setCurrentView} />;
       case 'sundeck360':
         return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
+      case 'embudo360':
+        return <Embudo360 onNavigate={setCurrentView} />;
       default:
-        return <Dashboard prospectos={prospectos} onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
+        return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
     }
   };
 
