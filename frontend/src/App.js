@@ -275,8 +275,8 @@ const Header = ({ currentView, onNavigate }) => {
             >
               <div className="notification-badge">
                 <span className="nav-icon">{item.icon}</span>
-                {item.badge && item.badge > 0 && (
-                  <span className="badge">{item.badge}</span>
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className={`badge ${item.badgeColor || 'red'}`}>{item.badge}</span>
                 )}
               </div>
               <span className="nav-label">{item.label}</span>
