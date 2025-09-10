@@ -341,4 +341,70 @@ const TareasPendientes = ({ onNavigate }) => {
   );
 };
 
+// Componente para una tarea compacta
+const TareaCompacta = ({ 
+  recordatorio, 
+  onWhatsApp, 
+  onCompletar, 
+  onExpandir, 
+  expandido,
+  getAccionDescripcion,
+  formatearFechaCompacta,
+  getExtractoMensaje
+}) => {
+  return (
+    <div className="tarea-compacta">
+      <div className="tarea-info">
+        <div className="cliente-info">
+          <strong>{recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
+        </div>
+        <div className="accion-info">
+          <span className="accion">{getAccionDescripcion(recordatorio.tipo)}</span>
+          <span className="fecha-limite">{formatearFechaCompacta(recordatorio.fecha_limite)}</span>
+        </div>
+        <div className="mensaje-extracto">
+          {getExtractoMensaje(recordatorio.mensaje_sugerido)}
+          {recordatorio.mensaje_sugerido && recordatorio.mensaje_sugerido.length > 80 && (
+            <button 
+              className="btn-expandir"
+              onClick={() => onExpandir(expandido ? null : recordatorio.id)}
+            >
+              {expandido ? 'Contraer' : 'Expandir'}
+            </button>
+          )}
+        </div>
+        {expandido && (
+          <div className="mensaje-completo">
+            <p>"{recordatorio.mensaje_sugerido}"</p>
+          </div>
+        )}
+      </div>
+      
+      <div className="tarea-acciones">
+        <button 
+          className="btn-accion whatsapp"
+          onClick={() => onWhatsApp(recordatorio)}
+          title="Enviar WhatsApp"
+        >
+          WhatsApp
+        </button>
+        <button 
+          className="btn-accion completar"
+          onClick={() => onCompletar(recordatorio.id)}
+          title="Completar"
+        >
+          ✓
+        </button>
+        <button 
+          className="btn-accion ver"
+          onClick={() => console.log('Ver prospecto:', recordatorio.prospecto_id)}
+          title="Ver detalles"
+        >
+          Ver
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default TareasPendientes;
