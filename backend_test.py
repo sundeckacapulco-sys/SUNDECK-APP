@@ -596,6 +596,503 @@ class ProspectosAPITester:
         )
         return success
 
+    # NEW DASHBOARD OPTIMIZATION TESTS
+    def test_pagination_basic(self):
+        """Test basic pagination functionality"""
+        print("\n🔍 Testing Dashboard Optimizations - Pagination")
+        
+        # Test with page=1, limit=3
+        success, response = self.run_test(
+            "Pagination - Page 1, Limit 3",
+            "GET",
+            "prospectos",
+            200,
+            params={"page": 1, "limit": 3}
+        )
+        
+        if success:
+            # Validate pagination metadata
+            pagination = response.get('pagination', {})
+            required_fields = ['current_page', 'total_pages', 'total_count', 'page_size', 'has_next', 'has_prev']
+            
+            for field in required_fields:
+                if field not in pagination:
+                    print(f"❌ Missing pagination field: {field}")
+                    success = False
+                else:
+                    print(f"   ✅ {field}: {pagination[field]}")
+            
+            # Validate prospectos array
+            prospectos = response.get('prospectos', [])
+            if len(prospectos) > 3:
+                print(f"❌ Expected max 3 prospectos, got {len(prospectos)}")
+                success = False
+            else:
+                print(f"   ✅ Returned {len(prospectos)} prospectos (≤ 3)")
+        
+        return success
+
+    def test_search_functionality(self):
+        """Test search by name and phone"""
+        print("\n🔍 Testing Dashboard Optimizations - Search")
+        
+        # First create test prospects with specific data for searching
+        test_prospects = [
+            {
+                "nombre": "Luis García Test",
+                "telefono": "+56974421234",
+                "producto_solicitado": "Deck Residencial",
+                "fecha_cita": datetime.now(timezone.utc).isoformat()
+            },
+            {
+                "nombre": "María López Search",
+                "telefono": "+56987654321",
+                "producto_solicitado": "Pergola",
+                "fecha_cita": datetime.now(timezone.utc).isoformat()
+            }
+        ]
+        
+        created_ids = []
+        
+        # Create test prospects
+        for i, prospect_data in enumerate(test_prospects):
+            success, response = self.run_test(
+                f"Create Search Test Prospect {i+1}",
+                "POST",
+                "prospectos",
+                200,
+                data=prospect_data
+            )
+            if success and 'id' in response:
+                created_ids.append(response['id'])
+        
+        # Test search by name (case-insensitive)
+        success1, response1 = self.run_test(
+            "Search by Name - 'luis' (case-insensitive)",
+            "GET",
+            "prospectos",
+            200,
+            params={"search": "luis"}
+        )
+        
+        if success1:
+            prospectos = response1.get('prospectos', [])
+            found_luis = any('Luis' in p.get('nombre', '') for p in prospectos)
+            if found_luis:
+                print("   ✅ Case-insensitive name search working")
+            else:
+                print("   ❌ Case-insensitive name search failed")
+                success1 = False
+        
+        # Test search by phone
+        success2, response2 = self.run_test(
+            "Search by Phone - '7442'",
+            "GET",
+            "prospectos",
+            200,
+            params={"search": "7442"}
+        )
+        
+        if success2:
+            prospectos = response2.get('prospectos', [])
+            found_phone = any('7442' in p.get('telefono', '') for p in prospectos)
+            if found_phone:
+                print("   ✅ Phone search working")
+            else:
+                print("   ❌ Phone search failed")
+                success2 = False
+        
+        # Clean up test prospects
+        for prospect_id in created_ids:
+            self.run_test(f"Cleanup Search Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success1 and success2
+
+    def test_etapa_filter(self):
+        """Test filtering by etapa (last stage)"""
+        print("\n🔍 Testing Dashboard Optimizations - Etapa Filter")
+        
+        # Create a test prospect with specific etapa
+        test_data = {
+            "nombre": "Test Etapa Filter",
+            "telefono": "+56999111222",
+            "producto_solicitado": "Deck Filter Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Etapa Filter",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Add a specific etapa
+        etapa_data = {
+            "nombre_etapa": "Visita Inicial / Medición",
+            "comentario": "Etapa para testing filtro",
+            "precio_m2_general": 25000,
+            "unidad_medida": "m",
+            "total_m2": 2.0,
+            "total_estimado": 50000,
+            "piezas_medicion": [
+                {
+                    "id": "filter-test-1",
+                    "ubicacion": "Test Area",
+                    "ancho": 1.0,
+                    "alto": 2.0,
+                    "producto_tela": "Deck Test",
+                    "color_acabado": "Natural",
+                    "observaciones": "Test piece"
+                }
+            ]
+        }
+        
+        success, response = self.run_test(
+            "Add Etapa for Filter Test",
+            "POST",
+            f"prospectos/{prospect_id}/etapas-json",
+            200,
+            json_data=etapa_data
+        )
+        
+        if not success:
+            self.run_test("Cleanup Filter Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        # Test filter by etapa
+        success, response = self.run_test(
+            "Filter by Etapa - 'Visita Inicial / Medición'",
+            "GET",
+            "prospectos",
+            200,
+            params={"etapa_filter": "Visita Inicial / Medición"}
+        )
+        
+        if success:
+            prospectos = response.get('prospectos', [])
+            # Check if our test prospect is in the results
+            found_prospect = any(p.get('id') == prospect_id for p in prospectos)
+            if found_prospect:
+                print("   ✅ Etapa filter working correctly")
+            else:
+                print("   ❌ Etapa filter failed - test prospect not found")
+                success = False
+            
+            # Validate pagination metadata is still present
+            pagination = response.get('pagination', {})
+            if 'total_count' not in pagination:
+                print("   ❌ Pagination metadata missing in filtered results")
+                success = False
+            else:
+                print(f"   ✅ Filtered results: {pagination['total_count']} total")
+        
+        # Clean up
+        self.run_test("Cleanup Filter Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success
+
+    def test_date_range_filter(self):
+        """Test filtering by date range"""
+        print("\n🔍 Testing Dashboard Optimizations - Date Range Filter")
+        
+        # Create test prospect with specific date
+        test_date = "2025-09-15T10:00:00Z"
+        test_data = {
+            "nombre": "Test Date Filter",
+            "telefono": "+56888999111",
+            "producto_solicitado": "Deck Date Test",
+            "fecha_cita": test_date
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Date Filter",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Test date range filter
+        success, response = self.run_test(
+            "Filter by Date Range - September 2025",
+            "GET",
+            "prospectos",
+            200,
+            params={
+                "fecha_inicio": "2025-09-01",
+                "fecha_fin": "2025-09-30"
+            }
+        )
+        
+        if success:
+            prospectos = response.get('prospectos', [])
+            found_prospect = any(p.get('id') == prospect_id for p in prospectos)
+            if found_prospect:
+                print("   ✅ Date range filter working correctly")
+            else:
+                print("   ❌ Date range filter failed - test prospect not found")
+                success = False
+        
+        # Clean up
+        self.run_test("Cleanup Date Filter Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success
+
+    def test_combined_filters(self):
+        """Test combination of multiple filters"""
+        print("\n🔍 Testing Dashboard Optimizations - Combined Filters")
+        
+        # Create test prospect
+        test_data = {
+            "nombre": "Luis Combined Test",
+            "telefono": "+56777888999",
+            "producto_solicitado": "Deck Combined",
+            "fecha_cita": "2025-09-20T14:00:00Z"
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Combined Filter",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Add Pedido etapa
+        pedido_data = {
+            "nombre_etapa": "Pedido",
+            "comentario": "Pedido para testing filtros combinados",
+            "monto_total": 100000,
+            "anticipo_recibido": 30000,
+            "saldo_pendiente": 70000,
+            "forma_pago": "Transferencia",
+            "fecha_vencimiento_saldo": "2025-12-31"
+        }
+        
+        success, response = self.run_test(
+            "Add Pedido Etapa for Combined Filter",
+            "POST",
+            f"prospectos/{prospect_id}/etapas-json",
+            200,
+            json_data=pedido_data
+        )
+        
+        if not success:
+            self.run_test("Cleanup Combined Filter Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        # Test combined filters: pagination + search + etapa filter
+        success, response = self.run_test(
+            "Combined Filters - Page 1, Limit 5, Search 'Luis', Etapa 'Pedido'",
+            "GET",
+            "prospectos",
+            200,
+            params={
+                "page": 1,
+                "limit": 5,
+                "search": "Luis",
+                "etapa_filter": "Pedido"
+            }
+        )
+        
+        if success:
+            prospectos = response.get('prospectos', [])
+            pagination = response.get('pagination', {})
+            
+            # Validate structure
+            if 'current_page' not in pagination:
+                print("   ❌ Pagination metadata missing in combined filter")
+                success = False
+            else:
+                print(f"   ✅ Combined filter returned {len(prospectos)} results")
+                print(f"   ✅ Pagination: page {pagination['current_page']}, total {pagination['total_count']}")
+        
+        # Clean up
+        self.run_test("Cleanup Combined Filter Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success
+
+    def test_etapas_disponibles(self):
+        """Test available stages endpoint"""
+        print("\n🔍 Testing Dashboard Optimizations - Available Stages")
+        
+        success, response = self.run_test(
+            "Get Available Stages",
+            "GET",
+            "etapas-disponibles",
+            200
+        )
+        
+        if success:
+            etapas = response.get('etapas', [])
+            expected_etapas = [
+                "Visita Inicial / Medición",
+                "Cotización Aprobada", 
+                "Pedido",
+                "Fabricación",
+                "Instalación en Proceso",
+                "Entrega Final",
+                "Postventa"
+            ]
+            
+            # Check if all expected stages are present
+            missing_etapas = []
+            for etapa in expected_etapas:
+                if etapa not in etapas:
+                    missing_etapas.append(etapa)
+            
+            if missing_etapas:
+                print(f"   ❌ Missing etapas: {missing_etapas}")
+                success = False
+            else:
+                print(f"   ✅ All {len(expected_etapas)} expected etapas present")
+            
+            # Check order (Medición should be first, Pedido should be after Cotización Aprobada)
+            if len(etapas) >= 3:
+                if etapas[0] == "Visita Inicial / Medición":
+                    print("   ✅ Correct order: Medición is first")
+                else:
+                    print(f"   ❌ Wrong order: Expected 'Visita Inicial / Medición' first, got '{etapas[0]}'")
+                    success = False
+                
+                # Check that Pedido comes after Cotización Aprobada
+                try:
+                    cotizacion_idx = etapas.index("Cotización Aprobada")
+                    pedido_idx = etapas.index("Pedido")
+                    if pedido_idx > cotizacion_idx:
+                        print("   ✅ Correct order: Pedido after Cotización Aprobada")
+                    else:
+                        print("   ❌ Wrong order: Pedido should come after Cotización Aprobada")
+                        success = False
+                except ValueError:
+                    print("   ❌ Could not find required etapas for order validation")
+                    success = False
+        
+        return success
+
+    def test_performance_validation(self):
+        """Test performance of optimized endpoints"""
+        print("\n🔍 Testing Dashboard Optimizations - Performance")
+        
+        import time
+        
+        # Test pagination performance
+        start_time = time.time()
+        success, response = self.run_test(
+            "Performance Test - Pagination",
+            "GET",
+            "prospectos",
+            200,
+            params={"page": 1, "limit": 12}
+        )
+        end_time = time.time()
+        
+        if success:
+            response_time = (end_time - start_time) * 1000  # Convert to milliseconds
+            print(f"   ✅ Pagination response time: {response_time:.0f}ms")
+            
+            if response_time > 500:
+                print(f"   ⚠️  Response time ({response_time:.0f}ms) > 500ms target")
+            else:
+                print("   ✅ Performance target met (< 500ms)")
+        
+        # Test search performance
+        start_time = time.time()
+        success2, response2 = self.run_test(
+            "Performance Test - Search",
+            "GET",
+            "prospectos",
+            200,
+            params={"search": "Test", "page": 1, "limit": 12}
+        )
+        end_time = time.time()
+        
+        if success2:
+            response_time = (end_time - start_time) * 1000
+            print(f"   ✅ Search response time: {response_time:.0f}ms")
+        
+        return success and success2
+
+    def test_edge_cases(self):
+        """Test edge cases for dashboard optimizations"""
+        print("\n🔍 Testing Dashboard Optimizations - Edge Cases")
+        
+        # Test empty page
+        success1, response1 = self.run_test(
+            "Edge Case - Empty Page (page 999)",
+            "GET",
+            "prospectos",
+            200,
+            params={"page": 999, "limit": 12}
+        )
+        
+        if success1:
+            prospectos = response1.get('prospectos', [])
+            pagination = response1.get('pagination', {})
+            
+            if len(prospectos) == 0:
+                print("   ✅ Empty page handled correctly")
+            else:
+                print(f"   ❌ Expected empty page, got {len(prospectos)} prospectos")
+                success1 = False
+            
+            if pagination.get('has_next') == False:
+                print("   ✅ has_next correctly set to False for empty page")
+            else:
+                print("   ❌ has_next should be False for empty page")
+                success1 = False
+        
+        # Test search with no results
+        success2, response2 = self.run_test(
+            "Edge Case - Search No Results",
+            "GET",
+            "prospectos",
+            200,
+            params={"search": "NONEXISTENT_SEARCH_TERM_12345"}
+        )
+        
+        if success2:
+            prospectos = response2.get('prospectos', [])
+            pagination = response2.get('pagination', {})
+            
+            if len(prospectos) == 0 and pagination.get('total_count') == 0:
+                print("   ✅ No results search handled correctly")
+            else:
+                print("   ❌ Search with no results not handled correctly")
+                success2 = False
+        
+        # Test invalid etapa filter
+        success3, response3 = self.run_test(
+            "Edge Case - Invalid Etapa Filter",
+            "GET",
+            "prospectos",
+            200,
+            params={"etapa_filter": "INVALID_ETAPA_NAME"}
+        )
+        
+        if success3:
+            prospectos = response3.get('prospectos', [])
+            print(f"   ✅ Invalid etapa filter handled (returned {len(prospectos)} results)")
+        
+        return success1 and success2 and success3
+
 def main():
     print("🚀 Starting Prospectos Sundeck API Tests - PEDIDO FUNCTIONALITY")
     print("=" * 70)
