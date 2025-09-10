@@ -692,6 +692,195 @@ async def generar_pedido_desde_medicion(prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generando pedido: {str(e)}")
 
+# Helper function to check permissions
+def check_permission(user_role: UserRole, permission: str) -> bool:
+    """Verificar si un rol tiene un permiso específico"""
+    return ROLE_PERMISSIONS.get(user_role, {}).get(permission, False)
+
+def check_stage_permission(user_role: UserRole, stage: str) -> bool:
+    """Verificar si un rol puede mover a una etapa específica"""
+    if user_role == UserRole.ADMIN:
+        return True
+    
+    allowed_stages = ROLE_PERMISSIONS.get(user_role, {}).get("allowed_stages", [])
+    return stage in allowed_stages
+
+# Función para registrar actividad
+async def log_activity(activity_data: ActivityLogCreate):
+    """Registrar actividad en el sistema"""
+    try:
+        activity_dict = activity_data.dict()
+        activity_dict["timestamp"] = datetime.now(timezone.utc).isoformat()
+        activity_dict["id"] = str(uuid.uuid4())
+        
+        await db.activity_logs.insert_one(activity_dict)
+        return activity_dict
+    except Exception as e:
+        print(f"Error logging activity: {str(e)}")
+
+# ENDPOINTS DE USUARIOS
+@api_router.post("/usuarios", response_model=User)
+async def crear_usuario(user_data: UserCreate):
+    """Crear nuevo usuario"""
+    try:
+        # Verificar si ya existe el email
+        existing_user = await db.users.find_one({"email": user_data.email})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="El email ya está registrado")
+        
+        # Crear usuario
+        usuario_dict = user_data.dict()
+        usuario_dict["id"] = str(uuid.uuid4())
+        usuario_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+        usuario_dict["activo"] = True
+        
+        await db.users.insert_one(usuario_dict)
+        
+        # Registrar actividad
+        await log_activity(ActivityLogCreate(
+            user_id="system",
+            user_name="Sistema",
+            action="create_user",
+            target_type="user",
+            target_id=usuario_dict["id"],
+            description=f"Usuario creado: {user_data.nombre} ({user_data.role})",
+            metadata={"email": user_data.email, "role": user_data.role}
+        ))
+        
+        return User(**usuario_dict)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+@api_router.get("/usuarios", response_model=List[User])
+async def obtener_usuarios():
+    """Obtener todos los usuarios"""
+    try:
+        users = await db.users.find({"activo": True}).to_list(length=None)
+        
+        # Convert dates
+        for user in users:
+            if isinstance(user.get('created_at'), str):
+                user['created_at'] = datetime.fromisoformat(user['created_at'])
+            if isinstance(user.get('last_login'), str):
+                user['last_login'] = datetime.fromisoformat(user['last_login'])
+        
+        return [User(**user) for user in users]
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving users: {str(e)}")
+
+@api_router.get("/usuarios/{user_id}", response_model=User)
+async def obtener_usuario(user_id: str):
+    """Obtener usuario por ID"""
+    try:
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        # Convert dates
+        if isinstance(user.get('created_at'), str):
+            user['created_at'] = datetime.fromisoformat(user['created_at'])
+        if isinstance(user.get('last_login'), str):
+            user['last_login'] = datetime.fromisoformat(user['last_login'])
+        
+        return User(**user)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving user: {str(e)}")
+
+@api_router.put("/usuarios/{user_id}", response_model=User)
+async def actualizar_usuario(user_id: str, user_data: UserCreate):
+    """Actualizar usuario"""
+    try:
+        # Verificar que el usuario existe
+        existing_user = await db.users.find_one({"id": user_id})
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        # Actualizar usuario
+        update_dict = user_data.dict()
+        
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": update_dict}
+        )
+        
+        # Obtener usuario actualizado
+        updated_user = await db.users.find_one({"id": user_id})
+        
+        # Registrar actividad
+        await log_activity(ActivityLogCreate(
+            user_id="system",
+            user_name="Sistema",
+            action="update_user",
+            target_type="user",
+            target_id=user_id,
+            description=f"Usuario actualizado: {user_data.nombre}",
+            metadata={"changes": update_dict}
+        ))
+        
+        return User(**updated_user)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating user: {str(e)}")
+
+@api_router.get("/roles")
+async def obtener_roles():
+    """Obtener roles disponibles y sus permisos"""
+    return {
+        "roles": [role.value for role in UserRole],
+        "permissions": ROLE_PERMISSIONS
+    }
+
+# ENDPOINTS DE LOGS DE ACTIVIDAD
+@api_router.get("/activity-logs")
+async def obtener_activity_logs(
+    limit: int = 50,
+    user_id: str = None,
+    action: str = None,
+    target_type: str = None
+):
+    """Obtener logs de actividad con filtros opcionales"""
+    try:
+        # Construir filtro
+        filter_dict = {}
+        if user_id:
+            filter_dict["user_id"] = user_id
+        if action:
+            filter_dict["action"] = action
+        if target_type:
+            filter_dict["target_type"] = target_type
+        
+        # Obtener logs
+        logs = await db.activity_logs.find(filter_dict).sort("timestamp", -1).limit(limit).to_list(length=None)
+        
+        # Convert dates
+        for log in logs:
+            if isinstance(log.get('timestamp'), str):
+                log['timestamp'] = datetime.fromisoformat(log['timestamp'])
+        
+        return {"logs": logs}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving activity logs: {str(e)}")
+
+@api_router.post("/activity-logs")
+async def crear_activity_log(log_data: ActivityLogCreate):
+    """Crear nuevo log de actividad"""
+    try:
+        log_dict = await log_activity(log_data)
+        return {"message": "Activity logged successfully", "log": log_dict}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating activity log: {str(e)}")
+
 @api_router.get("/kanban")
 async def obtener_kanban_data():
     """Obtener datos organizados por columnas para vista Kanban"""
