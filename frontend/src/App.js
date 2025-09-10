@@ -1608,6 +1608,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   };
 
   const esMedicion = formData.nombre_etapa === 'Visita Inicial / Medición';
+  const esPedido = formData.nombre_etapa === 'Pedido';
 
   return (
     <div className="modal-overlay">
