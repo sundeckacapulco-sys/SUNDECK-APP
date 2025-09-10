@@ -10,7 +10,7 @@ const Embudo360 = ({ onNavigate }) => {
     responsable: ''
   });
 
-  const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
+  const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
   // Cargar datos del embudo
   const cargarEmbudoData = async () => {
