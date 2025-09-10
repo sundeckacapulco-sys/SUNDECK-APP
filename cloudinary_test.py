@@ -310,8 +310,9 @@ class CloudinaryTester:
             print("❌ Skipping - No prospect ID available")
             return False
             
-        # Create a larger test image (1MB+)
-        large_image = self.create_test_image('JPEG', (1200, 800), 'red')
+        # Create a larger test image by repeating the base image
+        base_image = self.create_test_image('JPEG')
+        large_image = base_image * 1000  # Make it larger
         
         stage_data = {
             'nombre_etapa': 'Fabricación',
