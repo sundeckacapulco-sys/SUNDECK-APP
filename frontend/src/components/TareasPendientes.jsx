@@ -397,13 +397,6 @@ const TareaCompacta = ({
       
       <div className="tarea-acciones">
         <button 
-          className="btn-accion whatsapp"
-          onClick={() => onWhatsApp(recordatorio)}
-          title="Enviar mensaje por WhatsApp"
-        >
-          💬 WhatsApp
-        </button>
-        <button 
           className="btn-accion completar"
           onClick={() => onCompletar(recordatorio.id)}
           title="Marcar como completado"
@@ -413,13 +406,15 @@ const TareaCompacta = ({
         <button 
           className="btn-accion ver"
           onClick={() => {
-            // Aquí implementarías la navegación al prospecto o pedido
+            // Navegar al prospecto correspondiente
             console.log(`Ver ${tipoVista.label.toLowerCase()}:`, recordatorio.prospecto_id);
-            // onNavigate('prospecto', recordatorio.prospecto_id); // Ejemplo de implementación futura
+            // TODO: Implementar navegación al prospecto específico
+            // Por ahora, vamos al dashboard donde pueden buscar el prospecto
+            window.location.hash = `#prospecto-${recordatorio.prospecto_id}`;
           }}
-          title={`Ver ${tipoVista.label}`}
+          title={`Ir a ${tipoVista.label}`}
         >
-          {tipoVista.icon} {tipoVista.label}
+          {tipoVista.icon} Ir a {tipoVista.label}
         </button>
       </div>
     </div>
