@@ -5,7 +5,8 @@ const TareasPendientes = ({ onNavigate }) => {
   const [recordatorios, setRecordatorios] = useState([]);
   const [estadisticas, setEstadisticas] = useState({});
   const [loading, setLoading] = useState(false);
-  const [filtroActivo, setFiltroActivo] = useState('todos'); // todos, pendientes, vencidos, hoy
+  const [filtroActivo, setFiltroActivo] = useState('todos');
+  const [mensajeExpandido, setMensajeExpandido] = useState(null);
 
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
