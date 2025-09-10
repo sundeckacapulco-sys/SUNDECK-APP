@@ -383,12 +383,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Kanban 360° system fully implemented and tested"
-    - "All backend endpoints working correctly"
-    - "Performance and serialization validated"
+    - "Fix Embudo 360 API endpoint URL issue"
+    - "Fix Embudo 360 frontend API calls"
+    - "Validate Embudo 360 functionality"
+    - "Configure Cloudinary integration"
   stuck_tasks: []
   test_all: false
-  test_priority: "completed"
+  test_priority: "high_first"
 
 backend:
   - task: "Fix Embudo 360 API endpoint URL issue"
