@@ -37,6 +37,8 @@ class ProspectosAPITester:
                     response = requests.post(url, json=data, headers=headers)
             elif method == 'DELETE':
                 response = requests.delete(url, headers=headers)
+            elif method == 'PATCH':
+                response = requests.patch(url, json=json_data, headers=headers)
 
             success = response.status_code == expected_status
             if success:
