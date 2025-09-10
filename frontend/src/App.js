@@ -141,8 +141,17 @@ const determinarTipoWhatsApp = (prospecto) => {
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Componente principal
+// Componente principal envuelto con UserProvider
 function App() {
+  return (
+    <UserProvider>
+      <AppContent />
+    </UserProvider>
+  );
+}
+
+// Contenido principal de la app
+function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [prospectos, setProspectos] = useState([]);
   const [loading, setLoading] = useState(false);
