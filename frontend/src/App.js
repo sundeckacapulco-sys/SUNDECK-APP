@@ -1224,6 +1224,23 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   
   // Estado para saber si hay una medición disponible para generar pedido
   const [tieneMedicion, setTieneMedicion] = useState(false);
+  
+  // Verificar si existe medición disponible al abrir el modal
+  useEffect(() => {
+    const verificarMedicion = async () => {
+      if (prospectoId) {
+        try {
+          const response = await axios.get(`${API}/prospectos/${prospectoId}`);
+          const prospecto = response.data;
+          const medicion = prospecto.etapas.find(e => e.nombre_etapa === 'Visita Inicial / Medición');
+          setTieneMedicion(medicion && medicion.piezas_medicion && medicion.piezas_medicion.length > 0);
+        } catch (error) {
+          console.error('Error verificando medición:', error);
+        }
+      }
+    };
+    verificarMedicion();
+  }, [prospectoId]);
 
   // Función para obtener descripción de cada etapa
   const getEtapaDescription = (etapa) => {
