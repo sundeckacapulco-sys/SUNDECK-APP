@@ -978,10 +978,12 @@ const CitasHoy = ({ onNavigate }) => {
               </div>
 
               <div className="cita-actions">
-                <button className="btn-outline">
-                  <span>📞</span>
-                  Llamar
-                </button>
+                <WhatsAppButton 
+                  prospecto={cita} 
+                  tipo="confirmacion_cita" 
+                  className="btn-outline"
+                  size="small"
+                />
                 <button 
                   className="btn-primary"
                   onClick={() => onNavigate('dashboard')}
