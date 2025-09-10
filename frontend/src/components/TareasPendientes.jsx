@@ -163,28 +163,26 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="tareas-filtros">
-        <div className="filtros-tabs">
-          <button 
-            className={`tab-filter ${filtroActivo === 'todos' ? 'active' : ''}`}
-            onClick={() => aplicarFiltro('todos')}
-          >
-            📋 Todos ({estadisticas.total || 0})
-          </button>
-          <button 
-            className={`tab-filter ${filtroActivo === 'pendientes' ? 'active' : ''}`}
-            onClick={() => aplicarFiltro('pendientes')}
-          >
-            ⏳ Pendientes ({estadisticas.pendientes || 0})
-          </button>
-          <button 
-            className={`tab-filter ${filtroActivo === 'vencidos' ? 'active' : ''}`}
-            onClick={() => aplicarFiltro('vencidos')}
-          >
-            🚨 Vencidos ({estadisticas.vencidos || 0})
-          </button>
-        </div>
+      {/* Filtros compactos */}
+      <div className="filtros-compactos">
+        <button 
+          className={`filtro-btn ${filtroActivo === 'todos' ? 'active' : ''}`}
+          onClick={() => aplicarFiltro('todos')}
+        >
+          Todos ({estadisticas.total || 0})
+        </button>
+        <button 
+          className={`filtro-btn ${filtroActivo === 'pendientes' ? 'active' : ''}`}
+          onClick={() => aplicarFiltro('pendientes')}
+        >
+          Pendientes ({estadisticas.pendientes || 0})
+        </button>
+        <button 
+          className={`filtro-btn ${filtroActivo === 'vencidos' ? 'active' : ''}`}
+          onClick={() => aplicarFiltro('vencidos')}
+        >
+          Vencidos ({estadisticas.vencidos || 0})
+        </button>
       </div>
 
       {/* Lista de recordatorios agrupados */}
