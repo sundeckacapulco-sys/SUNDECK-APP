@@ -69,6 +69,50 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
     }
   };
 
+  // Reprogramar recordatorio
+  const reprogramarRecordatorio = async (recordatorioId, nuevaFecha, motivo, notas = '') => {
+    try {
+      const response = await axios.post(`${API}/api/recordatorios/${recordatorioId}/reprogramar`, {
+        nueva_fecha: nuevaFecha,
+        motivo: motivo,
+        notas: notas
+      });
+      
+      // Recargar recordatorios
+      cargarRecordatorios(filtroActivo === 'todos' ? null : filtroActivo);
+      
+      // Cerrar modal y limpiar estado
+      setModalReprogramar(null);
+      setFechaReprogramacion('');
+      setMotivoReprogramacion('');
+      setNotasReprogramacion('');
+      
+      if (response.data.fecha_ajustada) {
+        alert('✅ Recordatorio reprogramado exitosamente.\n📅 Fecha ajustada a día hábil.');
+      } else {
+        alert('✅ Recordatorio reprogramado exitosamente');
+      }
+    } catch (error) {
+      console.error('Error reprogramando recordatorio:', error);
+      alert('❌ Error al reprogramar recordatorio: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // Abrir modal de reprogramación
+  const abrirModalReprogramar = (recordatorio) => {
+    // Calcular fecha mínima (hoy + 1 día hábil)
+    const mañana = new Date();
+    mañana.setDate(mañana.getDate() + 1);
+    
+    // Formatear para input datetime-local
+    const fechaMinima = mañana.toISOString().slice(0, 16);
+    
+    setModalReprogramar(recordatorio);
+    setFechaReprogramacion(fechaMinima);
+    setMotivoReprogramacion('cliente_no_disponible');
+    setNotasReprogramacion('');
+  };
+
 
 
   // Formatear fecha compacta
