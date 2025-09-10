@@ -11,12 +11,27 @@
   --secondary: #D4AF37;      /* Dorado Sundeck */
   --neutral1: #F8FAFC;       /* Blanco suave */
   --neutral2: #334155;       /* Gris medio */
+  --neutral3: #cbd5e1;       /* Gris claro */
+  --neutral4: #f1f5f9;       /* Gris muy claro */
   --accent: #14B8A6;         /* Turquesa/Azul acento */
   --success: #10B981;        /* Verde éxito */
   --warning: #F59E0B;        /* Amarillo advertencia */
   --danger: #EF4444;         /* Rojo peligro */
   --shadow: rgba(15, 23, 42, 0.1);
   --shadow-dark: rgba(15, 23, 42, 0.2);
+  --background: #f8fafc;     /* Fondo general */
+  
+  /* Variables Sundeck específicas */
+  --sundeck-carbon: #1e293b;      /* Azul carbón para texto */
+  --sundeck-gold: #f59e0b;        /* Dorado para números/acentos */
+  --sundeck-gold-light: #fbbf24;  /* Dorado claro */
+  --sundeck-gold-bg: #fef3c7;     /* Fondo dorado suave */
+  --sundeck-red: #ef4444;         /* Rojo para vencidos */
+  --sundeck-red-bg: #fee2e2;      /* Fondo rojo suave */
+  --sundeck-green: #10b981;       /* Verde para completados */
+  --sundeck-green-bg: #f0fdf4;    /* Fondo verde suave */
+  --sundeck-blue: #3b82f6;        /* Azul para acciones */
+  --sundeck-purple: #8b5cf6;      /* Violeta para ver prospecto */
 }
 
 body {
