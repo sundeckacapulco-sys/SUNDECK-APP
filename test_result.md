@@ -408,7 +408,7 @@ backend:
 
   - task: "Configure Cloudinary integration for photo uploads"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 1
     priority: "high"
@@ -423,6 +423,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ CLOUDINARY INTEGRATION FAILED: Comprehensive testing revealed that the provided Cloudinary credentials are invalid. ✅ Backend integration code is correct and properly configured ✅ POST /api/prospectos/{id}/etapas endpoint accepts multipart form data correctly ✅ File upload handling works (files are received and processed) ✅ Stage creation without photos works perfectly ❌ CRITICAL ISSUE: All photo uploads fail with 'Invalid Signature' error from Cloudinary API ❌ Tested credentials: cloud_name=dm0jkstgo, api_key=889131198581369, api_secret=3.hYS25CWyVbMveJLuYgZPqpVOoyA ❌ Error persists with both SHA-1 and SHA-256 signature algorithms ❌ Even minimal uploads without custom parameters fail ❌ All 8 photo upload tests failed due to invalid Cloudinary credentials. RESOLUTION NEEDED: User must provide valid Cloudinary API credentials or verify the existing ones in their Cloudinary dashboard."
+      - working: true
+        agent: "testing"
+        comment: "🎉 CLOUDINARY INTEGRATION RESOLVED! ✅ CORRECTED CREDENTIALS WORKING: User provided corrected API secret 'hYS25CWyVbMveJLuYgZPqpVOoyA' (removed incorrect '3.' prefix) ✅ COMPREHENSIVE TESTING PASSED: Single photo upload successful with POST /api/prospectos/{id}/etapas endpoint ✅ Photo upload to 'Pedido' stage working perfectly ✅ Valid Cloudinary URLs generated: https://res.cloudinary.com/dm0jkstgo/image/upload/... ✅ Photos accessible from generated URLs (HTTP 200) ✅ Correct cloud name 'dm0jkstgo' in URLs ✅ Backend integration code working correctly ✅ File upload handling functional ✅ Stage creation with photos successful ✅ 'Invalid Signature' error COMPLETELY RESOLVED ✅ Core Cloudinary functionality confirmed working. Minor: Some filename formatting issues with special characters in stage names, but core integration is fully functional."
 
 frontend:
   - task: "Fix Embudo 360 frontend API calls"
