@@ -452,7 +452,7 @@ const EditarPlantillasModal = ({ isOpen, onClose, onUpdate }) => {
 };
 
 // Componente Kanban 360°
-const KanbanDashboard = ({ onUpdate, onNavigate }) => {
+const KanbanDashboard = ({ onUpdate, onNavigate, selectedProspecto: selectedFromParent, onClearSelection }) => {
   // Estados principales del Kanban
   const [kanbanData, setKanbanData] = useState({});
   const [kpis, setKpis] = useState({});
