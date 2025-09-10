@@ -253,117 +253,140 @@ const Header = ({ currentView, onNavigate }) => {
   );
 };
 
-// Componente Dashboard
-const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
+// Componente Kanban 360°
+const KanbanDashboard = ({ onUpdate, onNavigate }) => {
+  // Estados principales del Kanban
+  const [kanbanData, setKanbanData] = useState({});
+  const [kpis, setKpis] = useState({});
+  const [columnas, setColumnas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Estados de filtros y configuración
+  const [filtroGlobal, setFiltroGlobal] = useState('');
+  const [vistaKanban, setVistaKanban] = useState(true); // true = Kanban, false = Tabla
   const [selectedProspecto, setSelectedProspecto] = useState(null);
   
-  // Estados para optimización del dashboard
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [etapaFilter, setEtapaFilter] = useState('');
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
-  const [vistaExpandida, setVistaExpandida] = useState(true); // true = tarjetas, false = tabla
-  const [prospectosPaginados, setProspectosPaginados] = useState([]);
-  const [etapasDisponibles, setEtapasDisponibles] = useState([]);
+  // Estados de paginación por columna
+  const [paginacionColumnas, setPaginacionColumnas] = useState({});
+  const [elementosPorColumna] = useState(20);
   
-  // Debounce para búsqueda
-  const [searchDebounce, setSearchDebounce] = useState('');
-  
+  // Cargar configuración desde localStorage
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchDebounce(searchTerm);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Cargar etapas disponibles
-  useEffect(() => {
-    const cargarEtapas = async () => {
-      try {
-        const response = await axios.get(`${API}/etapas-disponibles`);
-        setEtapasDisponibles(response.data.etapas);
-      } catch (error) {
-        console.error('Error cargando etapas:', error);
-      }
-    };
-    cargarEtapas();
+    const configGuardada = localStorage.getItem('sundeck_kanban_config');
+    if (configGuardada) {
+      const config = JSON.parse(configGuardada);
+      setFiltroGlobal(config.filtroGlobal || '');
+      setVistaKanban(config.vistaKanban !== undefined ? config.vistaKanban : true);
+    }
   }, []);
 
-  // Cargar prospectos paginados
-  const cargarProspectosPaginados = async (page = 1, reset = false) => {
+  // Guardar configuración en localStorage
+  useEffect(() => {
+    const config = {
+      filtroGlobal,
+      vistaKanban
+    };
+    localStorage.setItem('sundeck_kanban_config', JSON.stringify(config));
+  }, [filtroGlobal, vistaKanban]);
+
+  // Cargar datos del Kanban
+  const cargarKanbanData = async () => {
     try {
       setLoading(true);
+      const response = await axios.get(`${API}/kanban`);
       
-      const params = {
-        page: page,
-        limit: 12
-      };
+      setKanbanData(response.data.kanban);
+      setKpis(response.data.kpis);
+      setColumnas(response.data.columnas);
       
-      if (searchDebounce.trim()) {
-        params.search = searchDebounce.trim();
-      }
-      
-      if (etapaFilter) {
-        params.etapa_filter = etapaFilter;
-      }
-      
-      if (fechaInicio) {
-        params.fecha_inicio = fechaInicio;
-      }
-      
-      if (fechaFin) {
-        params.fecha_fin = fechaFin;
-      }
-      
-      const response = await axios.get(`${API}/prospectos`, { params });
-      
-      setProspectosPaginados(response.data.prospectos);
-      setCurrentPage(response.data.pagination.current_page);
-      setTotalPages(response.data.pagination.total_pages);
-      setTotalCount(response.data.pagination.total_count);
-      
-      if (reset) {
-        setCurrentPage(1);
-      }
+      // Inicializar paginación
+      const nuevaPaginacion = {};
+      response.data.columnas.forEach(columna => {
+        nuevaPaginacion[columna] = elementosPorColumna;
+      });
+      setPaginacionColumnas(nuevaPaginacion);
       
     } catch (error) {
-      console.error('Error cargando prospectos paginados:', error);
-      setProspectosPaginados([]);
+      console.error('Error cargando datos Kanban:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Efectos para recargar datos
   useEffect(() => {
-    cargarProspectosPaginados(1, true);
-  }, [searchDebounce, etapaFilter, fechaInicio, fechaFin]);
+    cargarKanbanData();
+  }, []);
 
-  useEffect(() => {
-    cargarProspectosPaginados(currentPage);
-  }, [currentPage]);
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
+  // Manejar drag & drop
+  const onDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+    
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+    
+    try {
+      setLoading(true);
+      
+      // Encontrar el prospecto
+      const sourceColumn = kanbanData[source.droppableId];
+      const prospecto = sourceColumn.find(p => p.id === draggableId);
+      
+      if (!prospecto) return;
+      
+      // Mover en el backend
+      const response = await axios.post(`${API}/mover-etapa`, {
+        prospecto_id: prospecto.id,
+        nueva_etapa: destination.droppableId,
+        comentario: `Movido desde ${source.droppableId} a ${destination.droppableId} via Kanban`
+      });
+      
+      if (response.status === 200) {
+        // Recargar datos
+        await cargarKanbanData();
+        await onUpdate();
+      }
+      
+    } catch (error) {
+      console.error('Error moviendo prospecto:', error);
+      alert('Error moviendo el prospecto. Intenta nuevamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setEtapaFilter('');
-    setFechaInicio('');
-    setFechaFin('');
-    setCurrentPage(1);
+  // Cargar más elementos en una columna
+  const cargarMasElementos = (columna) => {
+    setPaginacionColumnas(prev => ({
+      ...prev,
+      [columna]: prev[columna] + elementosPorColumna
+    }));
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
+  // Filtrar datos según filtro global
+  const aplicarFiltroGlobal = (prospectos) => {
+    if (!filtroGlobal.trim()) return prospectos;
+    
+    const filtro = filtroGlobal.toLowerCase();
+    return prospectos.filter(p => 
+      p.nombre.toLowerCase().includes(filtro) ||
+      p.telefono.toLowerCase().includes(filtro) ||
+      p.producto_solicitado.toLowerCase().includes(filtro)
+    );
+  };
+
+  // Obtener color de urgencia
+  const getColorUrgencia = (urgencia) => {
+    switch(urgencia) {
+      case 2: return 'urgencia-roja';    // Vencida
+      case 1: return 'urgencia-amarilla'; // Hoy
+      default: return 'urgencia-verde';   // Normal
+    }
+  };
+
+  // Formatear fecha
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '';
+    const date = new Date(fecha);
     return date.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: '2-digit',
@@ -371,121 +394,200 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
     });
   };
 
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
+  // Formatear hora
+  const formatearHora = (fecha) => {
+    if (!fecha) return '';
+    const date = new Date(fecha);
     return date.toLocaleTimeString('es-ES', {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const getUltimaEtapa = (prospecto) => {
-    if (!prospecto.etapas || prospecto.etapas.length === 0) {
-      return 'Sin etapas';
-    }
-    return prospecto.etapas[prospecto.etapas.length - 1].nombre_etapa;
-  };
+  // Renderizar tarjeta del prospecto
+  const renderTarjetaProspecto = (prospecto, index) => (
+    <Draggable key={prospecto.id} draggableId={prospecto.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className={`tarjeta-kanban ${getColorUrgencia(prospecto.urgencia)} ${
+            snapshot.isDragging ? 'dragging' : ''
+          }`}
+        >
+          <div className="tarjeta-header">
+            <h4 className="tarjeta-nombre">{prospecto.nombre}</h4>
+            <div className="tarjeta-urgencia">
+              {prospecto.urgencia === 2 && '🔴'}
+              {prospecto.urgencia === 1 && '🟡'}
+              {prospecto.urgencia === 0 && '🟢'}
+            </div>
+          </div>
+          
+          <div className="tarjeta-info">
+            <div className="info-item">
+              <span className="info-icon">🏗️</span>
+              <span className="info-text">{prospecto.producto_solicitado}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-icon">📱</span>
+              <span className="info-text">{prospecto.telefono}</span>
+            </div>
+            {prospecto.fecha_proxima_accion && (
+              <div className="info-item">
+                <span className="info-icon">📅</span>
+                <span className="info-text">
+                  {formatearFecha(prospecto.fecha_proxima_accion)} - {formatearHora(prospecto.fecha_proxima_accion)}
+                </span>
+              </div>
+            )}
+            <div className="info-item">
+              <span className="info-icon">📊</span>
+              <span className="info-text">{prospecto.total_etapas} etapas</span>
+            </div>
+          </div>
+          
+          <div className="tarjeta-acciones">
+            <WhatsAppButton 
+              prospecto={prospecto} 
+              tipo={determinarTipoWhatsApp(prospecto)} 
+              className="btn-kanban-action whatsapp-action"
+              size="small"
+            />
+            <button
+              className="btn-kanban-action"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedProspecto(prospecto);
+              }}
+            >
+              👁️
+            </button>
+            <button
+              className="btn-kanban-action"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Implementar modal de comentario rápido
+                const comentario = prompt('Agregar comentario:');
+                if (comentario) {
+                  // Agregar comentario
+                }
+              }}
+            >
+              💬
+            </button>
+          </div>
+        </div>
+      )}
+    </Draggable>
+  );
 
-  const renderPaginationControls = () => {
-    if (totalPages <= 1) return null;
-
-    const pageNumbers = [];
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i);
-    }
+  // Renderizar columna del Kanban
+  const renderColumnaKanban = (columna) => {
+    const prospectos = kanbanData[columna] || [];
+    const prospectosFiltrados = aplicarFiltroGlobal(prospectos);
+    const prospectosVisibles = prospectosFiltrados.slice(0, paginacionColumnas[columna] || elementosPorColumna);
+    const hayMas = prospectosFiltrados.length > prospectosVisibles.length;
 
     return (
-      <div className="pagination-controls">
-        <button
-          className="btn-pagination"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={!currentPage || currentPage <= 1}
-        >
-          ← Anterior
-        </button>
+      <div key={columna} className="kanban-column">
+        <div className="column-header">
+          <h3 className="column-title">
+            {columna}
+            <span className="column-count">({kpis[columna] || 0})</span>
+          </h3>
+        </div>
         
-        {startPage > 1 && (
-          <>
-            <button className="btn-page" onClick={() => handlePageChange(1)}>1</button>
-            {startPage > 2 && <span className="pagination-dots">...</span>}
-          </>
-        )}
-        
-        {pageNumbers.map(page => (
-          <button
-            key={page}
-            className={`btn-page ${page === currentPage ? 'active' : ''}`}
-            onClick={() => handlePageChange(page)}
-          >
-            {page}
-          </button>
-        ))}
-        
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && <span className="pagination-dots">...</span>}
-            <button className="btn-page" onClick={() => handlePageChange(totalPages)}>{totalPages}</button>
-          </>
-        )}
-        
-        <button
-          className="btn-pagination"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={!currentPage || currentPage >= totalPages}
-        >
-          Siguiente →
-        </button>
+        <Droppable droppableId={columna}>
+          {(provided, snapshot) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className={`column-content ${snapshot.isDraggingOver ? 'drag-over' : ''}`}
+            >
+              {prospectosVisibles.map((prospecto, index) => 
+                renderTarjetaProspecto(prospecto, index)
+              )}
+              {provided.placeholder}
+              
+              {hayMas && (
+                <button
+                  className="btn-cargar-mas"
+                  onClick={() => cargarMasElementos(columna)}
+                >
+                  Cargar más ({prospectosFiltrados.length - prospectosVisibles.length} restantes)
+                </button>
+              )}
+            </div>
+          )}
+        </Droppable>
       </div>
     );
   };
 
+  // Renderizar vista de tabla
   const renderVistaTabla = () => {
+    const todosProspectos = [];
+    Object.keys(kanbanData).forEach(columna => {
+      kanbanData[columna].forEach(prospecto => {
+        todosProspectos.push({...prospecto, columna_kanban: columna});
+      });
+    });
+    
+    const prospectosFiltrados = aplicarFiltroGlobal(todosProspectos);
+
     return (
-      <div className="tabla-prospectos">
-        <div className="tabla-header">
-          <div className="tabla-col">Nombre</div>
-          <div className="tabla-col">Teléfono</div>
+      <div className="tabla-kanban">
+        <div className="tabla-header-kanban">
+          <div className="tabla-col">Cliente</div>
           <div className="tabla-col">Producto</div>
-          <div className="tabla-col">Última Etapa</div>
-          <div className="tabla-col">Cita</div>
+          <div className="tabla-col">Teléfono</div>
+          <div className="tabla-col">Etapa</div>
+          <div className="tabla-col">Próxima Acción</div>
+          <div className="tabla-col">Estado</div>
           <div className="tabla-col">Acciones</div>
         </div>
         
-        {prospectosPaginados.map(prospecto => (
-          <div key={prospecto.id} className="tabla-row">
+        {prospectosFiltrados.map(prospecto => (
+          <div key={prospecto.id} className={`tabla-row-kanban ${getColorUrgencia(prospecto.urgencia)}`}>
             <div className="tabla-col">
-              <div className="prospecto-nombre">{prospecto.nombre}</div>
+              <strong>{prospecto.nombre}</strong>
             </div>
             <div className="tabla-col">
-              <div className="prospecto-telefono">{prospecto.telefono}</div>
+              {prospecto.producto_solicitado}
             </div>
             <div className="tabla-col">
-              <div className="prospecto-producto">{prospecto.producto_solicitado}</div>
+              {prospecto.telefono}
             </div>
             <div className="tabla-col">
-              <div className="prospecto-etapa">
-                <span className="etapa-badge">{getUltimaEtapa(prospecto)}</span>
+              <span className="etapa-badge-tabla">{prospecto.columna_kanban}</span>
+            </div>
+            <div className="tabla-col">
+              {prospecto.fecha_proxima_accion && (
+                <div>
+                  <div>{formatearFecha(prospecto.fecha_proxima_accion)}</div>
+                  <div className="hora-small">{formatearHora(prospecto.fecha_proxima_accion)}</div>
+                </div>
+              )}
+            </div>
+            <div className="tabla-col">
+              <div className="estado-indicator">
+                {prospecto.urgencia === 2 && <span className="estado-rojo">Vencida</span>}
+                {prospecto.urgencia === 1 && <span className="estado-amarillo">Hoy</span>}
+                {prospecto.urgencia === 0 && <span className="estado-verde">Normal</span>}
               </div>
             </div>
             <div className="tabla-col">
-              <div className="prospecto-cita">
-                <div>{formatDate(prospecto.fecha_cita)}</div>
-                <div className="cita-hora">{formatTime(prospecto.fecha_cita)}</div>
-              </div>
-            </div>
-            <div className="tabla-col">
-              <div className="tabla-acciones">
+              <div className="acciones-tabla">
                 <WhatsAppButton 
                   prospecto={prospecto} 
                   tipo={determinarTipoWhatsApp(prospecto)} 
-                  className="btn-whatsapp-small"
+                  className="btn-tabla-action"
                   size="small"
                 />
                 <button
-                  className="btn-primary small"
+                  className="btn-tabla-action"
                   onClick={() => setSelectedProspecto(prospecto)}
                 >
                   Ver
@@ -498,160 +600,50 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
     );
   };
 
-  const renderVistaTarjetas = () => {
-    return (
-      <div className="prospectos-grid">
-        {prospectosPaginados.map(prospecto => (
-          <div key={prospecto.id} className="prospecto-card">
-            <div className="card-header">
-              <h3>{prospecto.nombre}</h3>
-              <div className="card-status">
-                <span className="etapas-count">{prospecto.etapas?.length || 0} etapas</span>
-              </div>
-            </div>
-            
-            <div className="card-info">
-              <div className="info-row">
-                <span className="info-icon">📱</span>
-                <span>{prospecto.telefono}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-icon">🏗️</span>
-                <span>{prospecto.producto_solicitado}</span>
-              </div>
-              <div className="info-row">
-                <span className="info-icon">📅</span>
-                <span>{formatDate(prospecto.fecha_cita)} - {formatTime(prospecto.fecha_cita)}</span>
-              </div>
-            </div>
-
-            {prospecto.etapas && prospecto.etapas.length > 0 && (
-              <div className="timeline-preview">
-                <h4>Últimas Etapas:</h4>
-                {prospecto.etapas.slice(-2).map(etapa => (
-                  <div key={etapa.id} className="timeline-item-preview">
-                    <div className="timeline-dot"></div>
-                    <div className="timeline-content">
-                      <span className="etapa-name">{etapa.nombre_etapa}</span>
-                      <span className="etapa-date">{formatDate(etapa.fecha)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="card-actions">
-              <WhatsAppButton 
-                prospecto={prospecto} 
-                tipo={determinarTipoWhatsApp(prospecto)} 
-                className="btn-outline"
-                size="small"
-              />
-              <button
-                className="btn-primary"
-                onClick={() => setSelectedProspecto(prospecto)}
-              >
-                Ver Detalles
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <h2>Dashboard de Prospectos</h2>
-        <div className="stats">
-          <div className="stat-card">
-            <div className="stat-number">{totalCount}</div>
-            <div className="stat-label">Total Prospectos</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">
-              {prospectosPaginados.filter(p => {
-                const today = new Date().toDateString();
-                const citaDate = new Date(p.fecha_cita).toDateString();
-                return today === citaDate;
-              }).length}
+    <div className="kanban-dashboard">
+      {/* Header con KPIs */}
+      <div className="kanban-header">
+        <div className="header-title">
+          <h2>🚀 Centro de Comando Sundeck</h2>
+        </div>
+        
+        <div className="kpis-container">
+          {columnas.map(columna => (
+            <div key={columna} className="kpi-card">
+              <div className="kpi-number">{kpis[columna] || 0}</div>
+              <div className="kpi-label">{columna}</div>
             </div>
-            <div className="stat-label">Citas Hoy</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">
-              {prospectosPaginados.reduce((sum, p) => sum + (p.etapas?.length || 0), 0)}
-            </div>
-            <div className="stat-label">Etapas Actuales</div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Controles de búsqueda y filtros */}
-      <div className="dashboard-controls">
-        <div className="controles-busqueda">
-          <div className="search-section">
-            <div className="search-input-container">
-              <input
-                type="text"
-                placeholder="Buscar por nombre o teléfono..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input-dashboard"
-              />
-              <span className="search-icon-dashboard">🔍</span>
-            </div>
-          </div>
-          
-          <div className="filtros-section">
-            <select
-              value={etapaFilter}
-              onChange={(e) => setEtapaFilter(e.target.value)}
-              className="filtro-select"
-            >
-              <option value="">Todas las etapas</option>
-              {etapasDisponibles.map(etapa => (
-                <option key={etapa} value={etapa}>{etapa}</option>
-              ))}
-            </select>
-            
+      {/* Controles */}
+      <div className="kanban-controls">
+        <div className="controls-left">
+          <div className="filtro-global-container">
             <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="filtro-date"
-              placeholder="Fecha desde"
+              type="text"
+              placeholder="Buscar por cliente, teléfono o producto..."
+              value={filtroGlobal}
+              onChange={(e) => setFiltroGlobal(e.target.value)}
+              className="filtro-global-input"
             />
-            
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              className="filtro-date"
-              placeholder="Fecha hasta"
-            />
-            
-            <button
-              onClick={clearFilters}
-              className="btn-clear-filters"
-            >
-              Limpiar
-            </button>
+            <span className="search-icon">🔍</span>
           </div>
         </div>
         
-        <div className="vista-controls">
-          <div className="toggle-vista">
+        <div className="controls-right">
+          <div className="toggle-vista-kanban">
             <button
-              className={`btn-vista ${vistaExpandida ? 'active' : ''}`}
-              onClick={() => setVistaExpandida(true)}
+              className={`btn-vista-kanban ${vistaKanban ? 'active' : ''}`}
+              onClick={() => setVistaKanban(true)}
             >
-              📋 Tarjetas
+              📋 Kanban
             </button>
             <button
-              className={`btn-vista ${!vistaExpandida ? 'active' : ''}`}
-              onClick={() => setVistaExpandida(false)}
+              className={`btn-vista-kanban ${!vistaKanban ? 'active' : ''}`}
+              onClick={() => setVistaKanban(false)}
             >
               📊 Tabla
             </button>
@@ -659,60 +651,34 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
         </div>
       </div>
 
-      {/* Resultados */}
-      <div className="resultados-info">
-        {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Cargando prospectos...</p>
+      {/* Contenido principal */}
+      <div className="kanban-content">
+        {loading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner-kanban"></div>
+            <p>Actualizando datos...</p>
           </div>
-        ) : (
-          <>
-            <div className="resultados-metadata">
-              <p>
-                Mostrando {prospectosPaginados.length} de {totalCount} prospectos
-                {(searchTerm || etapaFilter || fechaInicio || fechaFin) && (
-                  <span className="filtros-activos"> (filtrados)</span>
-                )}
-              </p>
+        )}
+        
+        {vistaKanban ? (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="kanban-board">
+              {columnas.map(columna => renderColumnaKanban(columna))}
             </div>
-            
-            {prospectosPaginados.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📋</div>
-                <h3>No se encontraron prospectos</h3>
-                <p>
-                  {(searchTerm || etapaFilter || fechaInicio || fechaFin) 
-                    ? 'Prueba ajustando los filtros de búsqueda'
-                    : 'Comienza agregando tu primer prospecto'
-                  }
-                </p>
-                {!(searchTerm || etapaFilter || fechaInicio || fechaFin) && (
-                  <button
-                    className="btn-primary"
-                    onClick={() => onNavigate('registro')}
-                  >
-                    Agregar Prospecto
-                  </button>
-                )}
-              </div>
-            ) : (
-              <>
-                {vistaExpandida ? renderVistaTarjetas() : renderVistaTabla()}
-                {renderPaginationControls()}
-              </>
-            )}
-          </>
+          </DragDropContext>
+        ) : (
+          renderVistaTabla()
         )}
       </div>
 
+      {/* Modal de detalles */}
       {selectedProspecto && (
         <ProspectoModal
           prospecto={selectedProspecto}
           onClose={() => setSelectedProspecto(null)}
           onUpdate={() => {
             onUpdate();
-            cargarProspectosPaginados(currentPage);
+            cargarKanbanData();
           }}
         />
       )}
