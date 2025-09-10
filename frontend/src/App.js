@@ -145,22 +145,18 @@ const determinarTipoWhatsApp = (prospecto) => {
   const ultimaEtapa = prospecto.etapas[prospecto.etapas.length - 1];
   const nombreEtapa = ultimaEtapa.nombre_etapa;
   
-  // Determinar tipo según la última etapa
+  // Mapear etapas a tipos de plantilla JSON
   if (nombreEtapa === 'Visita Inicial / Medición') {
-    return 'confirmacion_cita'; // Siguiente paso: confirmar cotización
-  } else if (nombreEtapa === 'Cotización Aprobada') {
-    return 'confirmacion_cita'; // Confirmar detalles del pedido
-  } else if (nombreEtapa === 'Pedido') {
-    return 'confirmacion_cita'; // Confirmar inicio de fabricación
-  } else if (nombreEtapa === 'Fabricación') {
-    return 'instalacion'; // En proceso de fabricación → instalación
-  } else if (nombreEtapa === 'Instalación en Proceso' || nombreEtapa === 'Entrega Final') {
-    return 'postventa'; // Ya instalado, seguimiento
-  } else if (nombreEtapa === 'Postventa') {
-    return 'postventa'; // Seguimiento postventa
+    return 'cita'; // Confirmar cita de medición
+  } else if (nombreEtapa === 'Cotización Aprobada' || nombreEtapa === 'Pedido') {
+    return 'cita'; // Confirmar detalles del pedido/cotización
+  } else if (nombreEtapa === 'Fabricación' || nombreEtapa === 'Instalación en Proceso') {
+    return 'instalacion'; // Coordinar instalación
+  } else if (nombreEtapa === 'Entrega Final' || nombreEtapa === 'Postventa') {
+    return 'postventa'; // Seguimiento post-instalación
   }
   
-  return 'general'; // Fallback
+  return 'prospecto'; // Fallback para prospectos nuevos
 };
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
