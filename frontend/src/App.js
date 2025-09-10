@@ -261,27 +261,24 @@ const RegistroProspecto = ({ onUpdate, onNavigate }) => {
   useEffect(() => {
     localStorage.setItem('catalogo_productos', JSON.stringify(catalogoProductos));
   }, [catalogoProductos]);
-  
-  // Estado del catálogo de productos
-  const [catalogoProductos, setCatalogoProductos] = useState(() => {
-    try { 
-      return JSON.parse(localStorage.getItem('catalogo_productos')) || DEFAULT_PRODUCTOS; 
-    } catch { 
-      return DEFAULT_PRODUCTOS; 
-    }
-  });
-
-  // Persistir catálogo en localStorage
-  useEffect(() => {
-    localStorage.setItem('catalogo_productos', JSON.stringify(catalogoProductos));
-  }, [catalogoProductos]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
+      
+      // Aprendizaje del producto al guardar
+      const prodTrim = (formData.producto_solicitado || '').trim();
+      if (prodTrim) {
+        const existe = catalogoProductos.some(p => p.toLowerCase() === prodTrim.toLowerCase());
+        if (!existe) {
+          setCatalogoProductos(prev => [...prev, prodTrim].sort((a,b) => a.localeCompare(b, 'es')));
+        }
+      }
+
       await axios.post(`${API}/prospectos`, {
         ...formData,
+        producto_solicitado: prodTrim,
         fecha_cita: new Date(formData.fecha_cita).toISOString()
       });
       
@@ -309,10 +306,50 @@ const RegistroProspecto = ({ onUpdate, onNavigate }) => {
     });
   };
 
+  const agregarProductoAlCatalogo = () => {
+    const nuevo = prompt('Agregar nuevo producto al catálogo:');
+    if (!nuevo) return;
+    const t = nuevo.trim();
+    if (!t) return;
+    if (catalogoProductos.some(p => p.toLowerCase() === t.toLowerCase())) {
+      alert('Ese producto ya existe en el catálogo.');
+      return;
+    }
+    setCatalogoProductos(prev => [...prev, t].sort((a,b) => a.localeCompare(b, 'es')));
+    alert('Producto agregado al catálogo exitosamente.');
+  };
+
+  const restablecerCatalogo = () => {
+    if (window.confirm('¿Restablecer catálogo a valores por defecto?')) {
+      setCatalogoProductos(DEFAULT_PRODUCTOS);
+      alert('Catálogo restablecido.');
+    }
+  };
+
   return (
     <div className="registro-prospecto">
       <div className="form-container">
         <h2>Nuevo Prospecto</h2>
+        
+        {/* Acciones rápidas sobre el catálogo */}
+        <div className="catalog-actions" style={{display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap'}}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={agregarProductoAlCatalogo}
+            style={{fontSize: '0.9rem', padding: '0.5rem 1rem'}}
+          >
+            + Producto al catálogo
+          </button>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={restablecerCatalogo}
+            style={{fontSize: '0.9rem', padding: '0.5rem 1rem'}}
+          >
+            Restablecer catálogo
+          </button>
+        </div>
         
         <form onSubmit={handleSubmit} className="prospecto-form">
           <div className="form-group">
@@ -343,21 +380,21 @@ const RegistroProspecto = ({ onUpdate, onNavigate }) => {
 
           <div className="form-group">
             <label htmlFor="producto_solicitado">Producto Solicitado</label>
-            <select
+            <input
+              list="lista-productos"
+              type="text"
               id="producto_solicitado"
               name="producto_solicitado"
+              placeholder="Producto solicitado (escribe o selecciona)"
               value={formData.producto_solicitado}
               onChange={handleChange}
               required
-            >
-              <option value="">Seleccione un producto</option>
-              <option value="Deck Residencial">Deck Residencial</option>
-              <option value="Deck Comercial">Deck Comercial</option>
-              <option value="Pergola">Pergola</option>
-              <option value="Gazebo">Gazebo</option>
-              <option value="Techo Solar">Techo Solar</option>
-              <option value="Mantenimiento">Mantenimiento</option>
-            </select>
+            />
+            <datalist id="lista-productos">
+              {catalogoProductos.map((p) => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
           </div>
 
           <div className="form-group">
