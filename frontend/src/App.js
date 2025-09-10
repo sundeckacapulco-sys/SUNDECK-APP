@@ -1334,6 +1334,47 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     return Math.max(m2Real, 1.0); // Mínimo 1 m²
   };
 
+  // Generar pedido desde medición
+  const generarPedidoDesdeMedicion = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/prospectos/${prospectoId}/generar-pedido`);
+      
+      if (response.data.etapa) {
+        // Cargar los datos del pedido generado en el formulario
+        const pedido = response.data.etapa;
+        setFormData({
+          nombre_etapa: 'Pedido',
+          comentario: pedido.comentario
+        });
+        
+        setCamposPedido({
+          monto_total: pedido.monto_total || '',
+          anticipo_recibido: pedido.anticipo_recibido || '',
+          saldo_pendiente: pedido.saldo_pendiente || '',
+          forma_pago: pedido.forma_pago || '',
+          fecha_vencimiento_saldo: pedido.fecha_vencimiento_saldo || '',
+          cotizacion_url: pedido.cotizacion_url || '',
+          archivo_levantamiento_url: pedido.archivo_levantamiento_url || ''
+        });
+        
+        setPiezasMedicion(pedido.piezas_medicion || []);
+        setPrecioM2General(pedido.precio_m2_general || '');
+        setUnidadMedida(pedido.unidad_medida || 'm');
+        
+        alert(`¡Pedido generado exitosamente!\n\nResumen:\n- ${response.data.resumen.total_piezas} piezas\n- ${response.data.resumen.total_m2_real} m² reales\n- ${response.data.resumen.total_m2_comercial} m² comerciales\n- $${response.data.resumen.total_estimado.toLocaleString('es-MX', {minimumFractionDigits: 2})} total estimado`);
+      }
+      
+      await onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error generando pedido:', error);
+      alert(error.response?.data?.detail || 'Error al generar el pedido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Calcular totales corregidos
   const calcularTotales = () => {
     let totalM2 = 0;
