@@ -821,12 +821,15 @@ async def mover_prospecto_etapa(request: dict):
         }
         
         # Guardar log en colección separada
-        await db.logs_actividad.insert_one(log_actividad)
+        result = await db.logs_actividad.insert_one(log_actividad)
+        
+        # Remove the ObjectId from log_actividad for response
+        log_actividad_response = log_actividad.copy()
         
         return {
             "message": "Prospecto movido exitosamente",
             "nueva_etapa": nueva_etapa_obj,
-            "log": log_actividad
+            "log": log_actividad_response
         }
         
     except HTTPException:
