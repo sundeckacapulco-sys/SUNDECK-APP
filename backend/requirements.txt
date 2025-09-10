@@ -66,3 +66,4 @@ tzdata==2025.2
 urllib3==2.5.0
 uvicorn==0.25.0
 watchfiles==1.1.0
+cloudinary==1.44.1
