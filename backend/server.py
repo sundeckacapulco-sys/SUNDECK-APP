@@ -1754,7 +1754,7 @@ async def obtener_recordatorios(
         
         return {
             "recordatorios": recordatorios,
-            "estadisticas": {
+            "resumen": {
                 "total": total_recordatorios,
                 "pendientes": pendientes,
                 "vencidos": vencidos,
