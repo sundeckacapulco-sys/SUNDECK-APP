@@ -255,6 +255,111 @@ const Header = ({ currentView, onNavigate }) => {
 // Componente Dashboard
 const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
   const [selectedProspecto, setSelectedProspecto] = useState(null);
+  
+  // Estados para optimización del dashboard
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [etapaFilter, setEtapaFilter] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [vistaExpandida, setVistaExpandida] = useState(true); // true = tarjetas, false = tabla
+  const [prospectosPaginados, setProspectosPaginados] = useState([]);
+  const [etapasDisponibles, setEtapasDisponibles] = useState([]);
+  
+  // Debounce para búsqueda
+  const [searchDebounce, setSearchDebounce] = useState('');
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounce(searchTerm);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Cargar etapas disponibles
+  useEffect(() => {
+    const cargarEtapas = async () => {
+      try {
+        const response = await axios.get(`${API}/etapas-disponibles`);
+        setEtapasDisponibles(response.data.etapas);
+      } catch (error) {
+        console.error('Error cargando etapas:', error);
+      }
+    };
+    cargarEtapas();
+  }, []);
+
+  // Cargar prospectos paginados
+  const cargarProspectosPaginados = async (page = 1, reset = false) => {
+    try {
+      setLoading(true);
+      
+      const params = {
+        page: page,
+        limit: 12
+      };
+      
+      if (searchDebounce.trim()) {
+        params.search = searchDebounce.trim();
+      }
+      
+      if (etapaFilter) {
+        params.etapa_filter = etapaFilter;
+      }
+      
+      if (fechaInicio) {
+        params.fecha_inicio = fechaInicio;
+      }
+      
+      if (fechaFin) {
+        params.fecha_fin = fechaFin;
+      }
+      
+      const response = await axios.get(`${API}/prospectos`, { params });
+      
+      setProspectosPaginados(response.data.prospectos);
+      setCurrentPage(response.data.pagination.current_page);
+      setTotalPages(response.data.pagination.total_pages);
+      setTotalCount(response.data.pagination.total_count);
+      
+      if (reset) {
+        setCurrentPage(1);
+      }
+      
+    } catch (error) {
+      console.error('Error cargando prospectos paginados:', error);
+      setProspectosPaginados([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Efectos para recargar datos
+  useEffect(() => {
+    cargarProspectosPaginados(1, true);
+  }, [searchDebounce, etapaFilter, fechaInicio, fechaFin]);
+
+  useEffect(() => {
+    cargarProspectosPaginados(currentPage);
+  }, [currentPage]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setEtapaFilter('');
+    setFechaInicio('');
+    setFechaFin('');
+    setCurrentPage(1);
+  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -273,36 +378,129 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
     });
   };
 
-  return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <h2>Dashboard de Prospectos</h2>
-        <div className="stats">
-          <div className="stat-card">
-            <div className="stat-number">{prospectos.length}</div>
-            <div className="stat-label">Total Prospectos</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">
-              {prospectos.filter(p => {
-                const today = new Date().toDateString();
-                const citaDate = new Date(p.fecha_cita).toDateString();
-                return today === citaDate;
-              }).length}
-            </div>
-            <div className="stat-label">Citas Hoy</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">
-              {prospectos.reduce((sum, p) => sum + (p.etapas?.length || 0), 0)}
-            </div>
-            <div className="stat-label">Total Etapas</div>
-          </div>
-        </div>
-      </div>
+  const getUltimaEtapa = (prospecto) => {
+    if (!prospecto.etapas || prospecto.etapas.length === 0) {
+      return 'Sin etapas';
+    }
+    return prospecto.etapas[prospecto.etapas.length - 1].nombre_etapa;
+  };
 
+  const renderPaginationControls = () => {
+    if (totalPages <= 1) return null;
+
+    const pageNumbers = [];
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return (
+      <div className="pagination-controls">
+        <button
+          className="btn-pagination"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={!currentPage || currentPage <= 1}
+        >
+          ← Anterior
+        </button>
+        
+        {startPage > 1 && (
+          <>
+            <button className="btn-page" onClick={() => handlePageChange(1)}>1</button>
+            {startPage > 2 && <span className="pagination-dots">...</span>}
+          </>
+        )}
+        
+        {pageNumbers.map(page => (
+          <button
+            key={page}
+            className={`btn-page ${page === currentPage ? 'active' : ''}`}
+            onClick={() => handlePageChange(page)}
+          >
+            {page}
+          </button>
+        ))}
+        
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="pagination-dots">...</span>}
+            <button className="btn-page" onClick={() => handlePageChange(totalPages)}>{totalPages}</button>
+          </>
+        )}
+        
+        <button
+          className="btn-pagination"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={!currentPage || currentPage >= totalPages}
+        >
+          Siguiente →
+        </button>
+      </div>
+    );
+  };
+
+  const renderVistaTabla = () => {
+    return (
+      <div className="tabla-prospectos">
+        <div className="tabla-header">
+          <div className="tabla-col">Nombre</div>
+          <div className="tabla-col">Teléfono</div>
+          <div className="tabla-col">Producto</div>
+          <div className="tabla-col">Última Etapa</div>
+          <div className="tabla-col">Cita</div>
+          <div className="tabla-col">Acciones</div>
+        </div>
+        
+        {prospectosPaginados.map(prospecto => (
+          <div key={prospecto.id} className="tabla-row">
+            <div className="tabla-col">
+              <div className="prospecto-nombre">{prospecto.nombre}</div>
+            </div>
+            <div className="tabla-col">
+              <div className="prospecto-telefono">{prospecto.telefono}</div>
+            </div>
+            <div className="tabla-col">
+              <div className="prospecto-producto">{prospecto.producto_solicitado}</div>
+            </div>
+            <div className="tabla-col">
+              <div className="prospecto-etapa">
+                <span className="etapa-badge">{getUltimaEtapa(prospecto)}</span>
+              </div>
+            </div>
+            <div className="tabla-col">
+              <div className="prospecto-cita">
+                <div>{formatDate(prospecto.fecha_cita)}</div>
+                <div className="cita-hora">{formatTime(prospecto.fecha_cita)}</div>
+              </div>
+            </div>
+            <div className="tabla-col">
+              <div className="tabla-acciones">
+                <WhatsAppButton 
+                  prospecto={prospecto} 
+                  tipo={determinarTipoWhatsApp(prospecto)} 
+                  className="btn-whatsapp-small"
+                  size="small"
+                />
+                <button
+                  className="btn-primary small"
+                  onClick={() => setSelectedProspecto(prospecto)}
+                >
+                  Ver
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderVistaTarjetas = () => {
+    return (
       <div className="prospectos-grid">
-        {prospectos.map(prospecto => (
+        {prospectosPaginados.map(prospecto => (
           <div key={prospecto.id} className="prospecto-card">
             <div className="card-header">
               <h3>{prospecto.nombre}</h3>
@@ -358,26 +556,163 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
           </div>
         ))}
       </div>
+    );
+  };
 
-      {prospectos.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon">📋</div>
-          <h3>No hay prospectos registrados</h3>
-          <p>Comienza agregando tu primer prospecto</p>
-          <button
-            className="btn-primary"
-            onClick={() => onNavigate('registro')}
-          >
-            Agregar Prospecto
-          </button>
+  return (
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <h2>Dashboard de Prospectos</h2>
+        <div className="stats">
+          <div className="stat-card">
+            <div className="stat-number">{totalCount}</div>
+            <div className="stat-label">Total Prospectos</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-number">
+              {prospectos.filter(p => {
+                const today = new Date().toDateString();
+                const citaDate = new Date(p.fecha_cita).toDateString();
+                return today === citaDate;
+              }).length}
+            </div>
+            <div className="stat-label">Citas Hoy</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-number">
+              {prospectos.reduce((sum, p) => sum + (p.etapas?.length || 0), 0)}
+            </div>
+            <div className="stat-label">Total Etapas</div>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Controles de búsqueda y filtros */}
+      <div className="dashboard-controls">
+        <div className="controles-busqueda">
+          <div className="search-section">
+            <div className="search-input-container">
+              <input
+                type="text"
+                placeholder="Buscar por nombre o teléfono..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input-dashboard"
+              />
+              <span className="search-icon-dashboard">🔍</span>
+            </div>
+          </div>
+          
+          <div className="filtros-section">
+            <select
+              value={etapaFilter}
+              onChange={(e) => setEtapaFilter(e.target.value)}
+              className="filtro-select"
+            >
+              <option value="">Todas las etapas</option>
+              {etapasDisponibles.map(etapa => (
+                <option key={etapa} value={etapa}>{etapa}</option>
+              ))}
+            </select>
+            
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="filtro-date"
+              placeholder="Fecha desde"
+            />
+            
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => setFechaFin(e.target.value)}
+              className="filtro-date"
+              placeholder="Fecha hasta"
+            />
+            
+            <button
+              onClick={clearFilters}
+              className="btn-clear-filters"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+        
+        <div className="vista-controls">
+          <div className="toggle-vista">
+            <button
+              className={`btn-vista ${vistaExpandida ? 'active' : ''}`}
+              onClick={() => setVistaExpandida(true)}
+            >
+              📋 Tarjetas
+            </button>
+            <button
+              className={`btn-vista ${!vistaExpandida ? 'active' : ''}`}
+              onClick={() => setVistaExpandida(false)}
+            >
+              📊 Tabla
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Resultados */}
+      <div className="resultados-info">
+        {loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Cargando prospectos...</p>
+          </div>
+        ) : (
+          <>
+            <div className="resultados-metadata">
+              <p>
+                Mostrando {prospectosPaginados.length} de {totalCount} prospectos
+                {(searchTerm || etapaFilter || fechaInicio || fechaFin) && (
+                  <span className="filtros-activos"> (filtrados)</span>
+                )}
+              </p>
+            </div>
+            
+            {prospectosPaginados.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📋</div>
+                <h3>No se encontraron prospectos</h3>
+                <p>
+                  {(searchTerm || etapaFilter || fechaInicio || fechaFin) 
+                    ? 'Prueba ajustando los filtros de búsqueda'
+                    : 'Comienza agregando tu primer prospecto'
+                  }
+                </p>
+                {!(searchTerm || etapaFilter || fechaInicio || fechaFin) && (
+                  <button
+                    className="btn-primary"
+                    onClick={() => onNavigate('registro')}
+                  >
+                    Agregar Prospecto
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {vistaExpandida ? renderVistaTarjetas() : renderVistaTabla()}
+                {renderPaginationControls()}
+              </>
+            )}
+          </>
+        )}
+      </div>
 
       {selectedProspecto && (
         <ProspectoModal
           prospecto={selectedProspecto}
           onClose={() => setSelectedProspecto(null)}
-          onUpdate={onUpdate}
+          onUpdate={() => {
+            onUpdate();
+            cargarProspectosPaginados(currentPage);
+          }}
         />
       )}
     </div>
