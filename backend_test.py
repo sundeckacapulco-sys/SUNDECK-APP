@@ -1615,6 +1615,434 @@ class ProspectosAPITester:
         
         return success
 
+    # NEW EMBUDO 360 TESTS
+    def test_embudo_360_basic(self):
+        """Test basic Embudo 360 endpoint without parameters"""
+        print("\n🔍 Testing Embudo 360 - Basic Endpoint")
+        
+        success, response = self.run_test(
+            "Get Embudo 360 Data - Basic",
+            "GET",
+            "embudo-360",
+            200
+        )
+        
+        if success:
+            # Validate main structure
+            required_fields = ['embudo', 'metricas', 'filtros_aplicados']
+            for field in required_fields:
+                if field not in response:
+                    print(f"❌ Missing field in Embudo 360 response: {field}")
+                    success = False
+                else:
+                    print(f"   ✅ Field present: {field}")
+            
+            if success:
+                # Validate embudo structure
+                embudo = response.get('embudo', {})
+                embudo_fields = ['etapas', 'contadores', 'conversiones', 'tiempos_promedio']
+                for field in embudo_fields:
+                    if field not in embudo:
+                        print(f"   ❌ Missing embudo field: {field}")
+                        success = False
+                    else:
+                        print(f"   ✅ Embudo field present: {field}")
+                
+                # Validate metricas structure
+                metricas = response.get('metricas', {})
+                metricas_fields = ['total_prospectos', 'prospectos_activos', 'tasa_conversion_general']
+                for field in metricas_fields:
+                    if field not in metricas:
+                        print(f"   ❌ Missing metricas field: {field}")
+                        success = False
+                    else:
+                        print(f"   ✅ Metricas field present: {field}")
+                
+                # Validate etapas array
+                etapas = embudo.get('etapas', [])
+                expected_etapas = [
+                    "Prospectos Nuevos",
+                    "Cotizaciones Activas", 
+                    "Pedidos",
+                    "Fabricación",
+                    "Instalación",
+                    "Entrega",
+                    "Postventa"
+                ]
+                
+                if etapas == expected_etapas:
+                    print("   ✅ All 7 embudo etapas present in correct order")
+                else:
+                    print(f"   ❌ Etapas mismatch. Expected: {expected_etapas}, Got: {etapas}")
+                    success = False
+                
+                # Validate contadores structure
+                contadores = embudo.get('contadores', {})
+                for etapa in expected_etapas:
+                    if etapa not in contadores:
+                        print(f"   ❌ Missing contador for etapa: {etapa}")
+                        success = False
+                    elif not isinstance(contadores[etapa], int):
+                        print(f"   ❌ Contador for {etapa} should be integer")
+                        success = False
+                
+                if success:
+                    print(f"   ✅ Embudo data structure validated successfully")
+                    print(f"   ✅ Total prospectos: {metricas.get('total_prospectos', 0)}")
+                    print(f"   ✅ Prospectos activos: {metricas.get('prospectos_activos', 0)}")
+                    print(f"   ✅ Tasa conversión general: {metricas.get('tasa_conversion_general', 0)}%")
+        
+        return success
+
+    def test_embudo_360_date_filters(self):
+        """Test Embudo 360 with date filters"""
+        print("\n🔍 Testing Embudo 360 - Date Filters")
+        
+        # Test with date range
+        success1, response1 = self.run_test(
+            "Get Embudo 360 Data - Date Range Filter",
+            "GET",
+            "embudo-360",
+            200,
+            params={
+                "fecha_inicio": "2024-01-01",
+                "fecha_fin": "2024-12-31"
+            }
+        )
+        
+        if success1:
+            filtros = response1.get('filtros_aplicados', {})
+            if filtros.get('fecha_inicio') == "2024-01-01" and filtros.get('fecha_fin') == "2024-12-31":
+                print("   ✅ Date filters correctly applied and returned")
+            else:
+                print("   ❌ Date filters not properly reflected in response")
+                success1 = False
+            
+            # Validate structure is still complete
+            embudo = response1.get('embudo', {})
+            if 'contadores' in embudo and 'conversiones' in embudo:
+                print("   ✅ Complete embudo structure maintained with date filters")
+            else:
+                print("   ❌ Embudo structure incomplete with date filters")
+                success1 = False
+        
+        # Test with only start date
+        success2, response2 = self.run_test(
+            "Get Embudo 360 Data - Start Date Only",
+            "GET",
+            "embudo-360",
+            200,
+            params={"fecha_inicio": "2024-06-01"}
+        )
+        
+        if success2:
+            filtros = response2.get('filtros_aplicados', {})
+            if filtros.get('fecha_inicio') == "2024-06-01" and filtros.get('fecha_fin') is None:
+                print("   ✅ Start date filter correctly applied")
+            else:
+                print("   ❌ Start date filter not properly handled")
+                success2 = False
+        
+        # Test with only end date
+        success3, response3 = self.run_test(
+            "Get Embudo 360 Data - End Date Only",
+            "GET",
+            "embudo-360",
+            200,
+            params={"fecha_fin": "2024-12-31"}
+        )
+        
+        if success3:
+            filtros = response3.get('filtros_aplicados', {})
+            if filtros.get('fecha_fin') == "2024-12-31" and filtros.get('fecha_inicio') is None:
+                print("   ✅ End date filter correctly applied")
+            else:
+                print("   ❌ End date filter not properly handled")
+                success3 = False
+        
+        return success1 and success2 and success3
+
+    def test_embudo_360_responsable_filter(self):
+        """Test Embudo 360 with responsable filter"""
+        print("\n🔍 Testing Embudo 360 - Responsable Filter")
+        
+        success, response = self.run_test(
+            "Get Embudo 360 Data - Responsable Filter",
+            "GET",
+            "embudo-360",
+            200,
+            params={"responsable": "Juan Pérez"}
+        )
+        
+        if success:
+            filtros = response.get('filtros_aplicados', {})
+            if filtros.get('responsable') == "Juan Pérez":
+                print("   ✅ Responsable filter correctly applied and returned")
+            else:
+                print("   ❌ Responsable filter not properly reflected in response")
+                success = False
+            
+            # Validate structure is still complete
+            embudo = response.get('embudo', {})
+            metricas = response.get('metricas', {})
+            
+            required_embudo_fields = ['etapas', 'contadores', 'conversiones', 'tiempos_promedio']
+            required_metricas_fields = ['total_prospectos', 'prospectos_activos', 'tasa_conversion_general']
+            
+            for field in required_embudo_fields:
+                if field not in embudo:
+                    print(f"   ❌ Missing embudo field with responsable filter: {field}")
+                    success = False
+            
+            for field in required_metricas_fields:
+                if field not in metricas:
+                    print(f"   ❌ Missing metricas field with responsable filter: {field}")
+                    success = False
+            
+            if success:
+                print("   ✅ Complete embudo structure maintained with responsable filter")
+        
+        return success
+
+    def test_embudo_360_combined_filters(self):
+        """Test Embudo 360 with combined filters"""
+        print("\n🔍 Testing Embudo 360 - Combined Filters")
+        
+        success, response = self.run_test(
+            "Get Embudo 360 Data - Combined Filters",
+            "GET",
+            "embudo-360",
+            200,
+            params={
+                "fecha_inicio": "2024-01-01",
+                "fecha_fin": "2024-12-31",
+                "responsable": "María López"
+            }
+        )
+        
+        if success:
+            filtros = response.get('filtros_aplicados', {})
+            
+            # Validate all filters are applied
+            expected_filters = {
+                "fecha_inicio": "2024-01-01",
+                "fecha_fin": "2024-12-31",
+                "responsable": "María López"
+            }
+            
+            filters_correct = True
+            for key, expected_value in expected_filters.items():
+                if filtros.get(key) != expected_value:
+                    print(f"   ❌ Filter {key} not correctly applied. Expected: {expected_value}, Got: {filtros.get(key)}")
+                    filters_correct = False
+            
+            if filters_correct:
+                print("   ✅ All combined filters correctly applied")
+            else:
+                success = False
+            
+            # Validate complete response structure
+            embudo = response.get('embudo', {})
+            metricas = response.get('metricas', {})
+            
+            if 'conversiones' in embudo and isinstance(embudo['conversiones'], list):
+                print("   ✅ Conversiones array present and valid")
+            else:
+                print("   ❌ Conversiones array missing or invalid")
+                success = False
+            
+            if 'tiempos_promedio' in embudo and isinstance(embudo['tiempos_promedio'], dict):
+                print("   ✅ Tiempos promedio object present and valid")
+            else:
+                print("   ❌ Tiempos promedio object missing or invalid")
+                success = False
+        
+        return success
+
+    def test_embudo_360_export(self):
+        """Test Embudo 360 export functionality"""
+        print("\n🔍 Testing Embudo 360 - Export Functionality")
+        
+        # Test basic export
+        success1, response1 = self.run_test(
+            "Export Embudo 360 Data - Basic",
+            "GET",
+            "embudo-360/export",
+            200
+        )
+        
+        if success1:
+            # Validate export structure
+            required_fields = ['datos_etapas', 'datos_conversiones', 'metricas_generales', 'formato', 'fecha_generacion']
+            for field in required_fields:
+                if field not in response1:
+                    print(f"   ❌ Missing export field: {field}")
+                    success1 = False
+                else:
+                    print(f"   ✅ Export field present: {field}")
+            
+            if success1:
+                # Validate datos_etapas structure
+                datos_etapas = response1.get('datos_etapas', [])
+                if isinstance(datos_etapas, list) and len(datos_etapas) > 0:
+                    first_etapa = datos_etapas[0]
+                    etapa_fields = ['Etapa', 'Cantidad', 'Tiempo_Promedio_Dias']
+                    for field in etapa_fields:
+                        if field not in first_etapa:
+                            print(f"   ❌ Missing field in datos_etapas: {field}")
+                            success1 = False
+                    
+                    if success1:
+                        print(f"   ✅ Export datos_etapas structure valid ({len(datos_etapas)} etapas)")
+                else:
+                    print("   ❌ datos_etapas should be non-empty list")
+                    success1 = False
+                
+                # Validate datos_conversiones structure
+                datos_conversiones = response1.get('datos_conversiones', [])
+                if isinstance(datos_conversiones, list) and len(datos_conversiones) > 0:
+                    first_conversion = datos_conversiones[0]
+                    conversion_fields = ['Desde', 'Hacia', 'Tasa_Conversion_%']
+                    for field in conversion_fields:
+                        if field not in first_conversion:
+                            print(f"   ❌ Missing field in datos_conversiones: {field}")
+                            success1 = False
+                    
+                    if success1:
+                        print(f"   ✅ Export datos_conversiones structure valid ({len(datos_conversiones)} conversions)")
+                else:
+                    print("   ❌ datos_conversiones should be non-empty list")
+                    success1 = False
+        
+        # Test export with filters
+        success2, response2 = self.run_test(
+            "Export Embudo 360 Data - With Filters",
+            "GET",
+            "embudo-360/export",
+            200,
+            params={
+                "fecha_inicio": "2024-01-01",
+                "fecha_fin": "2024-12-31",
+                "formato": "excel"
+            }
+        )
+        
+        if success2:
+            # Validate that filters are applied in export
+            if 'metricas_generales' in response2:
+                print("   ✅ Export with filters maintains complete structure")
+            else:
+                print("   ❌ Export with filters missing metricas_generales")
+                success2 = False
+            
+            # Validate formato parameter
+            formato = response2.get('formato', '')
+            if formato == "excel":
+                print("   ✅ Export format parameter correctly applied")
+            else:
+                print(f"   ❌ Export format not applied. Expected: excel, Got: {formato}")
+                success2 = False
+        
+        return success1 and success2
+
+    def test_embudo_360_response_structure_validation(self):
+        """Test detailed validation of Embudo 360 response structure"""
+        print("\n🔍 Testing Embudo 360 - Response Structure Validation")
+        
+        success, response = self.run_test(
+            "Get Embudo 360 Data - Structure Validation",
+            "GET",
+            "embudo-360",
+            200
+        )
+        
+        if success:
+            # Deep validation of embudo structure
+            embudo = response.get('embudo', {})
+            
+            # Validate etapas array
+            etapas = embudo.get('etapas', [])
+            if len(etapas) == 7:
+                print("   ✅ Embudo has exactly 7 etapas")
+            else:
+                print(f"   ❌ Expected 7 etapas, got {len(etapas)}")
+                success = False
+            
+            # Validate contadores object
+            contadores = embudo.get('contadores', {})
+            if isinstance(contadores, dict) and len(contadores) == 7:
+                print("   ✅ Contadores object has 7 entries")
+                # Check all values are integers
+                all_integers = all(isinstance(v, int) for v in contadores.values())
+                if all_integers:
+                    print("   ✅ All contador values are integers")
+                else:
+                    print("   ❌ Some contador values are not integers")
+                    success = False
+            else:
+                print("   ❌ Contadores object structure invalid")
+                success = False
+            
+            # Validate tiempos_promedio object
+            tiempos_promedio = embudo.get('tiempos_promedio', {})
+            if isinstance(tiempos_promedio, dict) and len(tiempos_promedio) == 7:
+                print("   ✅ Tiempos promedio object has 7 entries")
+                # Check all values are numbers
+                all_numbers = all(isinstance(v, (int, float)) for v in tiempos_promedio.values())
+                if all_numbers:
+                    print("   ✅ All tiempo promedio values are numbers")
+                else:
+                    print("   ❌ Some tiempo promedio values are not numbers")
+                    success = False
+            else:
+                print("   ❌ Tiempos promedio object structure invalid")
+                success = False
+            
+            # Validate conversiones array
+            conversiones = embudo.get('conversiones', [])
+            if isinstance(conversiones, list) and len(conversiones) == 6:  # 7 stages = 6 conversions
+                print("   ✅ Conversiones array has 6 entries (7 stages = 6 conversions)")
+                
+                # Validate conversion structure
+                if conversiones:
+                    first_conversion = conversiones[0]
+                    conversion_fields = ['desde', 'hacia', 'tasa']
+                    conversion_valid = True
+                    for field in conversion_fields:
+                        if field not in first_conversion:
+                            print(f"   ❌ Missing field in conversion: {field}")
+                            conversion_valid = False
+                    
+                    if conversion_valid and isinstance(first_conversion.get('tasa'), (int, float)):
+                        print("   ✅ Conversion structure is valid")
+                    else:
+                        print("   ❌ Conversion structure invalid")
+                        success = False
+            else:
+                print(f"   ❌ Expected 6 conversions, got {len(conversiones)}")
+                success = False
+            
+            # Deep validation of metricas structure
+            metricas = response.get('metricas', {})
+            required_metricas = [
+                'total_prospectos', 'prospectos_activos', 'tasa_conversion_general',
+                'cotizaciones_activas', 'pedidos_abiertos', 'instalaciones_proceso', 'postventas_abiertas'
+            ]
+            
+            for field in required_metricas:
+                if field not in metricas:
+                    print(f"   ❌ Missing metricas field: {field}")
+                    success = False
+                elif not isinstance(metricas[field], (int, float)):
+                    print(f"   ❌ Metricas field {field} should be numeric")
+                    success = False
+            
+            if success:
+                print("   ✅ Complete response structure validation passed")
+                print(f"   ✅ Detailed metrics: {metricas}")
+        
+        return success
+
 def main():
     print("🚀 Starting Prospectos Sundeck API Tests - KANBAN 360° SYSTEM")
     print("=" * 70)
