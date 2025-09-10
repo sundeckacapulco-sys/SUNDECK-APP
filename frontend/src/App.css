@@ -1223,29 +1223,7 @@ body {
   margin: 0;
 }
 
-.pieza-stats {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
 
-.m2-display {
-  background: linear-gradient(135deg, var(--accent) 0%, #0ea5e9 100%);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.total-display {
-  background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
-  color: var(--primary);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
 
 .btn-delete {
   background: transparent;
