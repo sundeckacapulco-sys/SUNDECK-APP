@@ -1662,49 +1662,79 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
 };
 
 // Componente para cada pieza en la tabla de medición
-const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto, precioM2General }) => {
+const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto, precioM2General, unidadMedida }) => {
   const [showFotos, setShowFotos] = useState(false);
 
   const handleInputChange = (campo, valor) => {
+    // Normalizar entrada: reemplazar coma por punto
+    if (campo === 'ancho' || campo === 'alto' || campo === 'precio_m2') {
+      if (typeof valor === 'string') {
+        valor = valor.replace(',', '.');
+      }
+    }
     onUpdate(campo, valor);
   };
 
-  const handleFotoUpload = (e) => {
-    const files = e.target.files;
-    if (files.length > 0) {
-      onUploadFoto(files);
-    }
-  };
-
-  // Calcular m² automáticamente
+  // Calcular m² automáticamente con validaciones
   const calcularM2 = () => {
-    const ancho = parseFloat(pieza.ancho) || 0;
-    const alto = parseFloat(pieza.alto) || 0;
-    if (ancho > 0 && alto > 0) {
-      // Si las medidas están en cm, dividir entre 10,000 para obtener m²
-      return (ancho * alto) / 10000;
+    let ancho = parseFloat(pieza.ancho) || 0;
+    let alto = parseFloat(pieza.alto) || 0;
+    
+    // Validar rangos razonables
+    if (unidadMedida === 'm') {
+      if (ancho > 10 || alto > 10) {
+        console.warn('Medidas muy grandes para metros:', ancho, alto);
+      }
+      if (ancho > 0 && alto > 0) {
+        return ancho * alto; // Directo en metros
+      }
+    } else { // cm
+      if (ancho > 1000 || alto > 1000) {
+        console.warn('Medidas muy grandes para centímetros:', ancho, alto);
+      }
+      if (ancho > 0 && alto > 0) {
+        return (ancho / 100) * (alto / 100); // Convertir cm a m²
+      }
     }
     return 0;
   };
 
-  // Calcular total de la pieza
-  const calcularTotalPieza = () => {
+  // Obtener precio aplicado (individual o general)
+  const obtenerPrecioAplicado = () => {
+    return parseFloat(pieza.precio_m2) || parseFloat(precioM2General) || 0;
+  };
+
+  // Calcular subtotal de la pieza
+  const calcularSubtotalPieza = () => {
     const m2 = calcularM2();
-    const precio = parseFloat(pieza.precio_m2 || precioM2General) || 0;
+    const precio = obtenerPrecioAplicado();
     return m2 * precio;
   };
 
   const metrosCuadrados = calcularM2();
-  const totalPieza = calcularTotalPieza();
+  const precioAplicado = obtenerPrecioAplicado();
+  const subtotalPieza = calcularSubtotalPieza();
+
+  // Validaciones visuales
+  const anchoNum = parseFloat(pieza.ancho) || 0;
+  const altoNum = parseFloat(pieza.alto) || 0;
+  const fueraDeRango = unidadMedida === 'm' ? (anchoNum > 10 || altoNum > 10) : (anchoNum > 1000 || altoNum > 1000);
 
   return (
     <div className="pieza-card">
       <div className="pieza-header">
         <h5>Pieza #{index + 1}</h5>
         <div className="pieza-stats">
-          <span className="m2-display">{metrosCuadrados.toFixed(2)} m²</span>
-          {totalPieza > 0 && (
-            <span className="total-display">${totalPieza.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+          <span className={`m2-display ${fueraDeRango ? 'warning' : ''}`}>
+            {metrosCuadrados.toFixed(2)} m²
+            {fueraDeRango && <span className="warning-icon">⚠️</span>}
+          </span>
+          {precioAplicado > 0 ? (
+            <span className="total-display">
+              ${subtotalPieza.toLocaleString('es-MX', {minimumFractionDigits: 2})}
+            </span>
+          ) : (
+            <span className="no-price-display">Falta precio</span>
           )}
         </div>
         <button
@@ -1729,24 +1759,29 @@ const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto, precioM2Ge
         </div>
 
         <div className="form-group">
-          <label>Ancho (cm)</label>
+          <label>Ancho ({unidadMedida})</label>
           <input
-            type="number"
-            step="0.1"
+            type="text"
             value={pieza.ancho}
-            onChange={(e) => handleInputChange('ancho', parseFloat(e.target.value) || '')}
-            placeholder="0.0"
+            onChange={(e) => handleInputChange('ancho', e.target.value)}
+            placeholder={unidadMedida === 'm' ? '2.50' : '250'}
+            className={fueraDeRango ? 'input-warning' : ''}
           />
+          {fueraDeRango && (
+            <small className="field-warning">
+              Valor muy grande para {unidadMedida === 'm' ? 'metros' : 'centímetros'}
+            </small>
+          )}
         </div>
 
         <div className="form-group">
-          <label>Alto (cm)</label>
+          <label>Alto ({unidadMedida})</label>
           <input
-            type="number"
-            step="0.1"
+            type="text"
             value={pieza.alto}
-            onChange={(e) => handleInputChange('alto', parseFloat(e.target.value) || '')}
-            placeholder="0.0"
+            onChange={(e) => handleInputChange('alto', e.target.value)}
+            placeholder={unidadMedida === 'm' ? '3.20' : '320'}
+            className={fueraDeRango ? 'input-warning' : ''}
           />
         </div>
 
@@ -1773,13 +1808,17 @@ const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto, precioM2Ge
         <div className="form-group">
           <label>Precio por m² (Opcional)</label>
           <input
-            type="number"
-            step="0.01"
+            type="text"
             value={pieza.precio_m2 || ''}
-            onChange={(e) => handleInputChange('precio_m2', parseFloat(e.target.value) || null)}
+            onChange={(e) => handleInputChange('precio_m2', e.target.value)}
             placeholder={`$${precioM2General || '0.00'}`}
           />
-          <small className="field-help">Deja vacío para usar precio general</small>
+          <small className="field-help">
+            {precioAplicado > 0 ? 
+              `Usando: $${precioAplicado.toFixed(2)}/m²` : 
+              'Deja vacío para usar precio general'
+            }
+          </small>
         </div>
 
         <div className="form-group span-2">
@@ -1844,6 +1883,13 @@ const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto, precioM2Ge
       </div>
     </div>
   );
+
+  function handleFotoUpload(e) {
+    const files = e.target.files;
+    if (files.length > 0) {
+      onUploadFoto(files);
+    }
+  }
 };
 
 export default App;
