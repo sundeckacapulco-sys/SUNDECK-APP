@@ -438,6 +438,217 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
           ← Volver al Dashboard
         </button>
       </div>
+      
+      {/* Modal de Reprogramación */}
+      {modalReprogramar && (
+        <div 
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setModalReprogramar(null);
+              setFechaReprogramacion('');
+              setMotivoReprogramacion('');
+              setNotasReprogramacion('');
+            }
+          }}
+        >
+          <div 
+            className="modal-contenido"
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '2rem',
+              maxWidth: '500px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ 
+                margin: '0 0 0.5rem 0', 
+                color: '#1f2937', 
+                fontSize: '1.5rem',
+                fontWeight: '600'
+              }}>
+                🔄 Reprogramar Recordatorio
+              </h3>
+              <p style={{ 
+                margin: 0, 
+                color: '#6b7280', 
+                fontSize: '0.95rem' 
+              }}>
+                <strong>{modalReprogramar.prospecto_nombre}</strong> - {getAccionDescripcion(modalReprogramar.tipo)}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem', 
+                fontWeight: '600',
+                color: '#374151'
+              }}>
+                📅 Nueva Fecha y Hora:
+              </label>
+              <input
+                type="datetime-local"
+                value={fechaReprogramacion}
+                onChange={(e) => setFechaReprogramacion(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+                min={new Date().toISOString().slice(0, 16)}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem', 
+                fontWeight: '600',
+                color: '#374151'
+              }}>
+                📝 Motivo de Reprogramación:
+              </label>
+              <select
+                value={motivoReprogramacion}
+                onChange={(e) => setMotivoReprogramacion(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="cliente_no_disponible">Cliente no disponible</option>
+                <option value="falta_informacion">Falta información</option>
+                <option value="espera_decision">Cliente necesita más tiempo</option>
+                <option value="problemas_tecnicos">Problemas técnicos</option>
+                <option value="solicitud_cliente">Solicitud del cliente</option>
+                <option value="feriado_imprevisto">Feriado imprevisto</option>
+                <option value="otro">Otro motivo</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '0.5rem', 
+                fontWeight: '600',
+                color: '#374151'
+              }}>
+                💬 Notas Adicionales (opcional):
+              </label>
+              <textarea
+                value={notasReprogramacion}
+                onChange={(e) => setNotasReprogramacion(e.target.value)}
+                placeholder="Agregar detalles adicionales sobre la reprogramación..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              justifyContent: 'flex-end' 
+            }}>
+              <button
+                onClick={() => {
+                  setModalReprogramar(null);
+                  setFechaReprogramacion('');
+                  setMotivoReprogramacion('');
+                  setNotasReprogramacion('');
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  background: 'white',
+                  color: '#6b7280',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.background = '#f9fafb';
+                  e.target.style.borderColor = '#d1d5db';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = 'white';
+                  e.target.style.borderColor = '#e5e7eb';
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (!fechaReprogramacion) {
+                    alert('⚠️ Debe seleccionar una fecha y hora');
+                    return;
+                  }
+                  if (!motivoReprogramacion) {
+                    alert('⚠️ Debe seleccionar un motivo');
+                    return;
+                  }
+                  reprogramarRecordatorio(
+                    modalReprogramar.id,
+                    fechaReprogramacion,
+                    motivoReprogramacion,
+                    notasReprogramacion
+                  );
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#2563eb'}
+                onMouseOut={(e) => e.target.style.background = '#3b82f6'}
+              >
+                🔄 Reprogramar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
