@@ -384,14 +384,14 @@ const TareaCompacta = ({
           }}
           title="Enviar mensaje por WhatsApp"
         >
-          WhatsApp
+          💬 WhatsApp
         </button>
         <button 
           className="btn-accion-small completar"
           onClick={() => onCompletar(recordatorio.id)}
           title="Marcar como completado"
         >
-          ✓
+          ✔ Completar
         </button>
         <button 
           className="btn-accion-small ver"
@@ -404,7 +404,7 @@ const TareaCompacta = ({
           }}
           title={`Ir a ${tipoVista.label}`}
         >
-          {tipoVista.label}
+          📂 Ver {tipoVista.label}
         </button>
       </div>
     </div>
