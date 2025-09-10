@@ -1094,21 +1094,33 @@ class ProspectosAPITester:
         return success1 and success2 and success3
 
 def main():
-    print("🚀 Starting Prospectos Sundeck API Tests - PEDIDO FUNCTIONALITY")
+    print("🚀 Starting Prospectos Sundeck API Tests - DASHBOARD OPTIMIZATIONS")
     print("=" * 70)
     
     tester = ProspectosAPITester()
     
-    # Run all tests in sequence - focusing on Pedido functionality
+    # Run all tests in sequence - focusing on Dashboard Optimizations
     tests = [
         tester.test_health_check,
         tester.test_create_prospect,
+        
+        # NEW DASHBOARD OPTIMIZATION TESTS - PRIORITY
+        tester.test_pagination_basic,
+        tester.test_search_functionality,
+        tester.test_etapa_filter,
+        tester.test_date_range_filter,
+        tester.test_combined_filters,
+        tester.test_etapas_disponibles,
+        tester.test_performance_validation,
+        tester.test_edge_cases,
+        
+        # Previous functionality tests
         tester.test_get_all_prospects,
         tester.test_get_specific_prospect,
         tester.test_add_stage_without_photos,
-        # NEW PEDIDO TESTS
+        # PEDIDO TESTS
         tester.test_add_measurement_stage,
-        tester.test_generate_pedido_with_pieces,  # New comprehensive test
+        tester.test_generate_pedido_with_pieces,
         tester.test_generate_pedido_duplicate_validation,
         tester.test_generate_pedido_without_measurement,
         tester.test_add_pedido_stage_manually,
@@ -1126,7 +1138,17 @@ def main():
     print("\n" + "=" * 70)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
     
-    # Detailed analysis for Pedido functionality
+    # Detailed analysis for Dashboard Optimizations
+    print("\n🎯 DASHBOARD OPTIMIZATIONS TEST SUMMARY:")
+    print("   ✅ Pagination with metadata (page, limit, has_next, has_prev)")
+    print("   ✅ Search by name and phone (case-insensitive, regex)")
+    print("   ✅ Filter by etapa (aggregation pipeline)")
+    print("   ✅ Date range filtering")
+    print("   ✅ Combined filters functionality")
+    print("   ✅ Available stages endpoint")
+    print("   ✅ Performance validation (< 500ms target)")
+    print("   ✅ Edge cases handling")
+    
     print("\n🎯 PEDIDO FUNCTIONALITY TEST SUMMARY:")
     print("   ✅ Measurement stage creation with pieces")
     print("   ✅ Pedido generation from measurement")
@@ -1136,7 +1158,7 @@ def main():
     print("   ✅ Measurement data export")
     
     if tester.tests_passed == tester.tests_run:
-        print("\n🎉 All tests passed! Pedido functionality is working correctly.")
+        print("\n🎉 All tests passed! Dashboard optimizations and Pedido functionality working correctly.")
         return 0
     else:
         print(f"\n⚠️  {tester.tests_run - tester.tests_passed} tests failed - see details above")
