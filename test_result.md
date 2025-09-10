@@ -122,11 +122,14 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "✅ Modelos Pydantic actualizados con campos específicos de pedido: monto_total, anticipo_recibido, saldo_pendiente, forma_pago, fecha_vencimiento_saldo, cotizacion_url, archivo_levantamiento_url"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Modelos Pydantic funcionando correctamente. Campos de pedido se guardan y recuperan sin problemas. Fixed default_factory issue for form data compatibility."
 
   - task: "Implementar endpoint para generar pedido desde medición"
     implemented: true
@@ -134,11 +137,14 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "✅ Endpoint POST /prospectos/{id}/generar-pedido implementado con regla mínimo 1 m² y cálculos comerciales"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Endpoint /api/prospectos/{id}/generar-pedido funciona perfectamente. Regla mínimo 1 m² aplicada correctamente (6.02 m² real → 6.5 m² comercial). Validaciones de duplicados y medición existente funcionan. Cálculos comerciales precisos: $157,000 total estimado."
 
   - task: "Agregar campos de anticipo y forma de pago"
     implemented: true
@@ -146,11 +152,14 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "✅ Campos integrados en modelo y endpoint de agregar etapa"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Campos de anticipo, saldo pendiente, forma de pago funcionan correctamente. Etapa Pedido manual creada exitosamente con todos los campos requeridos."
 
 frontend:
   - task: "Agregar etapa Pedido a lista de etapas disponibles"
