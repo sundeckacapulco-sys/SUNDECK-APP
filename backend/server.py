@@ -50,6 +50,7 @@ class ProspectoCreate(BaseModel):
     telefono: str
     producto_solicitado: str
     fecha_cita: datetime
+    direccion: Optional[str] = None
 
 class EtapaCreate(BaseModel):
     nombre_etapa: str
