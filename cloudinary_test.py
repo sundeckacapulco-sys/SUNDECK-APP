@@ -3,7 +3,6 @@ import sys
 import io
 from datetime import datetime, timezone
 import json
-from PIL import Image
 
 class CloudinaryTester:
     def __init__(self, base_url="https://sunflow-crm.preview.emergentagent.com/api"):
