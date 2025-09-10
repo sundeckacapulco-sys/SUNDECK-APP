@@ -1137,6 +1137,190 @@ async def obtener_logs_prospecto(prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving logs: {str(e)}")
 
+@api_router.get("/embudo-360")
+async def obtener_embudo_data(
+    fecha_inicio: str = None,
+    fecha_fin: str = None,
+    responsable: str = None
+):
+    """Obtener datos del embudo de ventas y conversiones"""
+    try:
+        # Construir filtro de fechas
+        date_filter = {}
+        if fecha_inicio:
+            date_filter["$gte"] = fecha_inicio
+        if fecha_fin:
+            date_filter["$lte"] = fecha_fin
+        
+        # Filtro base
+        base_filter = {}
+        if date_filter:
+            base_filter["created_at"] = date_filter
+        if responsable:
+            base_filter["responsable"] = responsable
+        
+        # Obtener todos los prospectos con filtros
+        prospectos = await db.prospectos.find(base_filter).to_list(length=None)
+        
+        # Definir etapas del embudo en orden
+        etapas_embudo = [
+            "Prospectos Nuevos",
+            "Cotizaciones Activas", 
+            "Pedidos",
+            "Fabricación",
+            "Instalación",
+            "Entrega",
+            "Postventa"
+        ]
+        
+        # Mapeo de etapas a embudo
+        mapeo_etapas = {
+            "Visita Inicial / Medición": "Prospectos Nuevos",
+            "Cotización Aprobada": "Cotizaciones Activas",
+            "Pedido": "Pedidos", 
+            "Fabricación": "Fabricación",
+            "Instalación en Proceso": "Instalación",
+            "Entrega Final": "Entrega",
+            "Postventa": "Postventa"
+        }
+        
+        # Contadores por etapa
+        contadores = {etapa: 0 for etapa in etapas_embudo}
+        prospectos_por_etapa = {etapa: [] for etapa in etapas_embudo}
+        
+        # Clasificar prospectos por etapa actual
+        for prospecto in prospectos:
+            if prospecto.get('etapas') and len(prospecto['etapas']) > 0:
+                ultima_etapa = prospecto['etapas'][-1]['nombre_etapa']
+                etapa_embudo = mapeo_etapas.get(ultima_etapa, "Prospectos Nuevos")
+            else:
+                etapa_embudo = "Prospectos Nuevos"
+            
+            contadores[etapa_embudo] += 1
+            prospectos_por_etapa[etapa_embudo].append(prospecto)
+        
+        # Calcular tasas de conversión
+        conversiones = []
+        for i in range(len(etapas_embudo) - 1):
+            etapa_actual = etapas_embudo[i]
+            etapa_siguiente = etapas_embudo[i + 1]
+            
+            total_actual = contadores[etapa_actual]
+            total_siguiente = sum(contadores[etapa] for etapa in etapas_embudo[i+1:])
+            
+            if total_actual > 0:
+                tasa_conversion = (total_siguiente / total_actual) * 100
+            else:
+                tasa_conversion = 0
+            
+            conversiones.append({
+                "desde": etapa_actual,
+                "hacia": etapa_siguiente,
+                "tasa": round(tasa_conversion, 2)
+            })
+        
+        # Calcular tiempo promedio por etapa
+        tiempos_promedio = {}
+        for etapa in etapas_embudo:
+            prospectos_etapa = prospectos_por_etapa[etapa]
+            if prospectos_etapa:
+                tiempos = []
+                for prospecto in prospectos_etapa:
+                    if prospecto.get('etapas') and len(prospecto['etapas']) > 0:
+                        fecha_primera = prospecto['etapas'][0].get('fecha')
+                        fecha_ultima = prospecto['etapas'][-1].get('fecha')
+                        
+                        if fecha_primera and fecha_ultima:
+                            if isinstance(fecha_primera, str):
+                                fecha_primera = datetime.fromisoformat(fecha_primera)
+                            if isinstance(fecha_ultima, str):
+                                fecha_ultima = datetime.fromisoformat(fecha_ultima)
+                            
+                            diferencia = (fecha_ultima - fecha_primera).days
+                            tiempos.append(diferencia)
+                
+                if tiempos:
+                    tiempos_promedio[etapa] = round(sum(tiempos) / len(tiempos), 1)
+                else:
+                    tiempos_promedio[etapa] = 0
+            else:
+                tiempos_promedio[etapa] = 0
+        
+        # Calcular métricas generales
+        total_prospectos = len(prospectos)
+        prospectos_activos = sum(contadores[etapa] for etapa in etapas_embudo[:-1])  # Excluir Postventa
+        tasa_conversion_general = (contadores["Postventa"] / total_prospectos * 100) if total_prospectos > 0 else 0
+        
+        return {
+            "embudo": {
+                "etapas": etapas_embudo,
+                "contadores": contadores,
+                "conversiones": conversiones,
+                "tiempos_promedio": tiempos_promedio
+            },
+            "metricas": {
+                "total_prospectos": total_prospectos,
+                "prospectos_activos": prospectos_activos,
+                "tasa_conversion_general": round(tasa_conversion_general, 2),
+                "cotizaciones_activas": contadores["Cotizaciones Activas"],
+                "pedidos_abiertos": contadores["Pedidos"] + contadores["Fabricación"],
+                "instalaciones_proceso": contadores["Instalación"],
+                "postventas_abiertas": contadores["Postventa"]
+            },
+            "filtros_aplicados": {
+                "fecha_inicio": fecha_inicio,
+                "fecha_fin": fecha_fin,
+                "responsable": responsable
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving embudo data: {str(e)}")
+
+@api_router.get("/embudo-360/export")
+async def exportar_embudo_data(
+    fecha_inicio: str = None,
+    fecha_fin: str = None,
+    responsable: str = None,
+    formato: str = "csv"
+):
+    """Exportar datos del embudo en CSV/Excel"""
+    try:
+        # Obtener datos del embudo
+        embudo_response = await obtener_embudo_data(fecha_inicio, fecha_fin, responsable)
+        embudo_data = embudo_response
+        
+        # Preparar datos para exportación
+        export_data = []
+        
+        # Datos por etapa
+        for etapa in embudo_data["embudo"]["etapas"]:
+            export_data.append({
+                "Etapa": etapa,
+                "Cantidad": embudo_data["embudo"]["contadores"][etapa],
+                "Tiempo_Promedio_Dias": embudo_data["embudo"]["tiempos_promedio"][etapa]
+            })
+        
+        # Datos de conversiones
+        conversion_data = []
+        for conversion in embudo_data["embudo"]["conversiones"]:
+            conversion_data.append({
+                "Desde": conversion["desde"],
+                "Hacia": conversion["hacia"], 
+                "Tasa_Conversion_%": conversion["tasa"]
+            })
+        
+        return {
+            "datos_etapas": export_data,
+            "datos_conversiones": conversion_data,
+            "metricas_generales": embudo_data["metricas"],
+            "formato": formato,
+            "fecha_generacion": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error exporting embudo data: {str(e)}")
+
 @api_router.get("/whatsapp-templates")
 async def obtener_whatsapp_templates():
     """Obtener plantillas de WhatsApp actuales"""
