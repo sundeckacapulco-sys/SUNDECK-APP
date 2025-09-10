@@ -4414,66 +4414,69 @@ body {
   line-height: 1.5;
 }
 
-/* Botones en fila compactos */
+/* Botones en fila con espaciado mejorado */
 .botones-fila {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   justify-content: flex-start;
-  margin-top: 0.25rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
 }
 
 .btn-compacto {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .btn-compacto:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-compacto.whatsapp {
-  background: #25d366;
+  background: linear-gradient(135deg, #25d366 0%, #20ba5a 100%);
   color: white;
   border-color: #25d366;
 }
 
 .btn-compacto.whatsapp:hover {
-  background: #20ba5a;
-  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.4);
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+  border-color: #20ba5a;
 }
 
 .btn-compacto.completar {
-  background: var(--sundeck-gold);
+  background: linear-gradient(135deg, var(--sundeck-gold) 0%, var(--sundeck-gold-light) 100%);
   color: white;
   border-color: var(--sundeck-gold);
 }
 
 .btn-compacto.completar:hover {
-  background: var(--sundeck-gold-light);
-  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+  border-color: var(--sundeck-gold-light);
 }
 
 .btn-compacto.ver {
-  background: var(--sundeck-purple);
+  background: linear-gradient(135deg, var(--sundeck-purple) 0%, #7c3aed 100%);
   color: white;
   border-color: var(--sundeck-purple);
 }
 
 .btn-compacto.ver:hover {
-  background: #7c3aed;
-  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+  border-color: #7c3aed;
 }
 
 /* Badge con colores */
