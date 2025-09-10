@@ -321,11 +321,11 @@ const EditarPlantillasModal = ({ isOpen, onClose, onUpdate }) => {
                 <div className="info-box">
                   <h4>Variables disponibles:</h4>
                   <div className="variables-list">
-                    <span className="variable">{nombre}</span>
-                    <span className="variable">{telefono}</span>
-                    <span className="variable">{producto}</span>
-                    <span className="variable">{fecha}</span>
-                    <span className="variable">{hora}</span>
+                    <span className="variable">&#123;nombre&#125;</span>
+                    <span className="variable">&#123;telefono&#125;</span>
+                    <span className="variable">&#123;producto&#125;</span>
+                    <span className="variable">&#123;fecha&#125;</span>
+                    <span className="variable">&#123;hora&#125;</span>
                   </div>
                 </div>
               </div>
