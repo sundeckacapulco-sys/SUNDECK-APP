@@ -3,6 +3,8 @@ import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './App.css';
 import whatsappTemplates from './whatsappTemplates.json';
+import { UserProvider, useUser } from './contexts/UserContext';
+import Embudo360 from './components/Embudo360';
 
 // Función para generar URL de WhatsApp (formato México limpio)
 const generateWhatsAppURL = (telefono, mensaje) => {
