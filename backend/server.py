@@ -78,6 +78,7 @@ class Etapa(BaseModel):
     fecha: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     comentario: str
     fotos: List[str] = Field(default_factory=list)
+    piezas_medicion: Optional[List[dict]] = Field(default_factory=list)
 
 # Cloudinary service functions
 def upload_to_cloudinary(file_content, filename: str):
