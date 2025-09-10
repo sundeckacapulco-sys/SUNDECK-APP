@@ -1693,6 +1693,316 @@ async def eliminar_prospecto(prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting prospecto: {str(e)}")
 
+# ==========================================
+# ENDPOINTS SISTEMA DE RECORDATORIOS
+# ==========================================
+
+@api_router.get("/recordatorios", response_model=dict)
+async def obtener_recordatorios(
+    estado: str = None,
+    prospecto_id: str = None,
+    tipo: str = None,
+    vencidos_solo: bool = False
+):
+    """Obtener recordatorios con filtros"""
+    try:
+        filtro = {}
+        
+        if estado:
+            filtro["estado"] = estado
+        
+        if prospecto_id:
+            filtro["prospecto_id"] = prospecto_id
+            
+        if tipo:
+            filtro["tipo"] = tipo
+        
+        # Si solo queremos vencidos
+        if vencidos_solo:
+            fecha_actual = datetime.now(timezone.utc).isoformat()
+            filtro["fecha_limite"] = {"$lt": fecha_actual}
+            filtro["estado"] = EstadoRecordatorio.PENDIENTE
+        
+        recordatorios = await db.recordatorios.find(filtro).sort("fecha_limite", 1).to_list(length=None)
+        
+        # Enriquecer con datos del prospecto
+        for recordatorio in recordatorios:
+            prospecto = await db.prospectos.find_one({"id": recordatorio["prospecto_id"]})
+            if prospecto:
+                recordatorio["prospecto_nombre"] = prospecto.get("nombre", "")
+                recordatorio["prospecto_telefono"] = prospecto.get("telefono", "")
+                recordatorio["prospecto_producto"] = prospecto.get("producto_solicitado", "")
+        
+        # Calcular estadísticas
+        total_recordatorios = len(recordatorios)
+        pendientes = len([r for r in recordatorios if r.get("estado") == EstadoRecordatorio.PENDIENTE])
+        vencidos = len([r for r in recordatorios if r.get("estado") == EstadoRecordatorio.PENDIENTE and r.get("fecha_limite", "") < datetime.now(timezone.utc).isoformat()])
+        
+        return {
+            "recordatorios": recordatorios,
+            "estadisticas": {
+                "total": total_recordatorios,
+                "pendientes": pendientes,
+                "vencidos": vencidos,
+                "completados": total_recordatorios - pendientes
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving recordatorios: {str(e)}")
+
+@api_router.post("/recordatorios", response_model=Recordatorio)
+async def crear_recordatorio(recordatorio_data: RecordatorioCreate):
+    """Crear nuevo recordatorio manual"""
+    try:
+        recordatorio_dict = recordatorio_data.dict()
+        recordatorio_dict['id'] = str(uuid.uuid4())
+        recordatorio_dict['estado'] = EstadoRecordatorio.PENDIENTE
+        recordatorio_dict['created_at'] = datetime.now(timezone.utc).isoformat()
+        recordatorio_dict['updated_at'] = datetime.now(timezone.utc).isoformat()
+        
+        # Convert datetime to ISO string for MongoDB
+        if isinstance(recordatorio_dict['fecha_limite'], datetime):
+            recordatorio_dict['fecha_limite'] = recordatorio_dict['fecha_limite'].isoformat()
+        
+        result = await db.recordatorios.insert_one(recordatorio_dict)
+        
+        # Retrieve the created document
+        created_doc = await db.recordatorios.find_one({"_id": result.inserted_id})
+        
+        # Convert back to datetime objects for response
+        if isinstance(created_doc['fecha_limite'], str):
+            created_doc['fecha_limite'] = datetime.fromisoformat(created_doc['fecha_limite'])
+        if isinstance(created_doc['created_at'], str):
+            created_doc['created_at'] = datetime.fromisoformat(created_doc['created_at'])
+        if isinstance(created_doc['updated_at'], str):
+            created_doc['updated_at'] = datetime.fromisoformat(created_doc['updated_at'])
+            
+        return Recordatorio(**created_doc)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating recordatorio: {str(e)}")
+
+@api_router.patch("/recordatorios/{recordatorio_id}/completar")
+async def completar_recordatorio(recordatorio_id: str, notas: str = None):
+    """Marcar recordatorio como completado"""
+    try:
+        update_data = {
+            "estado": EstadoRecordatorio.COMPLETADO,
+            "fecha_completado": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if notas:
+            update_data["notas_seguimiento"] = notas
+        
+        result = await db.recordatorios.update_one(
+            {"id": recordatorio_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Recordatorio not found")
+        
+        return {"message": "Recordatorio marcado como completado", "id": recordatorio_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error completing recordatorio: {str(e)}")
+
+@api_router.get("/recordatorios/dashboard", response_model=dict)
+async def obtener_dashboard_recordatorios():
+    """Obtener resumen de recordatorios para dashboard"""
+    try:
+        fecha_actual = datetime.now(timezone.utc).isoformat()
+        
+        # Recordatorios pendientes
+        pendientes = await db.recordatorios.find({
+            "estado": EstadoRecordatorio.PENDIENTE
+        }).to_list(length=None)
+        
+        # Recordatorios vencidos
+        vencidos = await db.recordatorios.find({
+            "estado": EstadoRecordatorio.PENDIENTE,
+            "fecha_limite": {"$lt": fecha_actual}
+        }).to_list(length=None)
+        
+        # Recordatorios de hoy
+        fecha_inicio_hoy = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        fecha_fin_hoy = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59, microsecond=999999).isoformat()
+        
+        hoy = await db.recordatorios.find({
+            "estado": EstadoRecordatorio.PENDIENTE,
+            "fecha_limite": {
+                "$gte": fecha_inicio_hoy,
+                "$lte": fecha_fin_hoy
+            }
+        }).to_list(length=None)
+        
+        # Enriquecer con datos de prospectos
+        for recordatorio in pendientes + vencidos + hoy:
+            prospecto = await db.prospectos.find_one({"id": recordatorio["prospecto_id"]})
+            if prospecto:
+                recordatorio["prospecto_nombre"] = prospecto.get("nombre", "")
+                recordatorio["prospecto_telefono"] = prospecto.get("telefono", "")
+                recordatorio["prospecto_producto"] = prospecto.get("producto_solicitado", "")
+        
+        return {
+            "total_pendientes": len(pendientes),
+            "total_vencidos": len(vencidos),
+            "total_hoy": len(hoy),
+            "recordatorios_urgentes": vencidos[:5],  # Top 5 más urgentes
+            "recordatorios_hoy": hoy
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving dashboard recordatorios: {str(e)}")
+
+# ==========================================
+# ENDPOINTS PLANTILLAS WHATSAPP
+# ==========================================
+
+@api_router.get("/templates-whatsapp", response_model=List[TemplateWhatsApp])
+async def obtener_templates_whatsapp(activo: bool = None):
+    """Obtener plantillas WhatsApp"""
+    try:
+        filtro = {}
+        if activo is not None:
+            filtro["activo"] = activo
+        
+        templates = await db.templates_whatsapp.find(filtro).to_list(length=None)
+        
+        # Convert datetime strings back to datetime objects
+        for template in templates:
+            if isinstance(template.get('created_at'), str):
+                template['created_at'] = datetime.fromisoformat(template['created_at'])
+            if isinstance(template.get('updated_at'), str):
+                template['updated_at'] = datetime.fromisoformat(template['updated_at'])
+        
+        return [TemplateWhatsApp(**template) for template in templates]
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving templates: {str(e)}")
+
+@api_router.post("/templates-whatsapp", response_model=TemplateWhatsApp)
+async def crear_template_whatsapp(template_data: TemplateWhatsAppCreate):
+    """Crear nueva plantilla WhatsApp"""
+    try:
+        template_dict = template_data.dict()
+        template_dict['id'] = str(uuid.uuid4())
+        template_dict['created_at'] = datetime.now(timezone.utc).isoformat()
+        template_dict['updated_at'] = datetime.now(timezone.utc).isoformat()
+        
+        result = await db.templates_whatsapp.insert_one(template_dict)
+        
+        # Retrieve the created document
+        created_doc = await db.templates_whatsapp.find_one({"_id": result.inserted_id})
+        
+        # Convert back to datetime objects for response
+        if isinstance(created_doc['created_at'], str):
+            created_doc['created_at'] = datetime.fromisoformat(created_doc['created_at'])
+        if isinstance(created_doc['updated_at'], str):
+            created_doc['updated_at'] = datetime.fromisoformat(created_doc['updated_at'])
+            
+        return TemplateWhatsApp(**created_doc)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating template: {str(e)}")
+
+@api_router.put("/templates-whatsapp/{template_id}", response_model=TemplateWhatsApp)
+async def actualizar_template_whatsapp(template_id: str, template_data: TemplateWhatsAppUpdate):
+    """Actualizar plantilla WhatsApp"""
+    try:
+        update_data = {k: v for k, v in template_data.dict().items() if v is not None}
+        update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+        
+        result = await db.templates_whatsapp.update_one(
+            {"id": template_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Retrieve updated document
+        updated_doc = await db.templates_whatsapp.find_one({"id": template_id})
+        
+        # Convert back to datetime objects for response
+        if isinstance(updated_doc['created_at'], str):
+            updated_doc['created_at'] = datetime.fromisoformat(updated_doc['created_at'])
+        if isinstance(updated_doc['updated_at'], str):
+            updated_doc['updated_at'] = datetime.fromisoformat(updated_doc['updated_at'])
+            
+        return TemplateWhatsApp(**updated_doc)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating template: {str(e)}")
+
+@api_router.get("/templates-whatsapp/{template_id}/mensaje")
+async def generar_mensaje_template(template_id: str, prospecto_id: str):
+    """Generar mensaje personalizado usando template y datos del prospecto"""
+    try:
+        # Obtener template
+        template = await db.templates_whatsapp.find_one({"id": template_id})
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Obtener prospecto
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Generar mensaje personalizado
+        mensaje = template["mensaje"]
+        
+        # Reemplazar variables
+        mensaje = mensaje.replace("{nombre}", prospecto.get("nombre", ""))
+        mensaje = mensaje.replace("{producto}", prospecto.get("producto_solicitado", ""))
+        
+        # Formatear fecha si está disponible
+        if "{fecha}" in mensaje and prospecto.get("fecha_cita"):
+            try:
+                fecha_cita = datetime.fromisoformat(prospecto["fecha_cita"]) if isinstance(prospecto["fecha_cita"], str) else prospecto["fecha_cita"]
+                fecha_formateada = fecha_cita.strftime("%d de %B de %Y")
+                mensaje = mensaje.replace("{fecha}", fecha_formateada)
+            except:
+                mensaje = mensaje.replace("{fecha}", "fecha programada")
+        
+        if "{hora}" in mensaje and prospecto.get("fecha_cita"):
+            try:
+                fecha_cita = datetime.fromisoformat(prospecto["fecha_cita"]) if isinstance(prospecto["fecha_cita"], str) else prospecto["fecha_cita"]
+                hora_formateada = fecha_cita.strftime("%H:%M")
+                mensaje = mensaje.replace("{hora}", hora_formateada)
+            except:
+                mensaje = mensaje.replace("{hora}", "hora programada")
+        
+        # Generar URL de WhatsApp
+        telefono = prospecto.get("telefono", "")
+        # Limpiar número de teléfono (formato México)
+        clean_phone = telefono.replace("+", "").replace("-", "").replace(" ", "")
+        if clean_phone.startswith("52"):
+            clean_phone = clean_phone[2:]
+        if len(clean_phone) == 10:
+            whatsapp_url = f"https://wa.me/52{clean_phone}?text={mensaje.replace(' ', '%20')}"
+        else:
+            whatsapp_url = None
+        
+        return {
+            "mensaje": mensaje,
+            "whatsapp_url": whatsapp_url,
+            "template_nombre": template["nombre"],
+            "prospecto_nombre": prospecto.get("nombre", ""),
+            "prospecto_telefono": telefono
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating message: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
