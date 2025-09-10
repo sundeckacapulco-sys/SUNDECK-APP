@@ -4162,6 +4162,16 @@ body {
   transition: all 0.3s ease !important;
 }
 
+.tareas-pendientes .segmento-contenedor {
+  background: white !important;
+  border: 3px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  margin-bottom: 3rem !important;
+  overflow: hidden !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
 .segmento-contenedor:hover {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
   transform: translateY(-3px);
