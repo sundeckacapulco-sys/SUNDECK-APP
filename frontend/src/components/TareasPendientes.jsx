@@ -49,38 +49,7 @@ const TareasPendientes = ({ onNavigate }) => {
     }
   };
 
-  // Generar mensaje de WhatsApp personalizado
-  const enviarWhatsApp = async (recordatorio) => {
-    try {
-      // Por ahora usar el mensaje del recordatorio directamente
-      const mensaje = recordatorio.mensaje_sugerido;
-      const telefono = recordatorio.prospecto_telefono?.replace(/[^0-9]/g, '') || '';
-      
-      if (telefono.length >= 10) {
-        let cleanPhone = telefono;
-        if (cleanPhone.startsWith('52')) {
-          cleanPhone = cleanPhone.substring(2);
-        }
-        if (cleanPhone.length === 10) {
-          const whatsappUrl = `https://wa.me/52${cleanPhone}?text=${encodeURIComponent(mensaje)}`;
-          window.open(whatsappUrl, '_blank');
-          
-          // Preguntar si se completó el seguimiento
-          setTimeout(() => {
-            if (window.confirm('¿Ya realizó el seguimiento? ¿Marcar como completado?')) {
-              completarRecordatorio(recordatorio.id, 'Seguimiento realizado vía WhatsApp');
-            }
-          }, 2000);
-        } else {
-          alert('❌ Número de teléfono inválido');
-        }
-      } else {
-        alert('❌ No hay número de teléfono válido para este prospecto');
-      }
-    } catch (error) {
-      console.error('Error enviando WhatsApp:', error);
-    }
-  };
+
 
   // Formatear fecha compacta
   const formatearFechaCompacta = (fechaStr) => {
