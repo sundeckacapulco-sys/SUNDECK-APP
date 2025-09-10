@@ -805,12 +805,16 @@ async def mover_prospecto_etapa(request: dict):
         )
         
         # Registrar log de actividad
+        etapa_anterior = "Nuevo"
+        if prospecto.get('etapas') and len(prospecto['etapas']) > 0:
+            etapa_anterior = prospecto['etapas'][-1].get('nombre_etapa', 'Desconocida')
+        
         log_actividad = {
             "id": str(uuid.uuid4()),
             "prospecto_id": prospecto_id,
             "accion": "mover_etapa",
             "descripcion": f"Movido a {etapa_nombre}",
-            "etapa_anterior": prospecto['etapas'][-1]['nombre_etapa'] if prospecto.get('etapas') else "Nuevo",
+            "etapa_anterior": etapa_anterior,
             "etapa_nueva": etapa_nombre,
             "fecha": datetime.now(timezone.utc).isoformat(),
             "comentario": comentario
