@@ -145,36 +145,20 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
 
   return (
     <div className="tareas-pendientes">
-      {/* Header con estadísticas */}
-      <div className="tareas-header">
-        <div className="tareas-title">
-          <h2>📋 Tareas Pendientes - Centro de Seguimiento</h2>
-          <p>Gestión automática de recordatorios y seguimientos de prospectos</p>
-        </div>
-        
-        <div className="tareas-stats">
-          <div className="stat-card pending">
-            <div className="stat-icon">⏳</div>
-            <div className="stat-content">
-              <div className="stat-number">{estadisticas.pendientes || 0}</div>
-              <div className="stat-label">Pendientes</div>
-            </div>
-          </div>
-          
-          <div className="stat-card overdue">
-            <div className="stat-icon">🚨</div>
-            <div className="stat-content">
-              <div className="stat-number">{estadisticas.vencidos || 0}</div>
-              <div className="stat-label">Vencidos</div>
-            </div>
-          </div>
-          
-          <div className="stat-card completed">
-            <div className="stat-icon">✅</div>
-            <div className="stat-content">
-              <div className="stat-number">{estadisticas.completados || 0}</div>
-              <div className="stat-label">Completados</div>
-            </div>
+      {/* Header compacto con badges */}
+      <div className="tareas-header-compacto">
+        <div className="tareas-title-compacto">
+          <h2>📋 Centro de Seguimiento</h2>
+          <div className="stats-badges">
+            <span className="stat-badge pending">
+              ⏳ Pendientes: {estadisticas.pendientes || 0}
+            </span>
+            <span className="stat-badge overdue">
+              🚨 Vencidos: {estadisticas.vencidos || 0}
+            </span>
+            <span className="stat-badge completed">
+              ✅ Completados: {estadisticas.completados || 0}
+            </span>
           </div>
         </div>
       </div>
