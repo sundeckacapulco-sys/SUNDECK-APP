@@ -853,6 +853,12 @@ const MapaView = ({ prospectos, onNavigate }) => {
                     )}
                   </div>
                   <div className="prospect-actions">
+                    <WhatsAppButton 
+                      prospecto={prospecto} 
+                      tipo="general" 
+                      className="btn-whatsapp-small"
+                      size="small"
+                    />
                     <button 
                       className="btn-primary small"
                       onClick={() => {
