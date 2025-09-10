@@ -4147,69 +4147,100 @@ body {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
-/* Grupos de urgencia Sundeck colapsables */
-.grupo-urgencia {
-  margin-bottom: 2rem;
+/* Contenedores de Segmentos Sundeck */
+.segmento-contenedor {
+  background: white;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
+  margin-bottom: 2rem;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
 }
 
-.grupo-titulo {
-  font-size: 1.2rem;
+.segmento-contenedor:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.segmento-titulo {
+  font-size: 1.1rem;
   font-weight: 700;
-  margin-bottom: 0;
   padding: 1rem 1.5rem;
-  border-radius: 12px 12px 0 0;
+  margin: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   transition: all 0.3s ease;
   user-select: none;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.grupo-titulo:hover {
-  transform: translateY(-1px);
+.segmento-titulo:hover {
+  background: rgba(0, 0, 0, 0.02);
 }
 
-.grupo-titulo .toggle-icon {
-  font-size: 1rem;
+.segmento-titulo .toggle-icon {
+  font-size: 0.9rem;
   transition: transform 0.3s ease;
+  color: #64748b;
 }
 
-.grupo-titulo.collapsed .toggle-icon {
+.segmento-titulo.collapsed .toggle-icon {
   transform: rotate(180deg);
 }
 
-.grupo-titulo.vencido {
-  background: linear-gradient(135deg, var(--sundeck-red) 0%, #dc2626 100%);
-  color: white;
+.segmento-titulo.vencidas {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: var(--sundeck-red);
+  border-color: var(--sundeck-red);
 }
 
-.grupo-titulo.hoy {
-  background: linear-gradient(135deg, var(--sundeck-gold) 0%, var(--sundeck-gold-light) 100%);
-  color: white;
+.segmento-titulo.hoy {
+  background: linear-gradient(135deg, #fffbeb 0%, var(--sundeck-gold-bg) 100%);
+  color: #d97706;
+  border-color: var(--sundeck-gold);
 }
 
-.grupo-titulo.manana {
-  background: linear-gradient(135deg, var(--sundeck-green) 0%, #059669 100%);
-  color: white;
+.segmento-titulo.manana {
+  background: linear-gradient(135deg, #f0fdf4 0%, var(--sundeck-green-bg) 100%);
+  color: var(--sundeck-green);
+  border-color: var(--sundeck-green);
 }
 
-.grupo-titulo.futuro {
-  background: linear-gradient(135deg, var(--sundeck-blue) 0%, #2563eb 100%);
-  color: white;
+.segmento-titulo.futuras {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: var(--sundeck-blue);
+  border-color: var(--sundeck-blue);
 }
 
-.grupo-contenido {
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 0 0 12px 12px;
+.segmento-contenido {
+  padding: 1.5rem;
+  background: #fafbfc;
+  display: grid;
+  gap: 1rem;
 }
 
-.grupo-contenido.collapsed {
+.segmento-contenido.collapsed {
   display: none;
+}
+
+/* Fondo sutil por tipo de segmento */
+.segmento-contenedor.vencidas .segmento-contenido {
+  background: linear-gradient(135deg, #fefefe 0%, #fef7f7 100%);
+}
+
+.segmento-contenedor.hoy .segmento-contenido {
+  background: linear-gradient(135deg, #fefefe 0%, #fffef7 100%);
+}
+
+.segmento-contenedor.manana .segmento-contenido {
+  background: linear-gradient(135deg, #fefefe 0%, #f7fef7 100%);
+}
+
+.segmento-contenedor.futuras .segmento-contenido {
+  background: linear-gradient(135deg, #fefefe 0%, #f7f9fb 100%);
 }
 
 /* Tarjeta de Tarea Sundeck Profesional */
