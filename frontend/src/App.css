@@ -4147,44 +4147,69 @@ body {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
-/* Grupos de urgencia */
+/* Grupos de urgencia Sundeck colapsables */
 .grupo-urgencia {
   margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .grupo-titulo {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0;
+  padding: 1rem 1.5rem;
+  border-radius: 12px 12px 0 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.grupo-titulo:hover {
+  transform: translateY(-1px);
+}
+
+.grupo-titulo .toggle-icon {
+  font-size: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.grupo-titulo.collapsed .toggle-icon {
+  transform: rotate(180deg);
 }
 
 .grupo-titulo.vencido {
-  background: #fee2e2;
-  color: #dc2626;
-  border-left: 4px solid #ef4444;
+  background: linear-gradient(135deg, var(--sundeck-red) 0%, #dc2626 100%);
+  color: white;
 }
 
 .grupo-titulo.hoy {
-  background: #fef3c7;
-  color: #d97706;
-  border-left: 4px solid #f59e0b;
+  background: linear-gradient(135deg, var(--sundeck-gold) 0%, var(--sundeck-gold-light) 100%);
+  color: white;
 }
 
-.grupo-titulo.mañana {
-  background: #f0fdf4;
-  color: #059669;
-  border-left: 4px solid #10b981;
+.grupo-titulo.manana {
+  background: linear-gradient(135deg, var(--sundeck-green) 0%, #059669 100%);
+  color: white;
 }
 
 .grupo-titulo.futuro {
+  background: linear-gradient(135deg, var(--sundeck-blue) 0%, #2563eb 100%);
+  color: white;
+}
+
+.grupo-contenido {
+  padding: 1rem;
   background: #f8fafc;
-  color: #475569;
-  border-left: 4px solid #94a3b8;
+  border-radius: 0 0 12px 12px;
+}
+
+.grupo-contenido.collapsed {
+  display: none;
 }
 
 /* Tarjeta de Tarea Sundeck Profesional */
