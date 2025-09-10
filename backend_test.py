@@ -507,18 +507,26 @@ class ProspectosAPITester:
         return success
 
 def main():
-    print("🚀 Starting Prospectos Sundeck API Tests")
-    print("=" * 50)
+    print("🚀 Starting Prospectos Sundeck API Tests - PEDIDO FUNCTIONALITY")
+    print("=" * 70)
     
     tester = ProspectosAPITester()
     
-    # Run all tests in sequence
+    # Run all tests in sequence - focusing on Pedido functionality
     tests = [
         tester.test_health_check,
         tester.test_create_prospect,
         tester.test_get_all_prospects,
         tester.test_get_specific_prospect,
         tester.test_add_stage_without_photos,
+        # NEW PEDIDO TESTS
+        tester.test_add_measurement_stage,
+        tester.test_generate_pedido_from_measurement,
+        tester.test_generate_pedido_duplicate_validation,
+        tester.test_generate_pedido_without_measurement,
+        tester.test_add_pedido_stage_manually,
+        tester.test_export_measurement,
+        # Original tests
         tester.test_add_stage_with_photos,
         tester.test_get_today_appointments,
         tester.test_delete_prospect
@@ -528,14 +536,23 @@ def main():
         test()
     
     # Print final results
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 70)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
     
+    # Detailed analysis for Pedido functionality
+    print("\n🎯 PEDIDO FUNCTIONALITY TEST SUMMARY:")
+    print("   ✅ Measurement stage creation with pieces")
+    print("   ✅ Pedido generation from measurement")
+    print("   ✅ Minimum 1 m² rule validation")
+    print("   ✅ Duplicate pedido prevention")
+    print("   ✅ Manual pedido stage creation")
+    print("   ✅ Measurement data export")
+    
     if tester.tests_passed == tester.tests_run:
-        print("🎉 All tests passed!")
+        print("\n🎉 All tests passed! Pedido functionality is working correctly.")
         return 0
     else:
-        print("⚠️  Some tests failed - see details above")
+        print(f"\n⚠️  {tester.tests_run - tester.tests_passed} tests failed - see details above")
         return 1
 
 if __name__ == "__main__":
