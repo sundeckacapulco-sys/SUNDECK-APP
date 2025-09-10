@@ -9,6 +9,21 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
   const [mensajeExpandido, setMensajeExpandido] = useState(null);
   const [gruposColapsados, setGruposColapsados] = useState({});
 
+  // Función de navegación aislada
+  const navegarAlDashboard = () => {
+    console.log('=== NAVEGACIÓN AL DASHBOARD ===');
+    console.log('onNavigate disponible:', !!onNavigate);
+    console.log('Tipo de onNavigate:', typeof onNavigate);
+    
+    if (onNavigate && typeof onNavigate === 'function') {
+      console.log('Llamando onNavigate("dashboard")');
+      onNavigate('dashboard');
+    } else {
+      console.log('Navegación directa via URL');
+      window.location.href = '/';
+    }
+  };
+
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
   // Cargar recordatorios
