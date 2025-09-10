@@ -3707,8 +3707,8 @@ body {
 }
 
 .tareas-pendientes {
-  padding: 2rem;
-  max-width: 1200px;
+  padding: 2.5rem;
+  max-width: 1400px;
   margin: 0 auto;
   background: var(--background);
   min-height: 100vh;
