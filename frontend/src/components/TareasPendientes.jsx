@@ -555,6 +555,26 @@ const TareaCompacta = ({
           ✔ Completar
         </button>
         <button 
+          className="btn-compacto reprogramar"
+          onClick={() => onReprogramar && onReprogramar(recordatorio)}
+          title="Reprogramar tarea"
+          style={{
+            background: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            padding: '0.5rem 1rem',
+            borderRadius: '6px',
+            fontSize: '0.85rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={(e) => e.target.style.background = '#2563eb'}
+          onMouseOut={(e) => e.target.style.background = '#3b82f6'}
+        >
+          🔄 Reprogramar
+        </button>
+        <button 
           className="btn-compacto ver"
           onClick={() => {
             if (onNavigateToProspecto) {
