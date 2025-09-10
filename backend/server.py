@@ -199,7 +199,7 @@ async def agregar_etapa(
     etapa_data: EtapaCreate = Depends(),
     fotos: List[UploadFile] = File(default=[])
 ):
-    """Agregar nueva etapa a un prospecto con fotos"""
+    """Agregar nueva etapa a un prospecto con fotos y mediciones"""
     try:
         # Check if prospecto exists
         prospecto = await db.prospectos.find_one({"id": prospecto_id})
@@ -221,7 +221,8 @@ async def agregar_etapa(
             "nombre_etapa": etapa_data.nombre_etapa,
             "fecha": datetime.now(timezone.utc).isoformat(),
             "comentario": etapa_data.comentario,
-            "fotos": foto_urls
+            "fotos": foto_urls,
+            "piezas_medicion": etapa_data.piezas_medicion if etapa_data.piezas_medicion else []
         }
         
         # Add etapa to prospecto
@@ -236,6 +237,44 @@ async def agregar_etapa(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error adding etapa: {str(e)}")
+
+@api_router.get("/prospectos/{prospecto_id}/medicion/export")
+async def exportar_medicion(prospecto_id: str):
+    """Exportar medición de un prospecto"""
+    try:
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Buscar etapa de medición
+        etapa_medicion = None
+        for etapa in prospecto.get('etapas', []):
+            if etapa.get('nombre_etapa') == 'Visita Inicial / Medición':
+                etapa_medicion = etapa
+                break
+        
+        if not etapa_medicion or not etapa_medicion.get('piezas_medicion'):
+            raise HTTPException(status_code=404, detail="No se encontraron mediciones para este prospecto")
+        
+        return {
+            "prospecto": {
+                "nombre": prospecto["nombre"],
+                "telefono": prospecto["telefono"],
+                "producto_solicitado": prospecto["producto_solicitado"],
+                "fecha_cita": prospecto["fecha_cita"],
+                "direccion": prospecto.get("direccion", "")
+            },
+            "medicion": {
+                "fecha": etapa_medicion["fecha"],
+                "comentario": etapa_medicion["comentario"],
+                "piezas": etapa_medicion["piezas_medicion"]
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error exporting medicion: {str(e)}")
 
 @api_router.get("/citas-hoy")
 async def obtener_citas_hoy():
