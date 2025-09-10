@@ -191,6 +191,307 @@ class ProspectosAPITester:
         
         return success
 
+    def test_add_measurement_stage(self):
+        """Test adding a measurement stage with pieces for pedido generation"""
+        if not self.created_prospect_id:
+            print("❌ Skipping - No prospect ID available")
+            return False
+            
+        # Create measurement data with pieces of different sizes (some < 1 m², some > 1 m²)
+        measurement_data = {
+            'nombre_etapa': 'Visita Inicial / Medición',
+            'comentario': 'Medición completa con piezas de diferentes tamaños',
+            'precio_m2_general': 25000,
+            'unidad_medida': 'm',
+            'piezas_medicion': [
+                {
+                    'id': 'pieza-1',
+                    'ubicacion': 'Terraza Principal',
+                    'ancho': 0.8,  # < 1 m² when multiplied by alto
+                    'alto': 1.0,
+                    'producto_tela': 'Deck WPC',
+                    'color_acabado': 'Café Oscuro',
+                    'observaciones': 'Pieza pequeña - debe aplicar regla mínimo 1 m²',
+                    'precio_m2': 28000
+                },
+                {
+                    'id': 'pieza-2',
+                    'ubicacion': 'Balcón Dormitorio',
+                    'ancho': 2.5,  # > 1 m²
+                    'alto': 1.8,
+                    'producto_tela': 'Deck Natural',
+                    'color_acabado': 'Natural',
+                    'observaciones': 'Pieza grande - cálculo normal',
+                    'precio_m2': 22000
+                },
+                {
+                    'id': 'pieza-3',
+                    'ubicacion': 'Entrada',
+                    'ancho': 0.6,  # < 1 m² when multiplied by alto
+                    'alto': 1.2,
+                    'producto_tela': 'Deck Premium',
+                    'color_acabado': 'Gris',
+                    'observaciones': 'Otra pieza pequeña para probar regla mínimo',
+                    'precio_m2': 30000
+                }
+            ]
+        }
+        
+        success, response = self.run_test(
+            "Add Measurement Stage with Pieces",
+            "POST",
+            f"prospectos/{self.created_prospect_id}/etapas",
+            200,
+            params=measurement_data
+        )
+        
+        if success:
+            print(f"   Added measurement stage with {len(measurement_data['piezas_medicion'])} pieces")
+        
+        return success
+
+    def test_generate_pedido_from_measurement(self):
+        """Test generating pedido from measurement stage"""
+        if not self.created_prospect_id:
+            print("❌ Skipping - No prospect ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Pedido from Measurement",
+            "POST",
+            f"prospectos/{self.created_prospect_id}/generar-pedido",
+            200
+        )
+        
+        if success:
+            # Validate response structure
+            expected_fields = ['message', 'etapa', 'resumen']
+            for field in expected_fields:
+                if field not in response:
+                    print(f"❌ Missing field in response: {field}")
+                    return False
+            
+            # Validate etapa structure
+            etapa = response.get('etapa', {})
+            expected_etapa_fields = ['id', 'nombre_etapa', 'piezas_medicion', 'monto_total', 'anticipo_recibido', 'saldo_pendiente']
+            for field in expected_etapa_fields:
+                if field not in etapa:
+                    print(f"❌ Missing field in etapa: {field}")
+                    return False
+            
+            # Validate resumen structure
+            resumen = response.get('resumen', {})
+            expected_resumen_fields = ['total_piezas', 'total_m2_real', 'total_m2_comercial', 'total_estimado', 'regla_minimo_aplicada']
+            for field in expected_resumen_fields:
+                if field not in resumen:
+                    print(f"❌ Missing field in resumen: {field}")
+                    return False
+            
+            # Validate minimum 1 m² rule application
+            if resumen.get('regla_minimo_aplicada'):
+                print("   ✅ Minimum 1 m² rule was applied correctly")
+            
+            # Validate that commercial m² >= real m²
+            m2_real = resumen.get('total_m2_real', 0)
+            m2_comercial = resumen.get('total_m2_comercial', 0)
+            if m2_comercial >= m2_real:
+                print(f"   ✅ Commercial m² ({m2_comercial}) >= Real m² ({m2_real})")
+            else:
+                print(f"   ❌ Commercial m² ({m2_comercial}) < Real m² ({m2_real})")
+                return False
+            
+            # Validate pieces have commercial calculations
+            piezas = etapa.get('piezas_medicion', [])
+            for i, pieza in enumerate(piezas):
+                required_fields = ['m2_real', 'm2_comercial', 'precio_aplicado', 'subtotal']
+                for field in required_fields:
+                    if field not in pieza:
+                        print(f"❌ Missing field in piece {i+1}: {field}")
+                        return False
+                
+                # Validate minimum rule per piece
+                if pieza['m2_comercial'] < 1.0 and pieza['m2_real'] < 1.0:
+                    print(f"❌ Piece {i+1}: Commercial m² should be at least 1.0 for small pieces")
+                    return False
+            
+            print(f"   ✅ Generated pedido with {resumen['total_piezas']} pieces")
+            print(f"   ✅ Total real: {m2_real} m², commercial: {m2_comercial} m²")
+            print(f"   ✅ Total estimated: ${resumen['total_estimado']:,.0f}")
+        
+        return success
+
+    def test_generate_pedido_duplicate_validation(self):
+        """Test that duplicate pedido generation is prevented"""
+        if not self.created_prospect_id:
+            print("❌ Skipping - No prospect ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Generate Duplicate Pedido (Should Fail)",
+            "POST",
+            f"prospectos/{self.created_prospect_id}/generar-pedido",
+            400  # Should fail with 400 Bad Request
+        )
+        
+        # For this test, success means it failed as expected
+        if not success:
+            print("   ❌ Duplicate validation failed - should have returned 400")
+            return False
+        else:
+            print("   ✅ Duplicate pedido correctly prevented")
+            return True
+
+    def test_generate_pedido_without_measurement(self):
+        """Test generating pedido without measurement stage"""
+        # Create a new prospect without measurement
+        test_data = {
+            "nombre": "Test Sin Medición",
+            "telefono": "+56987654321",
+            "producto_solicitado": "Deck Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect Without Measurement",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        if not prospect_id:
+            print("❌ Failed to get prospect ID")
+            return False
+        
+        # Try to generate pedido without measurement
+        success, response = self.run_test(
+            "Generate Pedido Without Measurement (Should Fail)",
+            "POST",
+            f"prospectos/{prospect_id}/generar-pedido",
+            400  # Should fail
+        )
+        
+        # Clean up
+        self.run_test("Cleanup Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        if not success:
+            print("   ❌ Should have failed with 400 when no measurement exists")
+            return False
+        else:
+            print("   ✅ Correctly prevented pedido generation without measurement")
+            return True
+
+    def test_add_pedido_stage_manually(self):
+        """Test adding pedido stage manually with all required fields"""
+        if not self.created_prospect_id:
+            print("❌ Skipping - No prospect ID available")
+            return False
+            
+        pedido_data = {
+            'nombre_etapa': 'Pedido',
+            'comentario': 'Pedido manual creado para testing',
+            'monto_total': 150000,
+            'anticipo_recibido': 50000,
+            'saldo_pendiente': 100000,
+            'forma_pago': 'Transferencia Bancaria',
+            'fecha_vencimiento_saldo': '2024-12-31',
+            'cotizacion_url': 'https://example.com/cotizacion.pdf',
+            'archivo_levantamiento_url': 'https://example.com/levantamiento.xlsx',
+            'piezas_medicion': [
+                {
+                    'id': 'manual-1',
+                    'ubicacion': 'Test Manual',
+                    'ancho': 2.0,
+                    'alto': 2.0,
+                    'producto_tela': 'Test Product',
+                    'color_acabado': 'Test Color',
+                    'observaciones': 'Test manual piece'
+                }
+            ],
+            'precio_m2_general': 25000,
+            'total_m2': 4.0,
+            'total_estimado': 100000
+        }
+        
+        # Create a new prospect for manual pedido test
+        test_data = {
+            "nombre": "Test Pedido Manual",
+            "telefono": "+56911111111",
+            "producto_solicitado": "Deck Manual Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Manual Pedido",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        manual_prospect_id = response.get('id')
+        
+        success, response = self.run_test(
+            "Add Manual Pedido Stage",
+            "POST",
+            f"prospectos/{manual_prospect_id}/etapas",
+            200,
+            params=pedido_data
+        )
+        
+        if success:
+            # Validate that all pedido fields were saved
+            etapa = response.get('etapa', {})
+            pedido_fields = ['monto_total', 'anticipo_recibido', 'saldo_pendiente', 'forma_pago', 'fecha_vencimiento_saldo']
+            for field in pedido_fields:
+                if field not in etapa:
+                    print(f"❌ Missing pedido field: {field}")
+                    success = False
+                else:
+                    print(f"   ✅ Field {field}: {etapa[field]}")
+        
+        # Clean up
+        self.run_test("Cleanup Manual Pedido Prospect", "DELETE", f"prospectos/{manual_prospect_id}", 200)
+        
+        return success
+
+    def test_export_measurement(self):
+        """Test exporting measurement data"""
+        if not self.created_prospect_id:
+            print("❌ Skipping - No prospect ID available")
+            return False
+            
+        success, response = self.run_test(
+            "Export Measurement Data",
+            "GET",
+            f"prospectos/{self.created_prospect_id}/medicion/export",
+            200
+        )
+        
+        if success:
+            # Validate export structure
+            expected_fields = ['prospecto', 'medicion']
+            for field in expected_fields:
+                if field not in response:
+                    print(f"❌ Missing field in export: {field}")
+                    return False
+            
+            medicion = response.get('medicion', {})
+            if 'piezas' not in medicion:
+                print("❌ Missing pieces in measurement export")
+                return False
+            
+            print(f"   ✅ Exported measurement with {len(medicion['piezas'])} pieces")
+        
+        return success
+
     def test_delete_prospect(self):
         """Test deleting a prospect"""
         if not self.created_prospect_id:
