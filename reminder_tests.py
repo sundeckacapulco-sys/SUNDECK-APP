@@ -660,6 +660,142 @@ class ReminderSystemTester:
         
         return success and success2
 
+    def test_completar_recordatorio(self):
+        """Test PATCH /api/recordatorios/{id}/completar endpoint"""
+        print("\n🔍 Testing Reminder System - Complete Recordatorio")
+        
+        # First create a prospect and stage to generate a recordatorio
+        test_data = {
+            "nombre": "Test Completar Recordatorio",
+            "telefono": "+56900003333",
+            "producto_solicitado": "Deck Completar Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Complete Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Add stage to create recordatorio
+        medicion_data = {
+            "nombre_etapa": "Visita Inicial / Medición",
+            "comentario": "Medición para test completar",
+            "precio_m2_general": 20000,
+            "total_m2": 2.0,
+            "total_estimado": 40000
+        }
+        
+        success, response = self.run_test(
+            "Add Stage to Create Recordatorio",
+            "POST",
+            f"prospectos/{prospect_id}/etapas-json",
+            200,
+            json_data=medicion_data
+        )
+        
+        if not success:
+            self.run_test("Cleanup Complete Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        # Wait for recordatorio creation
+        time.sleep(2)
+        
+        # Get the created recordatorio
+        success, response = self.run_test(
+            "Get Recordatorio to Complete",
+            "GET",
+            "recordatorios",
+            200,
+            params={"prospecto_id": prospect_id}
+        )
+        
+        if not success:
+            self.run_test("Cleanup Complete Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        recordatorios = response.get('recordatorios', [])
+        if not recordatorios:
+            print("   ❌ No recordatorio found to complete")
+            self.run_test("Cleanup Complete Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        recordatorio_id = recordatorios[0].get('id')
+        
+        # Test completing the recordatorio
+        complete_data = {
+            "notas_seguimiento": "Recordatorio completado exitosamente en testing"
+        }
+        
+        success, response = self.run_test(
+            "Complete Recordatorio",
+            "PATCH",
+            f"recordatorios/{recordatorio_id}/completar",
+            200,
+            json_data=complete_data
+        )
+        
+        if success:
+            # Validate response
+            if 'message' in response:
+                print("   ✅ Recordatorio completed successfully")
+                
+                # Verify the recordatorio was actually updated
+                success2, response2 = self.run_test(
+                    "Verify Recordatorio Completion",
+                    "GET",
+                    "recordatorios",
+                    200,
+                    params={"prospecto_id": prospect_id}
+                )
+                
+                if success2:
+                    updated_recordatorios = response2.get('recordatorios', [])
+                    completed_recordatorio = None
+                    
+                    for r in updated_recordatorios:
+                        if r.get('id') == recordatorio_id:
+                            completed_recordatorio = r
+                            break
+                    
+                    if completed_recordatorio:
+                        if completed_recordatorio.get('estado') == 'completado':
+                            print("   ✅ Recordatorio status updated to 'completado'")
+                        else:
+                            print(f"   ❌ Expected status 'completado', got '{completed_recordatorio.get('estado')}'")
+                            success = False
+                        
+                        if completed_recordatorio.get('notas_seguimiento') == complete_data['notas_seguimiento']:
+                            print("   ✅ Follow-up notes saved correctly")
+                        else:
+                            print("   ❌ Follow-up notes not saved correctly")
+                            success = False
+                        
+                        if completed_recordatorio.get('fecha_completado'):
+                            print("   ✅ Completion date recorded")
+                        else:
+                            print("   ❌ Completion date not recorded")
+                            success = False
+                    else:
+                        print("   ❌ Could not find updated recordatorio")
+                        success = False
+            else:
+                print("   ❌ No success message in completion response")
+                success = False
+        
+        # Clean up
+        self.run_test("Cleanup Complete Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success
+
     def run_all_tests(self):
         """Run all reminder system tests"""
         print("🚀 Starting Reminder System Tests...")
@@ -671,6 +807,7 @@ class ReminderSystemTester:
         self.test_automatic_reminder_creation_medicion()
         self.test_automatic_reminder_creation_cotizacion()
         self.test_get_recordatorios_endpoint()
+        self.test_completar_recordatorio()
         self.test_template_message_generation()
         
         # Summary
