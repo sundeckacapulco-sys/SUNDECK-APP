@@ -156,6 +156,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [prospectos, setProspectos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [prospectoSelected, setProspectoSelected] = useState(null);
 
   // Cargar prospectos al iniciar
   useEffect(() => {
