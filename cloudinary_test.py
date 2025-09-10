@@ -122,7 +122,8 @@ class CloudinaryTester:
             f"prospectos/{self.created_prospect_id}/etapas",
             200,
             data=stage_data,
-            files=files
+            files=files,
+            params=stage_data
         )
         
         if success:
