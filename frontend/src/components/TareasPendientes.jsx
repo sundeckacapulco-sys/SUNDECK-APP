@@ -136,17 +136,24 @@ const TareasPendientes = ({ onNavigate }) => {
     return grupos;
   };
 
-  // Obtener descripción del tipo de recordatorio
-  const getTipoDescripcion = (tipo) => {
-    const tipos = {
-      'cotizacion_24h': '📋 Enviar Cotización (24h)',
-      'primer_seguimiento': '📞 Primer Seguimiento',
-      'segundo_seguimiento': '📞 Segundo Seguimiento (3 días)',
-      'tercer_seguimiento': '📞 Tercer Seguimiento (7 días)',
-      'recontacto_sin_respuesta': '🔄 Recontacto sin Respuesta',
-      'cobro_anticipo': '💰 Recordar Anticipo'
+  // Obtener descripción de acción compacta
+  const getAccionDescripcion = (tipo) => {
+    const acciones = {
+      'cotizacion_24h': 'Enviar Cotización',
+      'primer_seguimiento': 'Primer Seguimiento',
+      'segundo_seguimiento': 'Segundo Seguimiento',
+      'tercer_seguimiento': 'Tercer Seguimiento',
+      'recontacto_sin_respuesta': 'Recontacto sin Respuesta',
+      'cobro_anticipo': 'Confirmar Anticipo'
     };
-    return tipos[tipo] || tipo;
+    return acciones[tipo] || tipo;
+  };
+
+  // Obtener extracto del mensaje (primera línea)
+  const getExtractoMensaje = (mensaje) => {
+    if (!mensaje) return '';
+    const primeraLinea = mensaje.split('\n')[0];
+    return primeraLinea.length > 80 ? primeraLinea.substring(0, 77) + '...' : primeraLinea;
   };
 
   useEffect(() => {
