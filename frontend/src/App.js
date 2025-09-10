@@ -1080,7 +1080,7 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
           <div className="modal-actions">
             <WhatsAppButton 
               prospecto={prospecto} 
-              tipo={prospecto.etapas && prospecto.etapas.length > 0 ? 'postventa' : 'prospecto'} 
+              tipo={determinarTipoWhatsApp(prospecto)} 
               className="btn-whatsapp-header"
               size="small"
             />
