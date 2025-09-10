@@ -599,6 +599,225 @@ async def generar_pedido_desde_medicion(prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generando pedido: {str(e)}")
 
+@api_router.get("/kanban")
+async def obtener_kanban_data():
+    """Obtener datos organizados por columnas para vista Kanban"""
+    try:
+        # Definir las columnas del Kanban en orden
+        columnas_kanban = [
+            "Prospectos Nuevos",
+            "Cotizaciones Activas", 
+            "Pedidos",
+            "Fabricación",
+            "Instalación",
+            "Entrega",
+            "Postventa"
+        ]
+        
+        # Mapeo de etapas a columnas Kanban
+        mapeo_etapas = {
+            "Visita Inicial / Medición": "Prospectos Nuevos",
+            "Cotización Aprobada": "Cotizaciones Activas",
+            "Pedido": "Pedidos", 
+            "Fabricación": "Fabricación",
+            "Instalación en Proceso": "Instalación",
+            "Entrega Final": "Entrega",
+            "Postventa": "Postventa"
+        }
+        
+        # Obtener todos los prospectos
+        prospectos = await db.prospectos.find().to_list(length=None)
+        
+        # Procesar fechas
+        for prospecto in prospectos:
+            if isinstance(prospecto.get('fecha_cita'), str):
+                prospecto['fecha_cita'] = datetime.fromisoformat(prospecto['fecha_cita'])
+            if isinstance(prospecto.get('created_at'), str):
+                prospecto['created_at'] = datetime.fromisoformat(prospecto['created_at'])
+                
+            for etapa in prospecto.get('etapas', []):
+                if isinstance(etapa.get('fecha'), str):
+                    etapa['fecha'] = datetime.fromisoformat(etapa['fecha'])
+        
+        # Organizar prospectos por columnas
+        kanban_data = {}
+        kpis = {}
+        
+        for columna in columnas_kanban:
+            kanban_data[columna] = []
+            kpis[columna] = 0
+        
+        # Clasificar prospectos
+        for prospecto in prospectos:
+            # Determinar columna basada en la última etapa
+            if prospecto.get('etapas') and len(prospecto['etapas']) > 0:
+                ultima_etapa = prospecto['etapas'][-1]['nombre_etapa']
+                columna = mapeo_etapas.get(ultima_etapa, "Prospectos Nuevos")
+            else:
+                columna = "Prospectos Nuevos"
+            
+            # Enriquecer prospecto con metadata para Kanban
+            prospecto_kanban = {
+                **prospecto,
+                "columna_actual": columna,
+                "ultima_etapa": ultima_etapa if prospecto.get('etapas') else None,
+                "fecha_ultima_etapa": prospecto['etapas'][-1]['fecha'] if prospecto.get('etapas') else None,
+                "total_etapas": len(prospecto.get('etapas', [])),
+                "urgencia": calcular_urgencia_prospecto(prospecto),
+                "fecha_proxima_accion": calcular_fecha_proxima_accion(prospecto)
+            }
+            
+            kanban_data[columna].append(prospecto_kanban)
+            kpis[columna] += 1
+        
+        # Ordenar cada columna por urgencia y fecha
+        for columna in kanban_data:
+            kanban_data[columna].sort(key=lambda x: (
+                x['urgencia'], 
+                x['fecha_proxima_accion'] or datetime.now(timezone.utc)
+            ), reverse=True)
+        
+        return {
+            "kanban": kanban_data,
+            "kpis": kpis,
+            "columnas": columnas_kanban,
+            "total_prospectos": len(prospectos)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving Kanban data: {str(e)}")
+
+def calcular_urgencia_prospecto(prospecto):
+    """Calcular nivel de urgencia: 0=verde, 1=amarillo, 2=rojo"""
+    try:
+        fecha_cita = prospecto.get('fecha_cita')
+        if not fecha_cita:
+            return 0
+            
+        if isinstance(fecha_cita, str):
+            fecha_cita = datetime.fromisoformat(fecha_cita)
+        
+        hoy = datetime.now(timezone.utc).date()
+        fecha_cita_date = fecha_cita.date()
+        
+        if fecha_cita_date < hoy:
+            return 2  # Rojo - vencida
+        elif fecha_cita_date == hoy:
+            return 1  # Amarillo - hoy
+        else:
+            return 0  # Verde - futuro
+            
+    except:
+        return 0
+
+def calcular_fecha_proxima_accion(prospecto):
+    """Calcular la próxima fecha de acción relevante"""
+    try:
+        # Priorizar fecha de cita si está en el futuro
+        fecha_cita = prospecto.get('fecha_cita')
+        if fecha_cita:
+            if isinstance(fecha_cita, str):
+                fecha_cita = datetime.fromisoformat(fecha_cita)
+            if fecha_cita.date() >= datetime.now(timezone.utc).date():
+                return fecha_cita
+        
+        # Si no hay cita futura, usar fecha de última etapa
+        if prospecto.get('etapas') and len(prospecto['etapas']) > 0:
+            ultima_fecha = prospecto['etapas'][-1].get('fecha')
+            if ultima_fecha:
+                if isinstance(ultima_fecha, str):
+                    return datetime.fromisoformat(ultima_fecha)
+                return ultima_fecha
+        
+        # Fallback a fecha de creación
+        return prospecto.get('created_at') or datetime.now(timezone.utc)
+        
+    except:
+        return datetime.now(timezone.utc)
+
+@api_router.post("/mover-etapa")
+async def mover_prospecto_etapa(request: dict):
+    """Mover prospecto entre etapas/columnas del Kanban"""
+    try:
+        prospecto_id = request.get('prospecto_id')
+        nueva_etapa = request.get('nueva_etapa')
+        comentario = request.get('comentario', '')
+        
+        if not prospecto_id or not nueva_etapa:
+            raise HTTPException(status_code=400, detail="prospecto_id y nueva_etapa son requeridos")
+        
+        # Buscar prospecto
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto no encontrado")
+        
+        # Mapeo inverso de columnas Kanban a etapas
+        mapeo_columnas = {
+            "Prospectos Nuevos": "Visita Inicial / Medición",
+            "Cotizaciones Activas": "Cotización Aprobada",
+            "Pedidos": "Pedido",
+            "Fabricación": "Fabricación", 
+            "Instalación": "Instalación en Proceso",
+            "Entrega": "Entrega Final",
+            "Postventa": "Postventa"
+        }
+        
+        etapa_nombre = mapeo_columnas.get(nueva_etapa, nueva_etapa)
+        
+        # Crear nueva etapa
+        nueva_etapa_obj = {
+            "id": str(uuid.uuid4()),
+            "nombre_etapa": etapa_nombre,
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "comentario": comentario or f"Movido a {etapa_nombre} desde Kanban",
+            "fotos": []
+        }
+        
+        # Agregar la nueva etapa
+        await db.prospectos.update_one(
+            {"id": prospecto_id},
+            {"$push": {"etapas": nueva_etapa_obj}}
+        )
+        
+        # Registrar log de actividad
+        log_actividad = {
+            "id": str(uuid.uuid4()),
+            "prospecto_id": prospecto_id,
+            "accion": "mover_etapa",
+            "descripcion": f"Movido a {etapa_nombre}",
+            "etapa_anterior": prospecto['etapas'][-1]['nombre_etapa'] if prospecto.get('etapas') else "Nuevo",
+            "etapa_nueva": etapa_nombre,
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "comentario": comentario
+        }
+        
+        # Guardar log en colección separada
+        await db.logs_actividad.insert_one(log_actividad)
+        
+        return {
+            "message": "Prospecto movido exitosamente",
+            "nueva_etapa": nueva_etapa_obj,
+            "log": log_actividad
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error moviendo prospecto: {str(e)}")
+
+@api_router.get("/logs-actividad/{prospecto_id}")
+async def obtener_logs_prospecto(prospecto_id: str):
+    """Obtener logs de actividad de un prospecto específico"""
+    try:
+        logs = await db.logs_actividad.find(
+            {"prospecto_id": prospecto_id}
+        ).sort("fecha", -1).to_list(length=50)
+        
+        return {"logs": logs}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving logs: {str(e)}")
+
 @api_router.get("/etapas-disponibles")
 async def obtener_etapas_disponibles():
     """Obtener lista de etapas disponibles para filtros"""
