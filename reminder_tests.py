@@ -611,16 +611,39 @@ class ReminderSystemTester:
                 # Test getting a specific template message
                 template_id = templates[0].get('id')
                 
-                success3, response3 = self.run_test(
-                    "Get Specific Template Message",
-                    "GET",
-                    f"templates-whatsapp/{template_id}/mensaje",
+                # Create a test prospect for template message generation
+                template_test_data = {
+                    "nombre": "Juan Pérez",
+                    "telefono": "+56900006666",
+                    "producto_solicitado": "Pergola Moderna",
+                    "fecha_cita": datetime.now(timezone.utc).isoformat()
+                }
+                
+                success_prospect, response_prospect = self.run_test(
+                    "Create Prospect for Template Message Test",
+                    "POST",
+                    "prospectos",
                     200,
-                    params={
-                        "nombre": "Juan Pérez",
-                        "producto": "Pergola Moderna"
-                    }
+                    data=template_test_data
                 )
+                
+                if success_prospect:
+                    template_prospect_id = response_prospect.get('id')
+                    
+                    success3, response3 = self.run_test(
+                        "Get Specific Template Message",
+                        "GET",
+                        f"templates-whatsapp/{template_id}/mensaje",
+                        200,
+                        params={
+                            "prospecto_id": template_prospect_id
+                        }
+                    )
+                    
+                    # Clean up template test prospect
+                    self.run_test("Cleanup Template Message Test Prospect", "DELETE", f"prospectos/{template_prospect_id}", 200)
+                else:
+                    success3 = False
                 
                 if success3:
                     mensaje_template = response3.get('mensaje', '')
