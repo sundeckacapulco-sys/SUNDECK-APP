@@ -4344,11 +4344,15 @@ body {
   .tarea-acciones {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
   
   .btn-accion {
     flex: 1;
     text-align: center;
+    min-width: 90px;
+    padding: 0.5rem;
+    font-size: 0.75rem;
   }
   
   .accion-info {
@@ -4360,6 +4364,14 @@ body {
   .grupo-titulo {
     font-size: 1.1rem;
     padding: 0.5rem 0.75rem;
+  }
+  
+  .cliente-info {
+    font-size: 0.95rem;
+  }
+  
+  .mensaje-extracto {
+    font-size: 0.8rem;
   }
 }
 }
