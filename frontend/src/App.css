@@ -4187,23 +4187,63 @@ body {
   border-left: 4px solid #94a3b8;
 }
 
-/* Tarea compacta */
+/* Tarjeta de Tarea Sundeck Profesional */
 .tarea-compacta {
   background: white;
-  border-radius: 8px;
-  padding: 0.875rem;
-  margin-bottom: 0.75rem;
-  box-shadow: 0 1px 6px var(--shadow);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
-  transition: all 0.2s ease;
+  gap: 1.5rem;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.tarea-compacta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--sundeck-gold) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .tarea-compacta:hover {
-  box-shadow: 0 2px 12px var(--shadow);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
+}
+
+.tarea-compacta:hover::before {
+  opacity: 1;
+}
+
+/* Estados de urgencia para tarjetas */
+.tarea-compacta.vencida {
+  border-left-color: var(--sundeck-red);
+  background: linear-gradient(135deg, white 0%, var(--sundeck-red-bg) 100%);
+}
+
+.tarea-compacta.hoy {
+  border-left-color: var(--sundeck-gold);
+  background: linear-gradient(135deg, white 0%, var(--sundeck-gold-bg) 100%);
+}
+
+.tarea-compacta.manana {
+  border-left-color: var(--sundeck-green);
+  background: linear-gradient(135deg, white 0%, var(--sundeck-green-bg) 100%);
+}
+
+.tarea-compacta.futura {
+  border-left-color: var(--sundeck-blue);
+  background: linear-gradient(135deg, white 0%, #dbeafe 100%);
 }
 
 .tarea-info {
