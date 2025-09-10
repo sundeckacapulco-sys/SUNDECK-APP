@@ -1982,7 +1982,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
             />
           </div>
 
-          {!esMedicion && (
+          {!esMedicion && !esPedido && (
             <div className="form-group">
               <label htmlFor="fotos">Fotos (Opcional)</label>
               <input
