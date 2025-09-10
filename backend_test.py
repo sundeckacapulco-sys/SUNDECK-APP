@@ -2049,10 +2049,18 @@ def main():
     
     tester = ProspectosAPITester()
     
-    # Run all tests in sequence - focusing on NEW KANBAN 360° functionality
+    # Run all tests in sequence - focusing on NEW EMBUDO 360 functionality
     tests = [
         tester.test_health_check,
         tester.test_create_prospect,
+        
+        # NEW EMBUDO 360 TESTS - PRIORITY (User Request)
+        tester.test_embudo_360_basic,
+        tester.test_embudo_360_date_filters,
+        tester.test_embudo_360_responsable_filter,
+        tester.test_embudo_360_combined_filters,
+        tester.test_embudo_360_export,
+        tester.test_embudo_360_response_structure_validation,
         
         # NEW KANBAN 360° TESTS - PRIORITY
         tester.test_kanban_data_structure,
