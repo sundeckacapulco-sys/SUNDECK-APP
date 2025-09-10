@@ -504,6 +504,59 @@ async def crear_recordatorios_automaticos(prospecto_id: str, etapa_nombre: str):
     except Exception as e:
         print(f"❌ Error creando recordatorios automáticos: {str(e)}")
 
+async def optimizar_recordatorios_inteligente():
+    """Optimizar recordatorios basado en patrones de comportamiento"""
+    try:
+        fecha_actual = datetime.now(timezone.utc)
+        
+        # Obtener recordatorios próximos (próximos 3 días)
+        fecha_limite = fecha_actual + timedelta(days=3)
+        recordatorios_proximos = await db.recordatorios.find({
+            "estado": EstadoRecordatorio.PENDIENTE,
+            "fecha_limite": {
+                "$gte": fecha_actual.isoformat(),
+                "$lte": fecha_limite.isoformat()
+            }
+        }).to_list(length=None)
+        
+        optimizaciones = []
+        
+        for recordatorio in recordatorios_proximos:
+            prospecto = await db.prospectos.find_one({"id": recordatorio["prospecto_id"]})
+            if not prospecto:
+                continue
+            
+            # Analizar historial del prospecto para optimizar timing
+            etapas_prospecto = prospecto.get("etapas", [])
+            
+            # Si el prospecto tiene muchas etapas, puede necesitar más tiempo
+            if len(etapas_prospecto) >= 3:
+                # Sugerir reprogramar con más margen
+                nueva_fecha = calcular_dias_habiles(fecha_actual, 2)
+                optimizaciones.append({
+                    "recordatorio_id": recordatorio["id"],
+                    "sugerencia": "mayor_margen_tiempo",
+                    "fecha_sugerida": nueva_fecha.isoformat(),
+                    "razon": "Prospecto con múltiples etapas - necesita más seguimiento"
+                })
+            
+            # Si es fin de semana o feriado próximo, ajustar
+            fecha_recordatorio = datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else recordatorio["fecha_limite"]
+            if not es_dia_habil(fecha_recordatorio):
+                nueva_fecha = obtener_siguiente_dia_habil(fecha_recordatorio)
+                optimizaciones.append({
+                    "recordatorio_id": recordatorio["id"],
+                    "sugerencia": "ajuste_dia_habil",
+                    "fecha_sugerida": nueva_fecha.isoformat(),
+                    "razon": "Ajuste automático a día hábil"
+                })
+        
+        return optimizaciones
+        
+    except Exception as e:
+        print(f"Error en optimización inteligente: {str(e)}")
+        return []
+
 async def inicializar_templates_whatsapp():
     """Inicializar plantillas WhatsApp por defecto"""
     try:
