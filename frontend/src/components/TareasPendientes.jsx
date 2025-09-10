@@ -7,6 +7,7 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
   const [loading, setLoading] = useState(false);
   const [filtroActivo, setFiltroActivo] = useState('todos');
   const [mensajeExpandido, setMensajeExpandido] = useState(null);
+  const [gruposColapsados, setGruposColapsados] = useState({});
 
   const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
