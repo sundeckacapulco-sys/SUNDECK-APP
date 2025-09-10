@@ -308,7 +308,6 @@ const TareasPendientes = ({ onNavigate }) => {
                       <TareaCompacta 
                         key={recordatorio.id} 
                         recordatorio={recordatorio}
-                        onWhatsApp={enviarWhatsApp}
                         onCompletar={completarRecordatorio}
                         onExpandir={setMensajeExpandido}
                         expandido={mensajeExpandido === recordatorio.id}
