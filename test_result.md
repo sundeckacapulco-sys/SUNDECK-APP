@@ -454,17 +454,6 @@ frontend:
         agent: "testing"
         comment: "✅ BACKEND VALIDATION CONFIRMS FRONTEND FIX: All Embudo 360 API endpoints responding correctly to frontend calls. Backend testing validates that the frontend URL fix resolved the issue. API endpoints /api/embudo-360 and /api/embudo-360/export are fully functional and returning proper data structures."
 
-  - task: "Implement automatic reminder and WhatsApp template system (Phase 1)"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ COMPREHENSIVE REMINDER SYSTEM TESTING COMPLETED: All 27 tests passed (100% success rate). ✅ WhatsApp Templates Initialization: 5 default templates created correctly (confirmacion_recepcion, seguimiento_3_dias, seguimiento_cierre, recontacto_sin_respuesta, cobro_anticipo) with proper structure and variable mapping. ✅ Dashboard Endpoint: GET /api/recordatorios/dashboard returns correct structure with tareas_pendientes, tareas_vencidas, tareas_hoy, and resumen_por_tipo fields. ✅ Automatic Reminder Creation: 'Visita Inicial / Medición' stage creates cotizacion_24h reminder correctly. 'Cotización Aprobada' stage creates 3 reminders (primer_seguimiento, segundo_seguimiento, tercer_seguimiento) with proper timing and business days calculation. ✅ Recordatorios Endpoint: GET /api/recordatorios with filters (estado, tipo, prospecto_id) working correctly, proper response structure with recordatorios array and resumen object. ✅ Complete Recordatorio: PATCH /api/recordatorios/{id}/completar updates status to 'completado', records completion date, and saves follow-up notes. ✅ Template Message Generation: Dynamic variable replacement working correctly with prospect data (nombre, producto), template endpoint generates personalized messages. All core reminder system functionality validated and working perfectly."
 
 agent_communication:
   - agent: "main"
