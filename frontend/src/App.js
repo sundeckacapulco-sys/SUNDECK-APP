@@ -545,12 +545,12 @@ const MapaView = ({ prospectos, onNavigate }) => {
     markersRef.current = [];
 
     // Crear nuevos marcadores para prospectos con dirección
-    const prospectosCon Direccion = filteredProspectos.filter(p => p.direccion);
+    const prospectsWithAddress = filteredProspectos.filter(p => p.direccion);
     
-    if (prospectosCon Direccion.length === 0) return;
+    if (prospectsWithAddress.length === 0) return;
 
     // Si tenemos coordenadas, usarlas; si no, geocodificar direcciones
-    prospectosCon Direccion.forEach((prospecto, index) => {
+    prospectsWithAddress.forEach((prospecto, index) => {
       if (prospecto.latitud && prospecto.longitud) {
         createMarker(map, prospecto, { lat: prospecto.latitud, lng: prospecto.longitud });
       } else if (prospecto.direccion) {
