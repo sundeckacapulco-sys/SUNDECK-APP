@@ -214,10 +214,31 @@ function AppContent() {
 
 // Componente Header
 const Header = ({ currentView, onNavigate }) => {
-    const navItems = [
+  const [recordatoriosPendientes, setRecordatoriosPendientes] = useState(0);
+  
+  // Cargar contador de recordatorios pendientes
+  useEffect(() => {
+    const cargarContadorRecordatorios = async () => {
+      try {
+        const response = await axios.get(`${API}/recordatorios/dashboard`);
+        setRecordatoriosPendientes(response.data.total_vencidos + response.data.total_hoy);
+      } catch (error) {
+        console.error('Error cargando contador de recordatorios:', error);
+      }
+    };
+    
+    cargarContadorRecordatorios();
+    
+    // Actualizar cada 5 minutos
+    const interval = setInterval(cargarContadorRecordatorios, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'registro', label: 'Nuevo Prospecto', icon: '➕' },
     { id: 'citas', label: 'Citas Hoy', icon: '📅' },
+    { id: 'tareas', label: 'Tareas', icon: '🔔', badge: recordatoriosPendientes },
     { id: 'sundeck360', label: 'Sundeck 360', icon: '🎯' },
     { id: 'embudo360', label: 'Embudo 360', icon: '📈' }
   ];
