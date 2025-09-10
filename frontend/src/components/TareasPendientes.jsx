@@ -267,6 +267,7 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
                         getAccionDescripcion={getAccionDescripcion}
                         formatearFechaCompacta={formatearFechaCompacta}
                         getExtractoMensaje={getExtractoMensaje}
+                        onNavigateToProspecto={onNavigateToProspecto}
                       />
                     ))}
                   </div>
