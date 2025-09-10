@@ -1974,6 +1974,211 @@ async def obtener_dashboard_recordatorios():
         raise HTTPException(status_code=500, detail=f"Error retrieving dashboard recordatorios: {str(e)}")
 
 # ==========================================
+# ENDPOINTS FASE 2 - GESTIÓN AVANZADA
+# ==========================================
+
+@api_router.post("/recordatorios/{recordatorio_id}/reprogramar")
+async def reprogramar_recordatorio(
+    recordatorio_id: str,
+    nueva_fecha: datetime,
+    motivo: MotivosReprogramacion,
+    notas: str = None
+):
+    """Reprogramar un recordatorio con motivo y nueva fecha"""
+    try:
+        # Obtener recordatorio actual
+        recordatorio = await db.recordatorios.find_one({"id": recordatorio_id})
+        if not recordatorio:
+            raise HTTPException(status_code=404, detail="Recordatorio not found")
+        
+        # Validar que la nueva fecha sea un día hábil
+        nueva_fecha_habil = obtener_siguiente_dia_habil(nueva_fecha)
+        if nueva_fecha_habil != nueva_fecha:
+            print(f"Fecha ajustada de {nueva_fecha} a {nueva_fecha_habil} (día hábil)")
+            nueva_fecha = nueva_fecha_habil
+        
+        # Crear registro de reprogramación
+        reprogramacion = {
+            "id": str(uuid.uuid4()),
+            "recordatorio_id": recordatorio_id,
+            "fecha_original": recordatorio["fecha_limite"],
+            "fecha_nueva": nueva_fecha.isoformat(),
+            "motivo": motivo,
+            "notas": notas,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Guardar reprogramación
+        await db.reprogramaciones.insert_one(reprogramacion)
+        
+        # Actualizar recordatorio
+        await db.recordatorios.update_one(
+            {"id": recordatorio_id},
+            {
+                "$set": {
+                    "fecha_limite": nueva_fecha.isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "reprogramado": True,
+                    "motivo_reprogramacion": motivo
+                }
+            }
+        )
+        
+        return {
+            "message": "Recordatorio reprogramado exitosamente",
+            "nueva_fecha": nueva_fecha.isoformat(),
+            "fecha_ajustada": nueva_fecha_habil != datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else nueva_fecha_habil != recordatorio["fecha_limite"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reprogramming recordatorio: {str(e)}")
+
+@api_router.get("/recordatorios/vencidos/gestionar")
+async def gestionar_recordatorios_vencidos():
+    """Identificar y gestionar recordatorios vencidos automáticamente"""
+    try:
+        fecha_actual = datetime.now(timezone.utc)
+        
+        # Encontrar recordatorios vencidos
+        recordatorios_vencidos = await db.recordatorios.find({
+            "estado": EstadoRecordatorio.PENDIENTE,
+            "fecha_limite": {"$lt": fecha_actual.isoformat()}
+        }).to_list(length=None)
+        
+        escalaciones_creadas = []
+        
+        for recordatorio in recordatorios_vencidos:
+            fecha_limite = datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else recordatorio["fecha_limite"]
+            dias_vencido = (fecha_actual - fecha_limite).days
+            
+            # Crear escalación basada en días vencidos
+            accion = "recordatorio_urgente"
+            if dias_vencido >= 7:
+                accion = "escalado_supervisor"
+            elif dias_vencido >= 3:
+                accion = "cambio_responsable"
+            
+            escalacion = {
+                "id": str(uuid.uuid4()),
+                "recordatorio_id": recordatorio["id"],
+                "dias_vencido": dias_vencido,
+                "accion_tomada": accion,
+                "fecha_escalacion": fecha_actual.isoformat(),
+                "resuelto": False
+            }
+            
+            await db.escalaciones.insert_one(escalacion)
+            escalaciones_creadas.append(escalacion)
+            
+            # Marcar recordatorio como escalado
+            await db.recordatorios.update_one(
+                {"id": recordatorio["id"]},
+                {
+                    "$set": {
+                        "estado": "escalado",
+                        "escalado_at": fecha_actual.isoformat()
+                    }
+                }
+            )
+        
+        return {
+            "recordatorios_vencidos": len(recordatorios_vencidos),
+            "escalaciones_creadas": len(escalaciones_creadas),
+            "acciones": [e["accion_tomada"] for e in escalaciones_creadas]
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error managing overdue recordatorios: {str(e)}")
+
+@api_router.get("/recordatorios/metricas")
+async def obtener_metricas_recordatorios(
+    periodo: str = "semanal",  # diario, semanal, mensual
+    fecha_inicio: str = None,
+    fecha_fin: str = None
+):
+    """Obtener métricas de rendimiento del sistema de recordatorios"""
+    try:
+        # Calcular fechas por defecto según período
+        fecha_actual = datetime.now(timezone.utc)
+        
+        if not fecha_inicio or not fecha_fin:
+            if periodo == "diario":
+                fecha_inicio = fecha_actual.replace(hour=0, minute=0, second=0, microsecond=0)
+                fecha_fin = fecha_inicio + timedelta(days=1)
+            elif periodo == "semanal":
+                dias_desde_lunes = fecha_actual.weekday()
+                fecha_inicio = (fecha_actual - timedelta(days=dias_desde_lunes)).replace(hour=0, minute=0, second=0, microsecond=0)
+                fecha_fin = fecha_inicio + timedelta(days=7)
+            else:  # mensual
+                fecha_inicio = fecha_actual.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                siguiente_mes = fecha_inicio.replace(month=fecha_inicio.month + 1) if fecha_inicio.month < 12 else fecha_inicio.replace(year=fecha_inicio.year + 1, month=1)
+                fecha_fin = siguiente_mes
+        else:
+            fecha_inicio = datetime.fromisoformat(fecha_inicio)
+            fecha_fin = datetime.fromisoformat(fecha_fin)
+        
+        # Consultar recordatorios en el período
+        recordatorios = await db.recordatorios.find({
+            "created_at": {
+                "$gte": fecha_inicio.isoformat(),
+                "$lt": fecha_fin.isoformat()
+            }
+        }).to_list(length=None)
+        
+        # Calcular métricas
+        total = len(recordatorios)
+        completados = len([r for r in recordatorios if r.get("estado") == "completado"])
+        vencidos = len([r for r in recordatorios if r.get("estado") == "pendiente" and r.get("fecha_limite", "") < datetime.now(timezone.utc).isoformat()])
+        reprogramados = len([r for r in recordatorios if r.get("reprogramado")])
+        
+        # Calcular recordatorios completados a tiempo vs tarde
+        completados_tiempo = 0
+        completados_tarde = 0
+        tiempos_resolucion = []
+        
+        for recordatorio in recordatorios:
+            if recordatorio.get("estado") == "completado" and recordatorio.get("fecha_completado"):
+                fecha_limite = datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else recordatorio["fecha_limite"]
+                fecha_completado = datetime.fromisoformat(recordatorio["fecha_completado"]) if isinstance(recordatorio["fecha_completado"], str) else recordatorio["fecha_completado"]
+                
+                if fecha_completado <= fecha_limite:
+                    completados_tiempo += 1
+                else:
+                    completados_tarde += 1
+                
+                # Calcular tiempo de resolución en horas
+                tiempo_resolucion = (fecha_completado - fecha_limite).total_seconds() / 3600
+                tiempos_resolucion.append(abs(tiempo_resolucion))
+        
+        tasa_cumplimiento = (completados / total * 100) if total > 0 else 0
+        tiempo_promedio = sum(tiempos_resolucion) / len(tiempos_resolucion) if tiempos_resolucion else 0
+        
+        return {
+            "periodo": periodo,
+            "fecha_inicio": fecha_inicio.isoformat(),
+            "fecha_fin": fecha_fin.isoformat(),
+            "metricas": {
+                "total_recordatorios": total,
+                "completados_tiempo": completados_tiempo,
+                "completados_tarde": completados_tarde,
+                "vencidos": vencidos,
+                "reprogramados": reprogramados,
+                "tasa_cumplimiento": round(tasa_cumplimiento, 2),
+                "tiempo_promedio_resolucion": round(tiempo_promedio, 2)
+            },
+            "kpis": {
+                "efectividad": f"{round(tasa_cumplimiento, 1)}%",
+                "puntualidad": f"{round((completados_tiempo / completados * 100) if completados > 0 else 0, 1)}%",
+                "productividad": f"{round(completados / 7 if periodo == 'semanal' else completados, 1)} por día"
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating metrics: {str(e)}")
+
+# ==========================================
 # ENDPOINTS PLANTILLAS WHATSAPP
 # ==========================================
 
