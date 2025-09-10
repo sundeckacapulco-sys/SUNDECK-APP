@@ -4147,26 +4147,47 @@ body {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
-/* Contenedores de Segmentos Sundeck */
+/* Contenedores de Segmentos con Bordes Definidos */
 .segmento-contenedor {
   background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  border: 3px solid #e2e8f0;
+  border-radius: 16px;
+  margin-bottom: 3rem;
   overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
 .segmento-contenedor:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+}
+
+/* Bordes específicos por tipo */
+.segmento-contenedor.vencidas {
+  border-color: var(--sundeck-red);
+  border-width: 3px;
+}
+
+.segmento-contenedor.hoy {
+  border-color: var(--sundeck-gold);
+  border-width: 3px;
+}
+
+.segmento-contenedor.manana {
+  border-color: var(--sundeck-green);
+  border-width: 3px;
+}
+
+.segmento-contenedor.futuras {
+  border-color: var(--sundeck-blue);
+  border-width: 3px;
 }
 
 .segmento-titulo {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 2rem;
   margin: 0;
   display: flex;
   align-items: center;
@@ -4174,17 +4195,18 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   user-select: none;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 .segmento-titulo:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .segmento-titulo .toggle-icon {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   transition: transform 0.3s ease;
   color: #64748b;
+  font-weight: bold;
 }
 
 .segmento-titulo.collapsed .toggle-icon {
@@ -4194,32 +4216,29 @@ body {
 .segmento-titulo.vencidas {
   background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   color: var(--sundeck-red);
-  border-color: var(--sundeck-red);
 }
 
 .segmento-titulo.hoy {
   background: linear-gradient(135deg, #fffbeb 0%, var(--sundeck-gold-bg) 100%);
   color: #d97706;
-  border-color: var(--sundeck-gold);
 }
 
 .segmento-titulo.manana {
   background: linear-gradient(135deg, #f0fdf4 0%, var(--sundeck-green-bg) 100%);
   color: var(--sundeck-green);
-  border-color: var(--sundeck-green);
 }
 
 .segmento-titulo.futuras {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   color: var(--sundeck-blue);
-  border-color: var(--sundeck-blue);
 }
 
 .segmento-contenido {
-  padding: 1.5rem;
+  padding: 2rem;
   background: #fafbfc;
-  display: grid;
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .segmento-contenido.collapsed {
