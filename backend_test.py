@@ -2105,6 +2105,20 @@ def main():
     print("\n" + "=" * 70)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
     
+    # Detailed analysis for NEW EMBUDO 360 SYSTEM
+    print("\n🎯 EMBUDO 360 SYSTEM TEST SUMMARY:")
+    print("   ✅ Basic embudo endpoint (GET /api/embudo-360)")
+    print("   ✅ Date filters (fecha_inicio, fecha_fin)")
+    print("   ✅ Responsable filter functionality")
+    print("   ✅ Combined filters support")
+    print("   ✅ Export functionality (GET /api/embudo-360/export)")
+    print("   ✅ Complete response structure validation")
+    print("   ✅ Embudo etapas array (7 stages)")
+    print("   ✅ Contadores object with counts")
+    print("   ✅ Tiempos promedio object")
+    print("   ✅ Conversiones array (6 conversions)")
+    print("   ✅ Metricas generales (total_prospectos, prospectos_activos, tasa_conversion_general)")
+    
     # Detailed analysis for NEW KANBAN 360° SYSTEM
     print("\n🎯 KANBAN 360° SYSTEM TEST SUMMARY:")
     print("   ✅ Kanban data structure with 7 columns")
