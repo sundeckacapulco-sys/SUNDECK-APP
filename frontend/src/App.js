@@ -403,6 +403,18 @@ const RegistroProspecto = ({ onUpdate, onNavigate }) => {
           </div>
 
           <div className="form-group">
+            <label htmlFor="direccion">Dirección (Opcional)</label>
+            <input
+              type="text"
+              id="direccion"
+              name="direccion"
+              value={formData.direccion}
+              onChange={handleChange}
+              placeholder="Ingrese la dirección para mostrar en el mapa"
+            />
+          </div>
+
+          <div className="form-group">
             <label htmlFor="fecha_cita">Fecha y Hora de Cita</label>
             <input
               type="datetime-local"
