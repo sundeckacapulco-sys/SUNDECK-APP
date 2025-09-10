@@ -131,7 +131,29 @@ const WhatsAppButton = ({ prospecto, tipo = 'general', className = '', size = 'n
   );
 };
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+// Función para determinar el tipo de mensaje WhatsApp según las etapas
+const determinarTipoWhatsApp = (prospecto) => {
+  if (!prospecto.etapas || prospecto.etapas.length === 0) {
+    return 'prospecto'; // Sin etapas = prospecto nuevo
+  }
+  
+  // Obtener la última etapa
+  const ultimaEtapa = prospecto.etapas[prospecto.etapas.length - 1];
+  const nombreEtapa = ultimaEtapa.nombre_etapa;
+  
+  // Determinar tipo según la última etapa
+  if (nombreEtapa === 'Visita Inicial / Medición') {
+    return 'confirmacion_cita'; // Siguiente paso: confirmar cotización
+  } else if (nombreEtapa === 'Cotización Aprobada' || nombreEtapa === 'Fabricación') {
+    return 'instalacion'; // En proceso de fabricación/instalación
+  } else if (nombreEtapa === 'Instalación en Proceso' || nombreEtapa === 'Entrega Final') {
+    return 'postventa'; // Ya instalado, seguimiento
+  } else if (nombreEtapa === 'Postventa') {
+    return 'postventa'; // Seguimiento postventa
+  }
+  
+  return 'general'; // Fallback
+};
 const API = `${BACKEND_URL}/api`;
 
 // Componente principal
