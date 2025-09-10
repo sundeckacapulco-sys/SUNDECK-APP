@@ -457,6 +457,8 @@ frontend:
 
 agent_communication:
   - agent: "main"
+    message: "🎯 PHASE 1 SISTEMA RECORDATORIOS COMPLETADO - Implementado completamente el sistema automático de recordatorios y plantillas WhatsApp: ✅ Backend: 5 modelos Pydantic (Recordatorio, TemplateWhatsApp), 7 endpoints REST, cálculo días hábiles, creación automática de recordatorios en etapas. ✅ Frontend: Componente TareasPendientes.jsx, nueva pestaña 'Tareas' con badge notificación, estilos CSS completos, integración API. ✅ Testing: 27/27 tests backend passed (100%). Sistema listo para producción. Fase 1 TERMINADA exitosamente."
+  - agent: "main"
     message: "📸 CLOUDINARY INTEGRATION CONFIGURED - Successfully configured Cloudinary with user credentials: cloud_name=dm0jkstgo, api_key=889131198581369, api_secret configured. Backend integration already exists with upload_to_cloudinary function, file upload handling, and photo URL generation. Environment variables updated, backend restarted successfully. Ready for photo upload testing."
   - agent: "main"
     message: "🔧 EMBUDO 360 ERROR FIXED - Identified and resolved the persistent 'Error cargando datos del embudo' issue. Problem was incorrect API URL construction in frontend component. Backend endpoint /api/embudo-360 exists correctly, but frontend was calling /api/api/embudo-360 (duplicate /api). Fixed API base URL definition and API call paths in Embudo360.js. Ready for testing."
