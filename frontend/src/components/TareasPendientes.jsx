@@ -388,38 +388,22 @@ const TareaCompacta = ({
   };
 
   return (
-    <div className={`tarea-compacta ${getEstadoClase(recordatorio.fecha_limite)}`}>
-      <div className="tarea-info">
-        <div className="cliente-principal">
-          👤 <strong>Cliente: {recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
+    <div className={`tarea-individual ${getEstadoClase(recordatorio.fecha_limite)}`}>
+      <div className="tarea-info-estructurada">
+        <div className="linea-cliente">
+          👤 <strong>{recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
         </div>
-        <div className="accion-principal">
-          📌 <strong>Acción:</strong> {getAccionDescripcion(recordatorio.tipo)}
+        <div className="linea-accion">
+          📌 {getAccionDescripcion(recordatorio.tipo)}
         </div>
-        <div className="fecha-principal">
-          🗓 <strong>Fecha límite:</strong> {formatearFechaCompacta(recordatorio.fecha_limite)}
+        <div className="linea-fecha">
+          🗓 Fecha límite: <span className="fecha-destacada">{formatearFechaCompacta(recordatorio.fecha_limite)}</span>
         </div>
-        {expandido && (
-          <div className="mensaje-completo">
-            <div className="mensaje-preview">
-              <strong>Mensaje WhatsApp:</strong>
-              <p>"{recordatorio.mensaje_sugerido}"</p>
-            </div>
-          </div>
-        )}
-        {recordatorio.mensaje_sugerido && recordatorio.mensaje_sugerido.length > 80 && (
-          <button 
-            className="btn-expandir-mensaje"
-            onClick={() => onExpandir(expandido ? null : recordatorio.id)}
-          >
-            {expandido ? '▲ Ocultar mensaje' : '▼ Ver mensaje completo'}
-          </button>
-        )}
       </div>
       
-      <div className="tarea-acciones">
+      <div className="botones-fila">
         <button 
-          className="btn-accion-small whatsapp"
+          className="btn-compacto whatsapp"
           onClick={() => {
             // Generar WhatsApp directamente con plantilla
             const mensaje = recordatorio.mensaje_sugerido;
@@ -445,14 +429,14 @@ const TareaCompacta = ({
           💬 WhatsApp
         </button>
         <button 
-          className="btn-accion-small completar"
+          className="btn-compacto completar"
           onClick={() => onCompletar(recordatorio.id)}
           title="Marcar como completado"
         >
           ✔ Completar
         </button>
         <button 
-          className="btn-accion-small ver"
+          className="btn-compacto ver"
           onClick={() => {
             if (onNavigateToProspecto) {
               onNavigateToProspecto(recordatorio.prospecto_id);
@@ -465,6 +449,24 @@ const TareaCompacta = ({
           📂 Ver {tipoVista.label}
         </button>
       </div>
+
+      {expandido && (
+        <div className="mensaje-completo">
+          <div className="mensaje-preview">
+            <strong>Mensaje WhatsApp:</strong>
+            <p>"{recordatorio.mensaje_sugerido}"</p>
+          </div>
+        </div>
+      )}
+      
+      {recordatorio.mensaje_sugerido && recordatorio.mensaje_sugerido.length > 80 && (
+        <button 
+          className="btn-expandir-mensaje"
+          onClick={() => onExpandir(expandido ? null : recordatorio.id)}
+        >
+          {expandido ? '▲ Ocultar mensaje' : '▼ Ver mensaje completo'}
+        </button>
+      )}
     </div>
   );
 };
