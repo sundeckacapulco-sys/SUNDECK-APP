@@ -226,7 +226,7 @@ const Header = ({ currentView, onNavigate }) => {
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'registro', label: 'Nuevo Prospecto', icon: '➕' },
     { id: 'citas', label: 'Citas Hoy', icon: '📅' },
-    { id: 'mapa', label: 'Mapa', icon: '🗺️' }
+    { id: 'sundeck360', label: 'Sundeck 360', icon: '🎯' }
   ];
 
   return (
