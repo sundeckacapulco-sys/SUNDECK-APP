@@ -321,28 +321,30 @@ const TareaCompacta = ({
   return (
     <div className="tarea-compacta">
       <div className="tarea-info">
-        <div className="cliente-info">
-          <strong>{recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
+        <div className="cliente-principal">
+          <strong>Cliente: {recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
         </div>
-        <div className="accion-info">
-          <span className="accion">{getAccionDescripcion(recordatorio.tipo)}</span>
-          <span className="fecha-limite">{formatearFechaCompacta(recordatorio.fecha_limite)}</span>
+        <div className="accion-principal">
+          <span className="accion-label">Acción:</span> {getAccionDescripcion(recordatorio.tipo)}
         </div>
-        <div className="mensaje-extracto">
-          {getExtractoMensaje(recordatorio.mensaje_sugerido)}
-          {recordatorio.mensaje_sugerido && recordatorio.mensaje_sugerido.length > 80 && (
-            <button 
-              className="btn-expandir"
-              onClick={() => onExpandir(expandido ? null : recordatorio.id)}
-            >
-              {expandido ? 'Contraer' : 'Expandir'}
-            </button>
-          )}
+        <div className="fecha-principal">
+          <span className="fecha-label">Fecha límite:</span> {formatearFechaCompacta(recordatorio.fecha_limite)}
         </div>
         {expandido && (
           <div className="mensaje-completo">
-            <p>"{recordatorio.mensaje_sugerido}"</p>
+            <div className="mensaje-preview">
+              <strong>Mensaje WhatsApp:</strong>
+              <p>"{recordatorio.mensaje_sugerido}"</p>
+            </div>
           </div>
+        )}
+        {recordatorio.mensaje_sugerido && recordatorio.mensaje_sugerido.length > 80 && (
+          <button 
+            className="btn-expandir-mensaje"
+            onClick={() => onExpandir(expandido ? null : recordatorio.id)}
+          >
+            {expandido ? '▲ Ocultar mensaje' : '▼ Ver mensaje completo'}
+          </button>
         )}
       </div>
       
