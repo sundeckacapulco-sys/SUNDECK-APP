@@ -420,6 +420,7 @@ const KanbanDashboard = ({ onUpdate, onNavigate }) => {
   const [filtroGlobal, setFiltroGlobal] = useState('');
   const [vistaKanban, setVistaKanban] = useState(true); // true = Kanban, false = Tabla
   const [selectedProspecto, setSelectedProspecto] = useState(null);
+  const [showPlantillasModal, setShowPlantillasModal] = useState(false);
   
   // Estados de paginación por columna
   const [paginacionColumnas, setPaginacionColumnas] = useState({});
