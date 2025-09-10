@@ -73,7 +73,7 @@ class EtapaCreate(BaseModel):
     nombre_etapa: str
     comentario: str
     # Campos específicos para Visita Inicial / Medición
-    piezas_medicion: Optional[List[dict]] = Field(default_factory=list)
+    piezas_medicion: Optional[List[dict]] = None
     precio_m2_general: Optional[float] = None  # Precio general por m²
     total_m2: Optional[float] = None  # Total m² calculado
     total_estimado: Optional[float] = None  # Total estimado de la cotización
