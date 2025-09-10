@@ -229,7 +229,8 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
                         getExtractoMensaje={getExtractoMensaje}
                         onNavigateToProspecto={onNavigateToProspecto}
                       />
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
 
