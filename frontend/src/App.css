@@ -4287,25 +4287,28 @@ body {
   flex: 1;
 }
 
-/* Información de tarea con iconos Sundeck */
-.cliente-principal {
-  font-size: 1.1rem;
-  color: var(--sundeck-carbon);
-  margin-bottom: 0.75rem;
-  line-height: 1.4;
+/* Información estructurada de tarea */
+.tarea-info-estructurada {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.cliente-principal strong {
-  font-weight: 700;
+.linea-cliente {
+  font-size: 1rem;
   color: var(--sundeck-carbon);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1.3;
 }
 
-.accion-principal {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
+.linea-cliente strong {
+  font-weight: 700;
+}
+
+.linea-accion {
+  font-size: 0.9rem;
   color: var(--sundeck-carbon);
   display: flex;
   align-items: center;
@@ -4313,14 +4316,18 @@ body {
   font-weight: 500;
 }
 
-.fecha-principal {
-  font-size: 0.95rem;
-  margin-bottom: 0.75rem;
+.linea-fecha {
+  font-size: 0.9rem;
   color: #64748b;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
+}
+
+.fecha-destacada {
+  color: var(--sundeck-gold);
+  font-weight: 600;
 }
 
 .btn-expandir-mensaje {
