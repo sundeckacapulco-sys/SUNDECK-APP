@@ -1664,8 +1664,8 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
             >
               <option value="">Seleccione una etapa</option>
               <option value="Visita Inicial / Medición">Visita Inicial / Medición</option>
-              <option value="Pedido">Pedido</option>
               <option value="Cotización Aprobada">Cotización Aprobada</option>
+              <option value="Pedido">Pedido</option>
               <option value="Fabricación">Fabricación</option>
               <option value="Instalación en Proceso">Instalación en Proceso</option>
               <option value="Entrega Final">Entrega Final</option>
