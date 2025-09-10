@@ -1926,3 +1926,229 @@ body {
     height: 60px;
   }
 }
+
+/* Estilos para Sección de Pedido */
+.pedido-section {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.pedido-header {
+  margin-bottom: 1.5rem;
+}
+
+.pedido-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pedido-title h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0;
+}
+
+.generar-pedido-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: var(--neutral2);
+  font-style: italic;
+  text-align: right;
+  max-width: 250px;
+}
+
+/* Campos de Pago */
+.campos-pago {
+  margin-bottom: 2rem;
+}
+
+.campos-pago h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pago-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.readonly-field {
+  background: #f8fafc !important;
+  color: var(--neutral2) !important;
+  cursor: not-allowed;
+  font-weight: 600;
+}
+
+/* Archivos del Pedido */
+.archivos-pedido {
+  margin-bottom: 2rem;
+}
+
+.archivos-pedido h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.archivos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+/* Resumen de Piezas para Pedido */
+.resumen-piezas-pedido {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.resumen-piezas-pedido h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resumen-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--neutral1);
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-item.primary {
+  background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
+  color: var(--primary);
+  border: 2px solid var(--secondary);
+  font-weight: 700;
+}
+
+.stat-item.money {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: 2px solid #10b981;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.stat-item.primary .stat-value,
+.stat-item.money .stat-value {
+  font-size: 1.1rem;
+}
+
+/* Información de Regla Mínimo */
+.regla-minimo-info {
+  margin-top: 1rem;
+}
+
+.info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid var(--warning);
+  border-radius: 8px;
+}
+
+.info-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.info-text {
+  font-size: 0.9rem;
+  color: var(--primary);
+  line-height: 1.4;
+}
+
+/* Responsive para Pedido */
+@media (max-width: 768px) {
+  .pedido-title {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .generar-pedido-container {
+    align-items: center;
+    width: 100%;
+  }
+  
+  .help-text {
+    text-align: center;
+    max-width: 100%;
+  }
+  
+  .pago-grid,
+  .archivos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .resumen-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .pedido-section {
+    padding: 1rem;
+  }
+  
+  .resumen-piezas-pedido {
+    padding: 1rem;
+  }
+  
+  .campos-pago h4,
+  .archivos-pedido h4 {
+    font-size: 1rem;
+  }
+}
