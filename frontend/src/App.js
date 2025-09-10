@@ -488,6 +488,27 @@ const KanbanDashboard = ({ onUpdate, onNavigate, selectedProspecto: selectedFrom
     localStorage.setItem('sundeck_kanban_config', JSON.stringify(config));
   }, [filtroGlobal, vistaKanban]);
 
+  // Manejar prospecto seleccionado desde componente padre
+  useEffect(() => {
+    if (selectedFromParent) {
+      setSelectedProspecto(selectedFromParent);
+      // Scroll hacia el prospecto si es posible
+      setTimeout(() => {
+        const elemento = document.getElementById(`prospecto-${selectedFromParent}`);
+        if (elemento) {
+          elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          elemento.style.backgroundColor = '#fef3c7';
+          elemento.style.border = '2px solid #f59e0b';
+          // Quitar el highlight después de 3 segundos
+          setTimeout(() => {
+            elemento.style.backgroundColor = '';
+            elemento.style.border = '';
+          }, 3000);
+        }
+      }, 1000);
+    }
+  }, [selectedFromParent]);
+
   // Cargar datos del Kanban
   const cargarKanbanData = async () => {
     try {
