@@ -1375,30 +1375,39 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     }
   };
 
-  // Calcular totales corregidos
-  const calcularTotales = () => {
-    let totalM2 = 0;
+  // Calcular totales corregidos (con opción de usar m² comercial)
+  const calcularTotales = (usarComercial = false) => {
+    let totalM2Real = 0;
+    let totalM2Comercial = 0;
     let totalEstimado = 0;
     let piezasConPrecio = 0;
     
     piezasMedicion.forEach(pieza => {
-      const m2 = calcularM2Pieza(pieza);
-      totalM2 += m2;
+      const m2Real = calcularM2Pieza(pieza);
+      const m2Comercial = calcularM2Comercial(pieza);
+      
+      totalM2Real += m2Real;
+      totalM2Comercial += m2Comercial;
       
       const precioIndividual = parseFloat(pieza.precio_m2) || 0;
       const precioGeneral = parseFloat(precioM2General) || 0;
       const precioAplicado = precioIndividual || precioGeneral;
       
       if (precioAplicado > 0) {
-        totalEstimado += m2 * precioAplicado;
+        // Usar m² comercial para cálculo de precios
+        const m2ParaCalculo = usarComercial ? m2Comercial : m2Real;
+        totalEstimado += m2ParaCalculo * precioAplicado;
         piezasConPrecio++;
       }
     });
     
-    const precioPromedio = totalM2 > 0 ? totalEstimado / totalM2 : 0;
+    const totalM2Final = usarComercial ? totalM2Comercial : totalM2Real;
+    const precioPromedio = totalM2Final > 0 ? totalEstimado / totalM2Final : 0;
     
     return { 
-      totalM2: totalM2, 
+      totalM2: totalM2Final,
+      totalM2Real: totalM2Real,
+      totalM2Comercial: totalM2Comercial,
       totalEstimado: totalEstimado,
       precioPromedio: precioPromedio,
       piezasConPrecio: piezasConPrecio,
