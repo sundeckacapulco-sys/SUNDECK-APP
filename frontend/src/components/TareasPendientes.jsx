@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const TareasPendientes = ({ onNavigate }) => {
+const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
   const [recordatorios, setRecordatorios] = useState([]);
   const [estadisticas, setEstadisticas] = useState({});
   const [loading, setLoading] = useState(false);
