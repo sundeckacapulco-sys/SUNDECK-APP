@@ -304,6 +304,123 @@ async def exportar_medicion(prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error exporting medicion: {str(e)}")
 
+@api_router.post("/prospectos/{prospecto_id}/generar-pedido")
+async def generar_pedido_desde_medicion(prospecto_id: str):
+    """Generar pedido automáticamente desde la etapa de medición"""
+    try:
+        # Buscar el prospecto
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Buscar la etapa de medición
+        etapa_medicion = None
+        for etapa in prospecto.get('etapas', []):
+            if etapa.get('nombre_etapa') == 'Visita Inicial / Medición':
+                etapa_medicion = etapa
+                break
+        
+        if not etapa_medicion:
+            raise HTTPException(status_code=400, detail="No se encontró etapa de medición para generar pedido")
+        
+        if not etapa_medicion.get('piezas_medicion'):
+            raise HTTPException(status_code=400, detail="La etapa de medición no tiene piezas registradas")
+        
+        # Calcular totales aplicando regla mínimo 1 m²
+        total_m2_real = 0
+        total_m2_comercial = 0
+        total_estimado = 0
+        
+        piezas_procesadas = []
+        precio_general = etapa_medicion.get('precio_m2_general', 0)
+        unidad_medida = etapa_medicion.get('unidad_medida', 'm')
+        
+        for pieza in etapa_medicion['piezas_medicion']:
+            # Calcular m² real
+            ancho = float(pieza.get('ancho', 0))
+            alto = float(pieza.get('alto', 0))
+            
+            if unidad_medida == 'm':
+                m2_real = ancho * alto
+            else:  # cm
+                m2_real = (ancho / 100) * (alto / 100)
+            
+            # Aplicar regla mínimo 1 m² para cálculo comercial
+            m2_comercial = max(m2_real, 1.0)
+            
+            # Calcular precio
+            precio_aplicado = float(pieza.get('precio_m2', 0)) or precio_general
+            subtotal = m2_comercial * precio_aplicado
+            
+            # Agregar información comercial a la pieza
+            pieza_procesada = pieza.copy()
+            pieza_procesada['m2_real'] = round(m2_real, 2)
+            pieza_procesada['m2_comercial'] = round(m2_comercial, 2)
+            pieza_procesada['precio_aplicado'] = precio_aplicado
+            pieza_procesada['subtotal'] = round(subtotal, 2)
+            
+            piezas_procesadas.append(pieza_procesada)
+            
+            total_m2_real += m2_real
+            total_m2_comercial += m2_comercial
+            if precio_aplicado > 0:
+                total_estimado += subtotal
+        
+        # Crear la nueva etapa de pedido
+        nueva_etapa = {
+            "id": str(uuid.uuid4()),
+            "nombre_etapa": "Pedido",
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "comentario": f"Pedido generado automáticamente desde medición. Total: {len(piezas_procesadas)} piezas, {round(total_m2_comercial, 2)} m² comerciales.",
+            "fotos": etapa_medicion.get('fotos', []).copy(),  # Copiar fotos de medición
+            "piezas_medicion": piezas_procesadas,
+            "precio_m2_general": precio_general,
+            "total_m2": round(total_m2_comercial, 2),  # Usar m² comercial para totales
+            "total_m2_real": round(total_m2_real, 2),  # Guardar también el real
+            "total_estimado": round(total_estimado, 2),
+            "unidad_medida": unidad_medida,
+            # Campos de pedido inicializados
+            "monto_total": round(total_estimado, 2),
+            "anticipo_recibido": 0,
+            "saldo_pendiente": round(total_estimado, 2),
+            "forma_pago": "",
+            "fecha_vencimiento_saldo": "",
+            "cotizacion_url": "",
+            "archivo_levantamiento_url": ""
+        }
+        
+        # Verificar que no existe ya una etapa de pedido
+        etapa_pedido_existente = any(
+            etapa.get('nombre_etapa') == 'Pedido' 
+            for etapa in prospecto.get('etapas', [])
+        )
+        
+        if etapa_pedido_existente:
+            raise HTTPException(status_code=400, detail="Ya existe una etapa de pedido para este prospecto")
+        
+        # Agregar etapa de pedido al prospecto
+        await db.prospectos.update_one(
+            {"id": prospecto_id},
+            {"$push": {"etapas": nueva_etapa}}
+        )
+        
+        return {
+            "message": "Pedido generado correctamente",
+            "etapa": nueva_etapa,
+            "resumen": {
+                "total_piezas": len(piezas_procesadas),
+                "total_m2_real": round(total_m2_real, 2),
+                "total_m2_comercial": round(total_m2_comercial, 2),
+                "total_estimado": round(total_estimado, 2),
+                "regla_minimo_aplicada": total_m2_comercial > total_m2_real
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generando pedido: {str(e)}")
+
 @api_router.get("/citas-hoy")
 async def obtener_citas_hoy():
     """Obtener prospectos con cita para hoy"""
