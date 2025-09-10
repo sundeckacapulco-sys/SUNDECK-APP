@@ -199,6 +199,72 @@ class Etapa(BaseModel):
     forma_pago: Optional[str] = None
     fecha_vencimiento_saldo: Optional[str] = None
     cotizacion_url: Optional[str] = None
+# Modelos para Sistema de Recordatorios
+class TipoRecordatorio(str, Enum):
+    COTIZACION_24H = "cotizacion_24h"
+    PRIMER_SEGUIMIENTO = "primer_seguimiento"
+    SEGUNDO_SEGUIMIENTO = "segundo_seguimiento"
+    TERCER_SEGUIMIENTO = "tercer_seguimiento"
+    RECONTACTO_SIN_RESPUESTA = "recontacto_sin_respuesta"
+    COBRO_ANTICIPO = "cobro_anticipo"
+
+class EstadoRecordatorio(str, Enum):
+    PENDIENTE = "pendiente"
+    COMPLETADO = "completado"
+    VENCIDO = "vencido"
+
+class Recordatorio(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    prospecto_id: str
+    tipo: TipoRecordatorio
+    fecha_limite: datetime
+    estado: EstadoRecordatorio = EstadoRecordatorio.PENDIENTE
+    mensaje_sugerido: str
+    etapa_relacionada: str
+    usuario_asignado: Optional[str] = None
+    fecha_completado: Optional[datetime] = None
+    notas_seguimiento: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class RecordatorioCreate(BaseModel):
+    prospecto_id: str
+    tipo: TipoRecordatorio
+    fecha_limite: datetime
+    mensaje_sugerido: str
+    etapa_relacionada: str
+    usuario_asignado: Optional[str] = None
+
+# Modelos para Plantillas WhatsApp
+class TipoTemplate(str, Enum):
+    CONFIRMACION_RECEPCION = "confirmacion_recepcion"
+    SEGUIMIENTO_3_DIAS = "seguimiento_3_dias"
+    SEGUIMIENTO_CIERRE = "seguimiento_cierre"
+    RECONTACTO_SIN_RESPUESTA = "recontacto_sin_respuesta"
+    COBRO_ANTICIPO = "cobro_anticipo"
+
+class TemplateWhatsApp(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    tipo: TipoTemplate
+    nombre: str
+    mensaje: str
+    variables: List[str] = Field(default_factory=list)  # [{nombre}, {producto}, etc.]
+    activo: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TemplateWhatsAppCreate(BaseModel):
+    tipo: TipoTemplate
+    nombre: str
+    mensaje: str
+    variables: List[str] = Field(default_factory=list)
+    activo: bool = True
+
+class TemplateWhatsAppUpdate(BaseModel):
+    nombre: Optional[str] = None
+    mensaje: Optional[str] = None
+    variables: Optional[List[str]] = None
+    activo: Optional[bool] = None
     archivo_levantamiento_url: Optional[str] = None
 
 # Cloudinary service functions
