@@ -383,10 +383,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fix Embudo 360 API endpoint URL issue"
-    - "Fix Embudo 360 frontend API calls"
-    - "Validate Embudo 360 functionality"
-    - "Configure Cloudinary integration"
+    - "Configure Cloudinary integration for photo uploads"
+    - "Test Cloudinary photo upload functionality"
+    - "Validate complete photo upload workflow"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
