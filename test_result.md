@@ -101,3 +101,133 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Integración de etapas "Visita Inicial / Medición" → "Pedido" → "Cotización Aprobada"
+  
+  Implementar:
+  1. Nueva etapa "Pedido" independiente entre Medición y Cotización Aprobada
+  2. Botón "Generar Pedido" en la etapa de medición que transfiera automáticamente:
+     - Todas las piezas medidas (ubicación, ancho, alto, producto, color, observaciones)
+     - Archivos asociados (fotos, links, notas)
+     - Excel/PDF de levantamiento generado
+  3. Regla especial: piezas < 1 m² se cobran como 1 m² mínimo
+  4. Campos de pedido: Monto total, Anticipo recibido, Saldo pendiente, Forma de pago, Fecha vencimiento
+  5. Mostrar m² real vs m² comercial en documentos para transparencia
+
+backend:
+  - task: "Crear modelo de datos para etapa Pedido"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Necesita actualizar modelos Pydantic para soportar campos de pedido"
+
+  - task: "Implementar endpoint para generar pedido desde medición"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Crear endpoint POST /prospectos/{id}/generar-pedido"
+
+  - task: "Agregar campos de anticipo y forma de pago"
+    implemented: false
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Añadir campos para gestión de pagos en modelo Pedido"
+
+frontend:
+  - task: "Agregar etapa Pedido a lista de etapas disponibles"
+    implemented: false
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Insertar 'Pedido' entre Medición y Cotización Aprobada"
+
+  - task: "Implementar botón Generar Pedido en medición"
+    implemented: false
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Botón que transfiere datos automáticamente de medición a pedido"
+
+  - task: "Implementar regla mínimo 1 m² para cálculo comercial"
+    implemented: false
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Mostrar m² real vs m² comercial (mínimo 1 m²)"
+
+  - task: "Crear interfaz para campos de pedido"
+    implemented: false
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Formulario con monto total, anticipo, saldo, forma de pago, vencimiento"
+
+  - task: "Actualizar documentos PDF/Excel con m² comercial"
+    implemented: false
+    working: "NA"
+    file: "App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Mostrar columnas m² real y m² cobrado para transparencia"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Crear modelo de datos para etapa Pedido"
+    - "Agregar etapa Pedido a lista de etapas disponibles"
+    - "Implementar botón Generar Pedido en medición"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Iniciando implementación de nueva etapa Pedido. Plan: Backend primero (modelos y endpoints), luego Frontend (UI y lógica). Prioridad en transferencia automática de datos y regla mínimo 1 m²."
