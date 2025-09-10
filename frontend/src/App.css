@@ -4335,15 +4335,15 @@ body {
   .tarea-acciones {
     width: 100%;
     justify-content: space-between;
-    flex-wrap: wrap;
+    gap: 1rem;
   }
   
   .btn-accion {
     flex: 1;
     text-align: center;
-    min-width: 90px;
-    padding: 0.5rem;
-    font-size: 0.75rem;
+    min-width: 100px;
+    padding: 0.6rem;
+    font-size: 0.8rem;
   }
   
   .accion-info {
