@@ -290,6 +290,62 @@ async def agregar_etapa(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error adding etapa: {str(e)}")
 
+@api_router.post("/prospectos/{prospecto_id}/etapas-json")
+async def agregar_etapa_json(prospecto_id: str, etapa_data: EtapaCreate):
+    """Agregar nueva etapa usando JSON (para testing con datos complejos)"""
+    try:
+        # Check if prospecto exists
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Create new etapa
+        nueva_etapa = {
+            "id": str(uuid.uuid4()),
+            "nombre_etapa": etapa_data.nombre_etapa,
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "comentario": etapa_data.comentario,
+            "fotos": [],  # No photos in JSON endpoint
+            "piezas_medicion": etapa_data.piezas_medicion if etapa_data.piezas_medicion else []
+        }
+        
+        # Agregar campos específicos según el tipo de etapa
+        if etapa_data.nombre_etapa == 'Visita Inicial / Medición':
+            nueva_etapa.update({
+                "precio_m2_general": etapa_data.precio_m2_general,
+                "total_m2": etapa_data.total_m2,
+                "total_estimado": etapa_data.total_estimado,
+                "unidad_medida": etapa_data.unidad_medida or "m"
+            })
+        elif etapa_data.nombre_etapa == 'Pedido':
+            nueva_etapa.update({
+                "piezas_medicion": etapa_data.piezas_medicion or [],
+                "precio_m2_general": etapa_data.precio_m2_general,
+                "total_m2": etapa_data.total_m2,
+                "total_estimado": etapa_data.total_estimado,
+                "unidad_medida": etapa_data.unidad_medida or "m",
+                "monto_total": etapa_data.monto_total,
+                "anticipo_recibido": etapa_data.anticipo_recibido or 0,
+                "saldo_pendiente": etapa_data.saldo_pendiente,
+                "forma_pago": etapa_data.forma_pago or "",
+                "fecha_vencimiento_saldo": etapa_data.fecha_vencimiento_saldo or "",
+                "cotizacion_url": etapa_data.cotizacion_url or "",
+                "archivo_levantamiento_url": etapa_data.archivo_levantamiento_url or ""
+            })
+        
+        # Add etapa to prospecto
+        await db.prospectos.update_one(
+            {"id": prospecto_id},
+            {"$push": {"etapas": nueva_etapa}}
+        )
+        
+        return {"message": "Etapa agregada correctamente", "etapa": nueva_etapa}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding etapa: {str(e)}")
+
 @api_router.get("/prospectos/{prospecto_id}/medicion/export")
 async def exportar_medicion(prospecto_id: str):
     """Exportar medición de un prospecto"""
