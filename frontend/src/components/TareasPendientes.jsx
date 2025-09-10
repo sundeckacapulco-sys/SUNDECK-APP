@@ -359,6 +359,23 @@ const TareaCompacta = ({
 
   const tipoVista = getTipoVista(recordatorio.tipo);
 
+  // Obtener estado de urgencia local
+  const getEstadoUrgencia = (fechaLimite) => {
+    try {
+      const fecha = new Date(fechaLimite);
+      const ahora = new Date();
+      const diffMs = fecha.getTime() - ahora.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) return 'vencido';
+      if (diffDays === 0) return 'hoy';
+      if (diffDays === 1) return 'mañana';
+      return 'futuro';
+    } catch {
+      return 'futuro';
+    }
+  };
+
   // Determinar clase de estado para la tarjeta
   const getEstadoClase = (fechaLimite) => {
     const estado = getEstadoUrgencia(fechaLimite);
