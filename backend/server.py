@@ -855,6 +855,61 @@ async def obtener_logs_prospecto(prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving logs: {str(e)}")
 
+@api_router.get("/whatsapp-templates")
+async def obtener_whatsapp_templates():
+    """Obtener plantillas de WhatsApp actuales"""
+    try:
+        import json
+        import os
+        
+        templates_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src', 'whatsappTemplates.json')
+        
+        if os.path.exists(templates_path):
+            with open(templates_path, 'r', encoding='utf-8') as f:
+                templates = json.load(f)
+            return {"templates": templates}
+        else:
+            # Plantillas por defecto si no existe el archivo
+            default_templates = {
+                "prospecto": "Hola {nombre}, gracias por su interés en Sundeck. Queremos acompañarle en su proyecto de decoración. ¿Cuándo sería un buen momento para agendar una visita?",
+                "cita": "Hola {nombre}, le confirmamos su cita con Sundeck el {fecha} a las {hora}. ¿Se mantiene la cita programada?",
+                "instalacion": "Hola {nombre}, su instalación de {producto} está programada para el {fecha} a las {hora}. Nuestro equipo acudirá puntualmente. ¡Gracias por confiar en Sundeck!",
+                "postventa": "Hola {nombre}, esperamos que disfrute su nueva instalación de Sundeck. Queremos asegurarnos de que todo esté funcionando perfectamente. ¿Podría confirmarnos su satisfacción o si requiere algún ajuste?"
+            }
+            return {"templates": default_templates}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving WhatsApp templates: {str(e)}")
+
+@api_router.put("/whatsapp-templates")
+async def actualizar_whatsapp_templates(templates: dict):
+    """Actualizar plantillas de WhatsApp"""
+    try:
+        import json
+        import os
+        
+        templates_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src', 'whatsappTemplates.json')
+        
+        # Validar que las claves requeridas estén presentes
+        required_keys = ["prospecto", "cita", "instalacion", "postventa"]
+        for key in required_keys:
+            if key not in templates:
+                raise HTTPException(status_code=400, detail=f"Missing required template: {key}")
+        
+        # Guardar las plantillas actualizadas
+        with open(templates_path, 'w', encoding='utf-8') as f:
+            json.dump(templates, f, ensure_ascii=False, indent=2)
+        
+        return {
+            "message": "Plantillas de WhatsApp actualizadas correctamente",
+            "templates": templates
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating WhatsApp templates: {str(e)}")
+
 @api_router.get("/etapas-disponibles")
 async def obtener_etapas_disponibles():
     """Obtener lista de etapas disponibles para filtros"""
