@@ -1488,7 +1488,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
 };
 
 // Componente para cada pieza en la tabla de medición
-const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto }) => {
+const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto, precioM2General }) => {
   const [showFotos, setShowFotos] = useState(false);
 
   const handleInputChange = (campo, valor) => {
@@ -1502,10 +1502,37 @@ const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto }) => {
     }
   };
 
+  // Calcular m² automáticamente
+  const calcularM2 = () => {
+    const ancho = parseFloat(pieza.ancho) || 0;
+    const alto = parseFloat(pieza.alto) || 0;
+    if (ancho > 0 && alto > 0) {
+      // Si las medidas están en cm, dividir entre 10,000 para obtener m²
+      return (ancho * alto) / 10000;
+    }
+    return 0;
+  };
+
+  // Calcular total de la pieza
+  const calcularTotalPieza = () => {
+    const m2 = calcularM2();
+    const precio = parseFloat(pieza.precio_m2 || precioM2General) || 0;
+    return m2 * precio;
+  };
+
+  const metrosCuadrados = calcularM2();
+  const totalPieza = calcularTotalPieza();
+
   return (
     <div className="pieza-card">
       <div className="pieza-header">
         <h5>Pieza #{index + 1}</h5>
+        <div className="pieza-stats">
+          <span className="m2-display">{metrosCuadrados.toFixed(2)} m²</span>
+          {totalPieza > 0 && (
+            <span className="total-display">${totalPieza.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+          )}
+        </div>
         <button
           type="button"
           className="btn-delete"
@@ -1567,6 +1594,18 @@ const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto }) => {
             onChange={(e) => handleInputChange('color_acabado', e.target.value)}
             placeholder="Color o acabado"
           />
+        </div>
+
+        <div className="form-group">
+          <label>Precio por m² (Opcional)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={pieza.precio_m2 || ''}
+            onChange={(e) => handleInputChange('precio_m2', parseFloat(e.target.value) || null)}
+            placeholder={`$${precioM2General || '0.00'}`}
+          />
+          <small className="field-help">Deja vacío para usar precio general</small>
         </div>
 
         <div className="form-group span-2">
