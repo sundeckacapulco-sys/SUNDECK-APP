@@ -281,6 +281,12 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
             )}
 
             <div className="card-actions">
+              <WhatsAppButton 
+                prospecto={prospecto} 
+                tipo="general" 
+                className="btn-outline"
+                size="small"
+              />
               <button
                 className="btn-primary"
                 onClick={() => setSelectedProspecto(prospecto)}
