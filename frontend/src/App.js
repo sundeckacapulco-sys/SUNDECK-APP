@@ -221,9 +221,12 @@ const Header = ({ currentView, onNavigate }) => {
     const cargarContadorRecordatorios = async () => {
       try {
         const response = await axios.get(`${API}/recordatorios/dashboard`);
-        setRecordatoriosPendientes(response.data.total_vencidos + response.data.total_hoy);
+        const vencidas = parseInt(response.data.tareas_vencidas || 0);
+        const hoy = parseInt(response.data.tareas_hoy || 0);
+        setRecordatoriosPendientes(vencidas + hoy);
       } catch (error) {
         console.error('Error cargando contador de recordatorios:', error);
+        setRecordatoriosPendientes(0); // Fallback en caso de error
       }
     };
     
