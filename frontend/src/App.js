@@ -175,6 +175,12 @@ function AppContent() {
     }
   };
 
+  // Función para navegar al prospecto específico
+  const navegarAProspecto = (prospectoId) => {
+    setProspectoSelected(prospectoId);
+    setCurrentView('dashboard'); // Ir al dashboard con el prospecto seleccionado
+  };
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'dashboard':
