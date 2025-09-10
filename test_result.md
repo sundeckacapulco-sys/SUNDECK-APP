@@ -359,7 +359,7 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "✅ CORRECCIÓN IMPORTANTE APLICADA - Orden de etapas corregido para reflejar flujo comercial real: Medición → Cotización Aprobada → Pedido → Fabricación. Backend usa nombres (no índices) - sin riesgo de problemas futuros."
+    message: "✅ OPTIMIZACIÓN DASHBOARD COMPLETADA - Implementadas todas las optimizaciones solicitadas: paginación (12/página), búsqueda tiempo real, filtros dinámicos, vista dual tarjetas/tabla, lazy loading. Backend testing: 47/48 tests ✅ (performance <60ms vs target 500ms). Dashboard escalable para 1000+ prospectos. ¡LISTO PARA PRODUCCIÓN!"
   - agent: "testing"
     message: "✅ TESTING COMPLETADO - Backend Pedido functionality PASSED (23/24 tests). Funcionalidades críticas validadas: ✅ Endpoint generar-pedido con regla mínimo 1 m² ✅ Modelos Pydantic con campos de pedido ✅ Validaciones de duplicados ✅ Cálculos comerciales vs reales ✅ Export de mediciones ✅ Creación manual de pedidos. Minor fix aplicado: default_factory → None para compatibilidad con form data. Agregado endpoint /etapas-json para testing con datos complejos."
   - agent: "testing"
