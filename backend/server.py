@@ -791,6 +791,9 @@ async def agregar_etapa_json(prospecto_id: str, etapa_data: EtapaCreate):
             {"$push": {"etapas": nueva_etapa}}
         )
         
+        # Crear recordatorios automáticos basados en la etapa
+        await crear_recordatorios_automaticos(prospecto_id, etapa_data.nombre_etapa)
+        
         return {"message": "Etapa agregada correctamente", "etapa": nueva_etapa}
         
     except HTTPException:
