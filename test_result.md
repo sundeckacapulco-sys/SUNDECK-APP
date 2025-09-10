@@ -231,8 +231,8 @@ metadata:
 test_plan:
   current_focus:
     - "Crear modelo de datos para etapa Pedido"
-    - "Agregar etapa Pedido a lista de etapas disponibles"
-    - "Implementar botón Generar Pedido en medición"
+    - "Implementar endpoint para generar pedido desde medición"
+    - "Agregar campos de anticipo y forma de pago"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
