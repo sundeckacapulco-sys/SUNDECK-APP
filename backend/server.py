@@ -55,9 +55,22 @@ class ProspectoCreate(BaseModel):
     fecha_cita: datetime
     direccion: Optional[str] = None
 
+class PiezaMedicion(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    ubicacion: str
+    ancho: float
+    alto: float
+    producto_tela: str
+    color_acabado: str
+    observaciones: Optional[str] = ""
+    fotos: List[str] = Field(default_factory=list)
+    notas_video_url: Optional[str] = ""
+
 class EtapaCreate(BaseModel):
     nombre_etapa: str
     comentario: str
+    # Campos específicos para Visita Inicial / Medición
+    piezas_medicion: Optional[List[dict]] = Field(default_factory=list)
 
 class Etapa(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
