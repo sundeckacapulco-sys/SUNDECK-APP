@@ -845,6 +845,16 @@ const KanbanDashboard = ({ onUpdate, onNavigate }) => {
           }}
         />
       )}
+
+      {/* Modal de plantillas WhatsApp */}
+      <EditarPlantillasModal
+        isOpen={showPlantillasModal}
+        onClose={() => setShowPlantillasModal(false)}
+        onUpdate={() => {
+          // Recargar plantillas si es necesario
+          window.location.reload(); // Forzar recarga para aplicar nuevas plantillas
+        }}
+      />
     </div>
   );
 };
