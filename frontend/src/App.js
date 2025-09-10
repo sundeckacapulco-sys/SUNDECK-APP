@@ -340,7 +340,7 @@ const Dashboard = ({ prospectos, onUpdate, onNavigate }) => {
             <div className="card-actions">
               <WhatsAppButton 
                 prospecto={prospecto} 
-                tipo="general" 
+                tipo={determinarTipoWhatsApp(prospecto)} 
                 className="btn-outline"
                 size="small"
               />
