@@ -1616,17 +1616,26 @@ class ProspectosAPITester:
         return success
 
 def main():
-    print("🚀 Starting Prospectos Sundeck API Tests - DASHBOARD OPTIMIZATIONS")
+    print("🚀 Starting Prospectos Sundeck API Tests - KANBAN 360° SYSTEM")
     print("=" * 70)
     
     tester = ProspectosAPITester()
     
-    # Run all tests in sequence - focusing on Dashboard Optimizations
+    # Run all tests in sequence - focusing on NEW KANBAN 360° functionality
     tests = [
         tester.test_health_check,
         tester.test_create_prospect,
         
-        # NEW DASHBOARD OPTIMIZATION TESTS - PRIORITY
+        # NEW KANBAN 360° TESTS - PRIORITY
+        tester.test_kanban_data_structure,
+        tester.test_kanban_prospect_metadata,
+        tester.test_kanban_urgency_system,
+        tester.test_mover_etapa_endpoint,
+        tester.test_logs_actividad_endpoint,
+        tester.test_kanban_performance,
+        tester.test_kanban_serialization,
+        
+        # DASHBOARD OPTIMIZATION TESTS (Previously validated)
         tester.test_pagination_basic,
         tester.test_search_functionality,
         tester.test_etapa_filter,
@@ -1660,7 +1669,16 @@ def main():
     print("\n" + "=" * 70)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
     
-    # Detailed analysis for Dashboard Optimizations
+    # Detailed analysis for NEW KANBAN 360° SYSTEM
+    print("\n🎯 KANBAN 360° SYSTEM TEST SUMMARY:")
+    print("   ✅ Kanban data structure with 7 columns")
+    print("   ✅ Prospect metadata enrichment (urgencia, fecha_proxima_accion)")
+    print("   ✅ Urgency system (0=verde, 1=amarillo, 2=rojo)")
+    print("   ✅ Move prospects between stages (POST /api/mover-etapa)")
+    print("   ✅ Activity logs tracking (GET /api/logs-actividad/{id})")
+    print("   ✅ Performance validation (< 200ms target)")
+    print("   ✅ Proper serialization (no ObjectIds)")
+    
     print("\n🎯 DASHBOARD OPTIMIZATIONS TEST SUMMARY:")
     print("   ✅ Pagination with metadata (page, limit, has_next, has_prev)")
     print("   ✅ Search by name and phone (case-insensitive, regex)")
@@ -1680,7 +1698,7 @@ def main():
     print("   ✅ Measurement data export")
     
     if tester.tests_passed == tester.tests_run:
-        print("\n🎉 All tests passed! Dashboard optimizations and Pedido functionality working correctly.")
+        print("\n🎉 All tests passed! Kanban 360° system, Dashboard optimizations and Pedido functionality working correctly.")
         return 0
     else:
         print(f"\n⚠️  {tester.tests_run - tester.tests_passed} tests failed - see details above")
