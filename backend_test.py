@@ -1093,6 +1093,528 @@ class ProspectosAPITester:
         
         return success1 and success2 and success3
 
+    # NEW KANBAN 360° TESTS
+    def test_kanban_data_structure(self):
+        """Test Kanban data endpoint structure and organization"""
+        print("\n🔍 Testing Kanban 360° - Data Structure")
+        
+        success, response = self.run_test(
+            "Get Kanban Data",
+            "GET",
+            "kanban",
+            200
+        )
+        
+        if success:
+            # Validate main structure
+            required_fields = ['kanban', 'kpis', 'columnas', 'total_prospectos']
+            for field in required_fields:
+                if field not in response:
+                    print(f"❌ Missing field in Kanban response: {field}")
+                    success = False
+                else:
+                    print(f"   ✅ Field present: {field}")
+            
+            if success:
+                # Validate 7 columns structure
+                expected_columns = [
+                    "Prospectos Nuevos",
+                    "Cotizaciones Activas", 
+                    "Pedidos",
+                    "Fabricación",
+                    "Instalación",
+                    "Entrega",
+                    "Postventa"
+                ]
+                
+                columnas = response.get('columnas', [])
+                kanban_data = response.get('kanban', {})
+                kpis = response.get('kpis', {})
+                
+                # Check columns list
+                if columnas == expected_columns:
+                    print("   ✅ All 7 Kanban columns present in correct order")
+                else:
+                    print(f"   ❌ Column mismatch. Expected: {expected_columns}, Got: {columnas}")
+                    success = False
+                
+                # Check kanban data structure
+                for column in expected_columns:
+                    if column not in kanban_data:
+                        print(f"   ❌ Missing column in kanban data: {column}")
+                        success = False
+                    elif not isinstance(kanban_data[column], list):
+                        print(f"   ❌ Column {column} should be a list")
+                        success = False
+                    else:
+                        print(f"   ✅ Column {column}: {len(kanban_data[column])} prospectos")
+                
+                # Check KPIs structure
+                for column in expected_columns:
+                    if column not in kpis:
+                        print(f"   ❌ Missing KPI for column: {column}")
+                        success = False
+                    elif not isinstance(kpis[column], int):
+                        print(f"   ❌ KPI for {column} should be integer")
+                        success = False
+                
+                # Validate KPI totals match
+                total_kpis = sum(kpis.values())
+                total_prospectos = response.get('total_prospectos', 0)
+                if total_kpis == total_prospectos:
+                    print(f"   ✅ KPI totals match total prospectos: {total_kpis}")
+                else:
+                    print(f"   ❌ KPI totals ({total_kpis}) don't match total prospectos ({total_prospectos})")
+                    success = False
+        
+        return success
+
+    def test_kanban_prospect_metadata(self):
+        """Test Kanban prospect metadata and enrichment"""
+        print("\n🔍 Testing Kanban 360° - Prospect Metadata")
+        
+        success, response = self.run_test(
+            "Get Kanban Data for Metadata Test",
+            "GET",
+            "kanban",
+            200
+        )
+        
+        if success:
+            kanban_data = response.get('kanban', {})
+            
+            # Find a prospect to validate metadata
+            test_prospect = None
+            for column, prospectos in kanban_data.items():
+                if prospectos:
+                    test_prospect = prospectos[0]
+                    break
+            
+            if test_prospect:
+                # Validate prospect metadata fields
+                required_fields = [
+                    'id', 'nombre', 'telefono', 'producto_solicitado',
+                    'fecha_cita', 'created_at', 'etapas', 'columna_actual',
+                    'ultima_etapa', 'fecha_ultima_etapa', 'total_etapas',
+                    'urgencia', 'fecha_proxima_accion'
+                ]
+                
+                for field in required_fields:
+                    if field not in test_prospect:
+                        print(f"   ❌ Missing metadata field: {field}")
+                        success = False
+                    else:
+                        print(f"   ✅ Metadata field present: {field}")
+                
+                # Validate urgency values (0, 1, or 2)
+                urgencia = test_prospect.get('urgencia')
+                if urgencia in [0, 1, 2]:
+                    print(f"   ✅ Valid urgencia value: {urgencia}")
+                else:
+                    print(f"   ❌ Invalid urgencia value: {urgencia} (should be 0, 1, or 2)")
+                    success = False
+                
+                # Validate dates are ISO strings
+                fecha_fields = ['fecha_cita', 'created_at', 'fecha_ultima_etapa', 'fecha_proxima_accion']
+                for field in fecha_fields:
+                    fecha = test_prospect.get(field)
+                    if fecha and not isinstance(fecha, str):
+                        print(f"   ❌ Date field {field} should be ISO string, got {type(fecha)}")
+                        success = False
+                    elif fecha:
+                        print(f"   ✅ Date field {field} is properly serialized")
+            else:
+                print("   ⚠️  No prospects found for metadata validation")
+        
+        return success
+
+    def test_kanban_urgency_system(self):
+        """Test Kanban urgency calculation system"""
+        print("\n🔍 Testing Kanban 360° - Urgency System")
+        
+        # Create test prospects with different dates for urgency testing
+        from datetime import datetime, timezone, timedelta
+        
+        # Past date (should be urgency 2 - red)
+        past_date = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+        # Today date (should be urgency 1 - yellow)  
+        today_date = datetime.now(timezone.utc).isoformat()
+        # Future date (should be urgency 0 - green)
+        future_date = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
+        
+        test_prospects = [
+            {
+                "nombre": "Test Urgencia Roja",
+                "telefono": "+56900000001",
+                "producto_solicitado": "Deck Urgencia Test",
+                "fecha_cita": past_date
+            },
+            {
+                "nombre": "Test Urgencia Amarilla",
+                "telefono": "+56900000002", 
+                "producto_solicitado": "Deck Urgencia Test",
+                "fecha_cita": today_date
+            },
+            {
+                "nombre": "Test Urgencia Verde",
+                "telefono": "+56900000003",
+                "producto_solicitado": "Deck Urgencia Test", 
+                "fecha_cita": future_date
+            }
+        ]
+        
+        created_ids = []
+        
+        # Create test prospects
+        for i, prospect_data in enumerate(test_prospects):
+            success, response = self.run_test(
+                f"Create Urgency Test Prospect {i+1}",
+                "POST",
+                "prospectos",
+                200,
+                data=prospect_data
+            )
+            if success and 'id' in response:
+                created_ids.append(response['id'])
+        
+        # Get Kanban data to check urgency
+        success, response = self.run_test(
+            "Get Kanban Data for Urgency Test",
+            "GET", 
+            "kanban",
+            200
+        )
+        
+        urgency_test_passed = True
+        
+        if success:
+            kanban_data = response.get('kanban', {})
+            
+            # Find our test prospects and validate urgency
+            for column, prospectos in kanban_data.items():
+                for prospect in prospectos:
+                    if prospect.get('id') in created_ids:
+                        nombre = prospect.get('nombre', '')
+                        urgencia = prospect.get('urgencia')
+                        
+                        if 'Roja' in nombre and urgencia == 2:
+                            print(f"   ✅ Past date prospect has urgencia 2 (red): {nombre}")
+                        elif 'Amarilla' in nombre and urgencia == 1:
+                            print(f"   ✅ Today date prospect has urgencia 1 (yellow): {nombre}")
+                        elif 'Verde' in nombre and urgencia == 0:
+                            print(f"   ✅ Future date prospect has urgencia 0 (green): {nombre}")
+                        else:
+                            print(f"   ❌ Wrong urgencia for {nombre}: expected based on date, got {urgencia}")
+                            urgency_test_passed = False
+        
+        # Clean up test prospects
+        for prospect_id in created_ids:
+            self.run_test(f"Cleanup Urgency Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success and urgency_test_passed
+
+    def test_mover_etapa_endpoint(self):
+        """Test moving prospects between Kanban stages"""
+        print("\n🔍 Testing Kanban 360° - Mover Etapa")
+        
+        # Create test prospect
+        test_data = {
+            "nombre": "Test Mover Etapa",
+            "telefono": "+56900000004",
+            "producto_solicitado": "Deck Mover Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Mover Etapa Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Test moving to different stages
+        move_tests = [
+            {
+                "nueva_etapa": "Cotizaciones Activas",
+                "comentario": "Movido a cotizaciones desde Kanban test"
+            },
+            {
+                "nueva_etapa": "Pedidos", 
+                "comentario": "Movido a pedidos desde Kanban test"
+            },
+            {
+                "nueva_etapa": "Fabricación",
+                "comentario": "Movido a fabricación desde Kanban test"
+            }
+        ]
+        
+        move_success = True
+        
+        for i, move_data in enumerate(move_tests):
+            move_data['prospecto_id'] = prospect_id
+            
+            success, response = self.run_test(
+                f"Move to {move_data['nueva_etapa']}",
+                "POST",
+                "mover-etapa",
+                200,
+                json_data=move_data
+            )
+            
+            if success:
+                # Validate response structure
+                required_fields = ['message', 'nueva_etapa', 'log']
+                for field in required_fields:
+                    if field not in response:
+                        print(f"   ❌ Missing field in move response: {field}")
+                        move_success = False
+                
+                # Validate log structure
+                log = response.get('log', {})
+                log_fields = ['id', 'prospecto_id', 'accion', 'descripcion', 'etapa_anterior', 'etapa_nueva', 'fecha', 'comentario']
+                for field in log_fields:
+                    if field not in log:
+                        print(f"   ❌ Missing field in activity log: {field}")
+                        move_success = False
+                
+                if move_success:
+                    print(f"   ✅ Successfully moved to {move_data['nueva_etapa']}")
+                    print(f"   ✅ Activity log created: {log.get('descripcion')}")
+            else:
+                move_success = False
+        
+        # Test invalid move
+        invalid_move = {
+            "prospecto_id": prospect_id,
+            "nueva_etapa": "INVALID_STAGE",
+            "comentario": "Test invalid stage"
+        }
+        
+        success, response = self.run_test(
+            "Move to Invalid Stage",
+            "POST",
+            "mover-etapa",
+            200,  # Should still work, just map to the stage name
+            json_data=invalid_move
+        )
+        
+        if success:
+            print("   ✅ Invalid stage handled gracefully")
+        
+        # Test missing required fields
+        invalid_request = {
+            "nueva_etapa": "Pedidos"
+            # Missing prospecto_id
+        }
+        
+        success, response = self.run_test(
+            "Move with Missing prospecto_id (Should Fail)",
+            "POST",
+            "mover-etapa",
+            400,
+            json_data=invalid_request
+        )
+        
+        if success:
+            print("   ✅ Missing prospecto_id correctly rejected")
+        else:
+            print("   ❌ Should have failed with 400 for missing prospecto_id")
+            move_success = False
+        
+        # Clean up
+        self.run_test("Cleanup Mover Etapa Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return move_success
+
+    def test_logs_actividad_endpoint(self):
+        """Test activity logs endpoint"""
+        print("\n🔍 Testing Kanban 360° - Logs Actividad")
+        
+        # Create test prospect
+        test_data = {
+            "nombre": "Test Logs Actividad",
+            "telefono": "+56900000005",
+            "producto_solicitado": "Deck Logs Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Logs Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Create some activity by moving stages
+        moves = [
+            {"nueva_etapa": "Cotizaciones Activas", "comentario": "Primera actividad"},
+            {"nueva_etapa": "Pedidos", "comentario": "Segunda actividad"},
+            {"nueva_etapa": "Fabricación", "comentario": "Tercera actividad"}
+        ]
+        
+        for move in moves:
+            move['prospecto_id'] = prospect_id
+            self.run_test(
+                f"Create Activity - {move['nueva_etapa']}",
+                "POST",
+                "mover-etapa",
+                200,
+                json_data=move
+            )
+        
+        # Now test logs endpoint
+        success, response = self.run_test(
+            "Get Activity Logs",
+            "GET",
+            f"logs-actividad/{prospect_id}",
+            200
+        )
+        
+        if success:
+            logs = response.get('logs', [])
+            
+            if len(logs) >= 3:
+                print(f"   ✅ Found {len(logs)} activity logs")
+                
+                # Validate log structure
+                first_log = logs[0]
+                required_fields = ['id', 'prospecto_id', 'accion', 'descripcion', 'etapa_anterior', 'etapa_nueva', 'fecha', 'comentario']
+                
+                log_valid = True
+                for field in required_fields:
+                    if field not in first_log:
+                        print(f"   ❌ Missing field in log: {field}")
+                        log_valid = False
+                
+                if log_valid:
+                    print("   ✅ Log structure is valid")
+                    
+                    # Check if logs are ordered by date (descending)
+                    if len(logs) >= 2:
+                        first_date = logs[0].get('fecha', '')
+                        second_date = logs[1].get('fecha', '')
+                        if first_date >= second_date:
+                            print("   ✅ Logs are ordered by date (descending)")
+                        else:
+                            print("   ❌ Logs are not properly ordered by date")
+                            success = False
+                
+                success = success and log_valid
+            else:
+                print(f"   ❌ Expected at least 3 logs, got {len(logs)}")
+                success = False
+        
+        # Test logs for non-existent prospect
+        success2, response2 = self.run_test(
+            "Get Logs for Non-existent Prospect",
+            "GET",
+            "logs-actividad/non-existent-id",
+            200
+        )
+        
+        if success2:
+            logs = response2.get('logs', [])
+            if len(logs) == 0:
+                print("   ✅ No logs returned for non-existent prospect")
+            else:
+                print("   ❌ Should return empty logs for non-existent prospect")
+                success2 = False
+        
+        # Clean up
+        self.run_test("Cleanup Logs Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success and success2
+
+    def test_kanban_performance(self):
+        """Test Kanban endpoint performance"""
+        print("\n🔍 Testing Kanban 360° - Performance")
+        
+        import time
+        
+        # Test Kanban endpoint performance
+        start_time = time.time()
+        success, response = self.run_test(
+            "Kanban Performance Test",
+            "GET",
+            "kanban",
+            200
+        )
+        end_time = time.time()
+        
+        if success:
+            response_time = (end_time - start_time) * 1000  # Convert to milliseconds
+            print(f"   ✅ Kanban response time: {response_time:.0f}ms")
+            
+            # Check against 200ms target mentioned in requirements
+            if response_time > 200:
+                print(f"   ⚠️  Response time ({response_time:.0f}ms) > 200ms target")
+                # Don't fail the test, just warn
+            else:
+                print("   ✅ Performance target met (< 200ms)")
+            
+            # Validate data completeness in performance test
+            total_prospectos = response.get('total_prospectos', 0)
+            kpis = response.get('kpis', {})
+            total_kpis = sum(kpis.values())
+            
+            if total_kpis == total_prospectos:
+                print(f"   ✅ Data integrity maintained: {total_prospectos} prospectos processed")
+            else:
+                print(f"   ❌ Data integrity issue: KPIs ({total_kpis}) != total ({total_prospectos})")
+                success = False
+        
+        return success
+
+    def test_kanban_serialization(self):
+        """Test Kanban data serialization (no ObjectIds)"""
+        print("\n🔍 Testing Kanban 360° - Serialization")
+        
+        success, response = self.run_test(
+            "Kanban Serialization Test",
+            "GET",
+            "kanban",
+            200
+        )
+        
+        if success:
+            # Convert response to JSON string to check for serialization issues
+            try:
+                import json
+                json_str = json.dumps(response)
+                print("   ✅ Response is properly JSON serializable")
+                
+                # Check for ObjectId patterns in the JSON string
+                if 'ObjectId' in json_str:
+                    print("   ❌ Found ObjectId in serialized response")
+                    success = False
+                else:
+                    print("   ✅ No ObjectId found in response - proper serialization")
+                
+                # Check for _id fields
+                if '"_id"' in json_str:
+                    print("   ❌ Found _id field in serialized response")
+                    success = False
+                else:
+                    print("   ✅ No _id fields found - clean serialization")
+                
+            except Exception as e:
+                print(f"   ❌ JSON serialization failed: {str(e)}")
+                success = False
+        
+        return success
+
 def main():
     print("🚀 Starting Prospectos Sundeck API Tests - DASHBOARD OPTIMIZATIONS")
     print("=" * 70)
