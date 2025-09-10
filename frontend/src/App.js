@@ -195,7 +195,7 @@ function App() {
       case 'citas':
         return <CitasHoy onNavigate={setCurrentView} />;
       case 'sundeck360':
-        return <MapaView prospectos={prospectos} onNavigate={setCurrentView} />;
+        return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
       default:
         return <Dashboard prospectos={prospectos} onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
     }
