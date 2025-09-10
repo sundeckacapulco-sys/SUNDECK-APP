@@ -239,6 +239,6 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "✅ IMPLEMENTACIÓN COMPLETADA - Nueva etapa Pedido implementada exitosamente. Backend: modelos actualizados, endpoint generar-pedido con regla mínimo 1 m². Frontend: UI completa con campos de pago, transferencia automática, documentos actualizados. Listo para testing."
+    message: "✅ CORRECCIÓN IMPORTANTE APLICADA - Orden de etapas corregido para reflejar flujo comercial real: Medición → Cotización Aprobada → Pedido → Fabricación. Backend usa nombres (no índices) - sin riesgo de problemas futuros."
   - agent: "testing"
     message: "✅ TESTING COMPLETADO - Backend Pedido functionality PASSED (23/24 tests). Funcionalidades críticas validadas: ✅ Endpoint generar-pedido con regla mínimo 1 m² ✅ Modelos Pydantic con campos de pedido ✅ Validaciones de duplicados ✅ Cálculos comerciales vs reales ✅ Export de mediciones ✅ Creación manual de pedidos. Minor fix aplicado: default_factory → None para compatibilidad con form data. Agregado endpoint /etapas-json para testing con datos complejos."
