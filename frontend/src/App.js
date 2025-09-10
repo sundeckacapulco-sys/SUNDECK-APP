@@ -1207,6 +1207,7 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [piezasMedicion, setPiezasMedicion] = useState([]);
   const [precioM2General, setPrecioM2General] = useState('');
+  const [unidadMedida, setUnidadMedida] = useState('m'); // 'm' o 'cm'
 
   // Función para obtener descripción de cada etapa
   const getEtapaDescription = (etapa) => {
@@ -1271,26 +1272,61 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     }
   };
 
-  // Calcular totales
+  // Normalizar entrada de precio
+  const normalizarPrecio = (valor) => {
+    if (typeof valor === 'string') {
+      return valor.replace(',', '.');
+    }
+    return valor;
+  };
+
+  // Calcular m² para una pieza con validaciones
+  const calcularM2Pieza = (pieza) => {
+    let ancho = parseFloat(pieza.ancho) || 0;
+    let alto = parseFloat(pieza.alto) || 0;
+    
+    if (ancho <= 0 || alto <= 0) return 0;
+    
+    if (unidadMedida === 'm') {
+      return ancho * alto; // Directo en metros
+    } else { // cm
+      return (ancho / 100) * (alto / 100); // Convertir cm a m²
+    }
+  };
+
+  // Calcular totales corregidos
   const calcularTotales = () => {
     let totalM2 = 0;
     let totalEstimado = 0;
+    let piezasConPrecio = 0;
     
     piezasMedicion.forEach(pieza => {
-      const ancho = parseFloat(pieza.ancho) || 0;
-      const alto = parseFloat(pieza.alto) || 0;
-      const m2 = (ancho * alto) / 10000;
+      const m2 = calcularM2Pieza(pieza);
       totalM2 += m2;
       
-      const precio = parseFloat(pieza.precio_m2 || precioM2General) || 0;
-      totalEstimado += m2 * precio;
+      const precioIndividual = parseFloat(pieza.precio_m2) || 0;
+      const precioGeneral = parseFloat(precioM2General) || 0;
+      const precioAplicado = precioIndividual || precioGeneral;
+      
+      if (precioAplicado > 0) {
+        totalEstimado += m2 * precioAplicado;
+        piezasConPrecio++;
+      }
     });
     
-    return { totalM2, totalEstimado };
+    const precioPromedio = totalM2 > 0 ? totalEstimado / totalM2 : 0;
+    
+    return { 
+      totalM2: totalM2, 
+      totalEstimado: totalEstimado,
+      precioPromedio: precioPromedio,
+      piezasConPrecio: piezasConPrecio,
+      totalPiezas: piezasMedicion.length
+    };
   };
 
-  const { totalM2, totalEstimado } = calcularTotales();
-  const hayPrecio = precioM2General > 0 || piezasMedicion.some(p => p.precio_m2 > 0);
+  const totales = calcularTotales();
+  const hayPrecio = totales.piezasConPrecio > 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1305,8 +1341,9 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       if (formData.nombre_etapa === 'Visita Inicial / Medición') {
         formDataToSend.append('piezas_medicion', JSON.stringify(piezasMedicion));
         formDataToSend.append('precio_m2_general', precioM2General || 0);
-        formDataToSend.append('total_m2', totalM2);
-        formDataToSend.append('total_estimado', totalEstimado);
+        formDataToSend.append('total_m2', totales.totalM2);
+        formDataToSend.append('total_estimado', totales.totalEstimado);
+        formDataToSend.append('unidad_medida', unidadMedida);
       }
       
       fotos.forEach((foto, index) => {
@@ -1355,15 +1392,16 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
         ['Producto:', data.prospecto.producto_solicitado],
         ['Fecha Medición:', new Date(data.medicion.fecha).toLocaleDateString('es-MX')],
         ['Dirección:', data.prospecto.direccion || 'No especificada'],
+        ['Unidad de medida:', unidadMedida === 'm' ? 'Metros' : 'Centímetros'],
         [''],
         ['PIEZAS MEDIDAS:'],
-        ['Ubicación', 'Ancho (cm)', 'Alto (cm)', 'Producto/Tela', 'Color/Acabado', 'm²', 'Precio/m²', 'Total', 'Observaciones', 'Fotos', 'Notas/Video']
+        ['Ubicación', `Ancho (${unidadMedida})`, `Alto (${unidadMedida})`, 'Producto/Tela', 'Color/Acabado', 'm²', 'Precio/m²', 'Subtotal', 'Observaciones', 'Fotos', 'Notas/Video']
       ];
       
-      data.medicion.piezas.forEach(pieza => {
-        const m2 = (pieza.ancho * pieza.alto) / 10000;
-        const precio = pieza.precio_m2 || data.medicion.precio_m2_general || 0;
-        const total = m2 * precio;
+      piezasMedicion.forEach(pieza => {
+        const m2 = calcularM2Pieza(pieza);
+        const precioAplicado = parseFloat(pieza.precio_m2) || parseFloat(precioM2General) || 0;
+        const subtotal = m2 * precioAplicado;
         
         wsData.push([
           pieza.ubicacion,
@@ -1372,21 +1410,21 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
           pieza.producto_tela,
           pieza.color_acabado,
           m2.toFixed(2),
-          precio > 0 ? `$${precio.toFixed(2)}` : 'N/A',
-          precio > 0 ? `$${total.toFixed(2)}` : 'N/A',
+          precioAplicado > 0 ? `$${precioAplicado.toFixed(2)}` : 'Sin precio',
+          precioAplicado > 0 ? `$${subtotal.toFixed(2)}` : 'Sin precio',
           pieza.observaciones,
           pieza.fotos.length + ' foto(s)',
           pieza.notas_video_url || 'Sin notas'
         ]);
       });
       
-      // Agregar totales
+      // Agregar totales corregidos
       wsData.push([]);
       wsData.push(['TOTALES:']);
-      wsData.push(['Total m²:', totalM2.toFixed(2)]);
+      wsData.push(['Total m²:', totales.totalM2.toFixed(2)]);
       if (hayPrecio) {
-        wsData.push(['Precio promedio por m²:', `$${(totalEstimado / totalM2).toFixed(2)}`]);
-        wsData.push(['TOTAL ESTIMADO:', `$${totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`]);
+        wsData.push(['Precio promedio por m²:', `$${totales.precioPromedio.toFixed(2)}`]);
+        wsData.push(['TOTAL ESTIMADO:', `$${totales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`]);
       }
       
       const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -1426,42 +1464,43 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       doc.setTextColor(0, 0, 0);
       doc.text(`Cliente: ${formData.cliente || 'Cliente de Prueba'}`, 20, 50);
       doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, 20, 60);
+      doc.text(`Unidad de medida: ${unidadMedida === 'm' ? 'Metros' : 'Centímetros'}`, 20, 70);
       
-      // Tabla de piezas
+      // Tabla de piezas con cálculos corregidos
       const tableData = piezasMedicion.map(pieza => {
-        const m2 = ((parseFloat(pieza.ancho) || 0) * (parseFloat(pieza.alto) || 0)) / 10000;
-        const precio = parseFloat(pieza.precio_m2 || precioM2General) || 0;
-        const total = m2 * precio;
+        const m2 = calcularM2Pieza(pieza);
+        const precioAplicado = parseFloat(pieza.precio_m2) || parseFloat(precioM2General) || 0;
+        const subtotal = m2 * precioAplicado;
         
         return [
           pieza.ubicacion,
-          `${pieza.ancho} x ${pieza.alto} cm`,
+          `${pieza.ancho} × ${pieza.alto} ${unidadMedida}`,
           pieza.producto_tela,
           pieza.color_acabado,
           m2.toFixed(2),
-          `$${precio.toFixed(2)}`,
-          `$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}`
+          precioAplicado > 0 ? `$${precioAplicado.toFixed(2)}` : 'Sin precio',
+          precioAplicado > 0 ? `$${subtotal.toLocaleString('es-MX', {minimumFractionDigits: 2})}` : 'Sin precio'
         ];
       });
       
       doc.autoTable({
-        head: [['Ubicación', 'Medidas', 'Producto', 'Color', 'm²', 'Precio/m²', 'Total']],
+        head: [['Ubicación', 'Medidas', 'Producto', 'Color', 'm²', 'Precio/m²', 'Subtotal']],
         body: tableData,
-        startY: 70,
+        startY: 80,
         theme: 'grid',
         styles: { fontSize: 8 },
         headStyles: { fillColor: [212, 175, 55] }
       });
       
-      // Totales
+      // Totales corregidos
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(12);
-      doc.text(`Total m²: ${totalM2.toFixed(2)}`, 20, finalY);
-      doc.text(`Precio promedio: $${(totalEstimado / totalM2).toFixed(2)}/m²`, 20, finalY + 10);
+      doc.text(`Total m²: ${totales.totalM2.toFixed(2)}`, 20, finalY);
+      doc.text(`Precio promedio: $${totales.precioPromedio.toFixed(2)}/m²`, 20, finalY + 10);
       
       doc.setFontSize(14);
       doc.setTextColor(212, 175, 55);
-      doc.text(`TOTAL ESTIMADO: $${totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`, 20, finalY + 25);
+      doc.text(`TOTAL ESTIMADO: $${totales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`, 20, finalY + 25);
       
       // Términos y condiciones
       doc.setFontSize(8);
@@ -1513,35 +1552,72 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
           {esMedicion && (
             <div className="medicion-section">
               <div className="medicion-header">
-                <h4>📏 Levantamiento de Medidas</h4>
-                <div className="medicion-actions">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={agregarPieza}
-                  >
-                    + Agregar Pieza
-                  </button>
+                <div className="medicion-title">
+                  <h4>📏 Levantamiento de Medidas</h4>
                   {piezasMedicion.length > 0 && (
-                    <>
+                    <div className="medicion-summary">
+                      <span className="summary-item">
+                        📐 {totales.totalM2.toFixed(2)} m² total
+                      </span>
+                      {hayPrecio && (
+                        <span className="summary-item total-money">
+                          💰 ${totales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="medicion-controls">
+                  {/* Toggle de unidades */}
+                  <div className="unit-toggle">
+                    <label>Unidad:</label>
+                    <div className="toggle-buttons">
                       <button
                         type="button"
-                        className="btn-outline"
-                        onClick={exportarMedicion}
+                        className={`toggle-btn ${unidadMedida === 'm' ? 'active' : ''}`}
+                        onClick={() => setUnidadMedida('m')}
                       >
-                        📄 Descargar Levantamiento
+                        m
                       </button>
-                      {hayPrecio && (
+                      <button
+                        type="button"
+                        className={`toggle-btn ${unidadMedida === 'cm' ? 'active' : ''}`}
+                        onClick={() => setUnidadMedida('cm')}
+                      >
+                        cm
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="medicion-actions">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={agregarPieza}
+                    >
+                      + Agregar Pieza
+                    </button>
+                    {piezasMedicion.length > 0 && (
+                      <>
                         <button
                           type="button"
-                          className="btn-primary"
-                          onClick={generarCotizacion}
+                          className="btn-outline"
+                          onClick={exportarMedicion}
                         >
-                          💰 Generar Cotización
+                          📄 Descargar Levantamiento
                         </button>
-                      )}
-                    </>
-                  )}
+                        {hayPrecio && (
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={generarCotizacion}
+                          >
+                            💰 Generar Cotización
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1551,14 +1627,16 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
                   <div className="form-group">
                     <label htmlFor="precio_m2_general">Precio General por m² (MXN)</label>
                     <input
-                      type="number"
-                      step="0.01"
+                      type="text"
                       id="precio_m2_general"
                       value={precioM2General}
-                      onChange={(e) => setPrecioM2General(parseFloat(e.target.value) || '')}
-                      placeholder="0.00"
+                      onChange={(e) => setPrecioM2General(normalizarPrecio(e.target.value))}
+                      placeholder="750.00"
                     />
-                    <small className="field-help">Precio base aplicable a todas las piezas (opcional)</small>
+                    <small className="field-help">
+                      Precio base aplicable a todas las piezas (opcional). 
+                      {hayPrecio && ` ${totales.piezasConPrecio}/${totales.totalPiezas} piezas con precio`}
+                    </small>
                   </div>
                 </div>
               )}
@@ -1578,28 +1656,35 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
                       onDelete={() => eliminarPieza(pieza.id)}
                       onUploadFoto={(files) => subirFotoPieza(pieza.id, files)}
                       precioM2General={precioM2General}
+                      unidadMedida={unidadMedida}
                     />
                   ))}
                   
-                  {/* Totales */}
+                  {/* Totales corregidos */}
                   <div className="totales-section">
                     <h4>Resumen de Medición</h4>
                     <div className="totales-grid">
                       <div className="total-item">
                         <span className="total-label">Total m²:</span>
-                        <span className="total-value">{totalM2.toFixed(2)} m²</span>
+                        <span className="total-value">{totales.totalM2.toFixed(2)} m²</span>
                       </div>
                       {hayPrecio && (
                         <>
                           <div className="total-item">
                             <span className="total-label">Precio promedio:</span>
-                            <span className="total-value">${totalM2 > 0 ? (totalEstimado / totalM2).toFixed(2) : '0.00'}/m²</span>
+                            <span className="total-value">${totales.precioPromedio.toFixed(2)}/m²</span>
                           </div>
                           <div className="total-item primary">
                             <span className="total-label">TOTAL ESTIMADO:</span>
-                            <span className="total-value">${totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            <span className="total-value">${totales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
                           </div>
                         </>
+                      )}
+                      {totales.piezasConPrecio < totales.totalPiezas && (
+                        <div className="total-item warning">
+                          <span className="total-label">Sin precio:</span>
+                          <span className="total-value">{totales.totalPiezas - totales.piezasConPrecio} pieza(s)</span>
+                        </div>
                       )}
                     </div>
                   </div>
