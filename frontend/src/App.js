@@ -2,29 +2,41 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 
-// Plantillas de mensajes de WhatsApp
+// Plantillas de mensajes de WhatsApp (México)
 const WHATSAPP_TEMPLATES = {
-  prospecto: "Hola {nombre}, le escribo de Sundeck para darle seguimiento a su interés en {producto}. ¿Podríamos coordinar una cita?",
-  confirmacion_cita: "Hola {nombre}, le escribo de Sundeck para confirmar su cita del {fecha} para {producto}. ¿Se mantiene la cita?",
-  instalacion: "Hola {nombre}, somos de Sundeck. Nos comunicamos para coordinar la instalación de {producto}. ¿Está disponible para la cita programada?",
-  postventa: "Hola {nombre}, somos de Sundeck. Nos comunicamos para hacer seguimiento de su {producto} instalado. ¿Todo está funcionando correctamente?",
+  prospecto: "Hola {nombre}, gracias por su interés en Sundeck. Somos especialistas en {producto}. ¿Podríamos agendar una cita para platicarle sobre nuestros servicios?",
+  confirmacion_cita: "Hola {nombre}, le confirmamos su instalación de {producto} el {fecha}. ¿Se mantiene la cita programada?",
+  instalacion: "Hola {nombre}, somos de Sundeck. Nos comunicamos para coordinar la instalación de su {producto}. ¿Está disponible para la fecha programada?",
+  postventa: "Hola {nombre}, ¿cómo le fue con su instalación de {producto}? Queremos asegurarnos de que quedó completamente satisfecho con nuestro servicio.",
   general: "Hola {nombre}, le escribo de Sundeck para darle seguimiento. ¿En qué podemos ayudarle?"
 };
 
-// Función para generar URL de WhatsApp
+// Función para generar URL de WhatsApp (formato México)
 const generateWhatsAppURL = (telefono, mensaje) => {
   if (!telefono) return null;
   
   // Limpiar el número de teléfono (solo números)
-  const cleanPhone = telefono.replace(/[^\d]/g, '');
+  let cleanPhone = telefono.replace(/[^\d]/g, '');
   
-  // Si no empieza con código de país, asumir Chile (+56)
-  const phoneWithCountryCode = cleanPhone.startsWith('56') ? cleanPhone : `56${cleanPhone}`;
+  // Remover cualquier código de país existente si está presente
+  if (cleanPhone.startsWith('52')) {
+    cleanPhone = cleanPhone.substring(2);
+  } else if (cleanPhone.startsWith('1') && cleanPhone.length === 11) {
+    cleanPhone = cleanPhone.substring(1);
+  }
   
-  // Codificar el mensaje para URL
-  const encodedMessage = encodeURIComponent(mensaje);
+  // Asegurar que tengamos exactamente 10 dígitos
+  if (cleanPhone.length === 10) {
+    // Anteponer 521 (código de México + 1 para celular)
+    const phoneWithCountryCode = `521${cleanPhone}`;
+    
+    // Codificar el mensaje para URL
+    const encodedMessage = encodeURIComponent(mensaje);
+    
+    return `https://wa.me/${phoneWithCountryCode}?text=${encodedMessage}`;
+  }
   
-  return `https://wa.me/${phoneWithCountryCode}?text=${encodedMessage}`;
+  return null; // Número inválido
 };
 
 // Función para generar mensaje personalizado
@@ -33,9 +45,10 @@ const generateWhatsAppMessage = (prospecto, tipo = 'general') => {
   
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
+    return date.toLocaleDateString('es-MX', {
+      weekday: 'long',
       day: '2-digit',
-      month: '2-digit',
+      month: 'long',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
