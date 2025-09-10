@@ -103,17 +103,128 @@
 #====================================================================================================
 
 user_problem_statement: |
-  OPTIMIZACIÓN DEL DASHBOARD - Escalabilidad para grandes volúmenes de prospectos
+  KANBAN 360° SYSTEM - Sistema completo de gestión visual de prospectos
   
   Implementar:
-  1. Paginación (12 prospectos por página) con controles Anterior/Siguiente
-  2. Búsqueda en tiempo real por nombre o teléfono (MongoDB)
-  3. Filtros por etapa y fecha de cita
-  4. Vista dual: tarjetas detalladas ↔ tabla resumida
-  5. Lazy loading y optimizaciones técnicas
-  6. Performance optimizada para 1000+ prospectos
+  1. Endpoint GET /api/kanban con organización por 7 columnas Kanban
+  2. Sistema de urgencia (0=verde, 1=amarillo, 2=rojo) basado en fechas
+  3. Endpoint POST /api/mover-etapa para movimiento entre etapas
+  4. Endpoint GET /api/logs-actividad/{id} para historial de actividades
+  5. KPIs dinámicos y metadata enriquecida de prospectos
+  6. Performance optimizada < 200ms y serialización sin ObjectIds
 
 backend:
+  - task: "Implementar endpoint GET /api/kanban con estructura completa"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Endpoint GET /api/kanban implementado con 7 columnas: Prospectos Nuevos, Cotizaciones Activas, Pedidos, Fabricación, Instalación, Entrega, Postventa"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Estructura Kanban completa validada. 7 columnas correctas, KPIs dinámicos funcionando, metadata completa con urgencia y fecha_proxima_accion. Serialización sin ObjectIds correcta."
+
+  - task: "Implementar sistema de urgencia para prospectos"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Sistema de urgencia implementado: calcular_urgencia_prospecto() con lógica 0=verde (futuro), 1=amarillo (hoy), 2=rojo (pasado)"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Sistema de urgencia funcionando perfectamente. Prospectos con fechas pasadas=2 (rojo), hoy=1 (amarillo), futuras=0 (verde). Cálculo automático correcto."
+
+  - task: "Implementar endpoint POST /api/mover-etapa"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "✅ Endpoint POST /api/mover-etapa implementado con mapeo de columnas Kanban a etapas, creación automática de nueva etapa y logs de actividad"
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED: Error 500 por serialización ObjectId en respuesta. Problema en log_actividad y acceso a etapas del prospecto."
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED & TESTED: Corregido problema de serialización ObjectId. Endpoint funcionando correctamente, movimientos entre todas las etapas exitosos, logs de actividad creados correctamente."
+
+  - task: "Implementar endpoint GET /api/logs-actividad/{prospecto_id}"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Endpoint GET /api/logs-actividad/{prospecto_id} implementado con ordenamiento por fecha descendente y límite de 50 logs"
+      - working: false
+        agent: "testing"
+        comment: "❌ FAILED: Error 500 por ObjectId en serialización de logs"
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED & TESTED: Corregido problema ObjectId en logs. Endpoint funcionando, logs ordenados correctamente por fecha descendente, estructura validada."
+
+  - task: "Implementar funciones de cálculo de metadata Kanban"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Funciones calcular_urgencia_prospecto() y calcular_fecha_proxima_accion() implementadas con lógica de prioridades"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Funciones de cálculo funcionando correctamente. Metadata enriquecida incluye urgencia, fecha_proxima_accion, columna_actual, ultima_etapa, total_etapas."
+
+  - task: "Optimizar performance endpoint Kanban"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Performance optimizada con procesamiento eficiente de prospectos y serialización correcta sin ObjectIds"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Performance excelente 49ms < 200ms target. Serialización JSON correcta sin ObjectIds. Integridad de datos mantenida."
+
+  - task: "Validar mapeo de etapas a columnas Kanban"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Mapeo bidireccional implementado: etapas ↔ columnas Kanban con mapeo_etapas y mapeo_columnas"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Mapeo funcionando correctamente. Prospectos se organizan en columnas según última etapa. Movimientos entre columnas crean etapas correctas."
+
   - task: "Implementar paginación optimizada con metadata"
     implemented: true
     working: true
@@ -125,6 +236,9 @@ backend:
       - working: true
         agent: "main"
         comment: "✅ Endpoint GET /api/prospectos optimizado con paginación (page, limit), metadata completa, performance 54ms"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Paginación funcional con metadata completa (current_page, total_pages, has_next, has_prev) ✅ Límite de 12 prospectos por página por defecto ✅ Performance excelente: 54ms."
 
   - task: "Implementar búsqueda por nombre y teléfono"
     implemented: true
@@ -137,6 +251,9 @@ backend:
       - working: true
         agent: "main"
         comment: "✅ Búsqueda case-insensitive con regex MongoDB funcionando, performance 56ms"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Búsqueda case-insensitive funcionando perfectamente. Regex search por nombre y teléfono. Parámetro 'search' funciona con términos parciales. Performance: 56ms."
 
   - task: "Implementar filtro por etapa con aggregation"
     implemented: true
@@ -149,6 +266,9 @@ backend:
       - working: true
         agent: "main"
         comment: "✅ Filtro por última etapa usando aggregation pipeline, conteo correcto de totales"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Filtro por etapa funciona correctamente usando aggregation pipeline. Filtra por última etapa del prospecto. Parámetro 'etapa_filter' funcional. Conteo correcto de totales con filtros aplicados."
 
   - task: "Implementar filtros por fecha de cita"
     implemented: true
@@ -161,6 +281,9 @@ backend:
       - working: true
         agent: "main"
         comment: "✅ Filtros fecha_inicio y fecha_fin operativos, combinación con otros filtros funcional"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Filtro por rango de fechas funcionando. Parámetros fecha_inicio y fecha_fin operativos. Filtra correctamente por fecha_cita del prospecto."
 
   - task: "Crear endpoint etapas disponibles"
     implemented: true
@@ -173,102 +296,9 @@ backend:
       - working: true
         agent: "main"
         comment: "✅ GET /api/etapas-disponibles con orden comercial correcto implementado"
-
-  - task: "Optimizar endpoint GET /api/prospectos con paginación"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Paginación funcional con parámetros page, limit. Metadata completa: current_page, total_pages, total_count, page_size, has_next, has_prev. Límite de 12 prospectos por página por defecto. Performance excelente: 54ms."
-
-  - task: "Implementar búsqueda por nombre y teléfono"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Búsqueda case-insensitive funcionando perfectamente. Regex search por nombre y teléfono. Parámetro 'search' funciona con términos parciales. Performance: 56ms."
-
-  - task: "Implementar filtro por etapa usando aggregation pipeline"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Filtro por etapa funciona correctamente usando aggregation pipeline. Filtra por última etapa del prospecto. Parámetro 'etapa_filter' funcional. Conteo correcto de totales con filtros aplicados."
-
-  - task: "Implementar filtro por rango de fechas"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Filtro por rango de fechas funcionando. Parámetros fecha_inicio y fecha_fin operativos. Filtra correctamente por fecha_cita del prospecto."
-
-  - task: "Implementar filtros combinados"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Filtros combinados funcionan perfectamente. Combinación de paginación + búsqueda + filtro de etapa + fechas. Metadata de paginación se mantiene correcta con todos los filtros aplicados."
-
-  - task: "Endpoint GET /api/etapas-disponibles"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
       - working: true
         agent: "testing"
         comment: "✅ TESTED: Endpoint funcional. Lista completa de 7 etapas disponibles. Orden correcto: Medición → Cotización Aprobada → Pedido → Fabricación → Instalación → Entrega → Postventa."
-
-  - task: "Validar performance de optimizaciones"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Performance excelente. Paginación: 54ms, Búsqueda: 56ms. Ambos muy por debajo del target de 500ms. Aggregation pipeline eficiente para filtros de etapa."
-
-  - task: "Manejo de casos edge en dashboard"
-    implemented: true
-    working: true
-    file: "server.py"
-    stuck_count: 0
-    priority: "low"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Casos edge manejados correctamente. Páginas vacías (page 999), búsquedas sin resultados, filtros de etapa inválidos. Metadata de paginación consistente en todos los casos."
 
 frontend:
   - task: "Implementar paginación con controles navegación"
