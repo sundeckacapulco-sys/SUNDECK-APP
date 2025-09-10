@@ -442,6 +442,7 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
 const TareaCompacta = ({ 
   recordatorio, 
   onCompletar, 
+  onReprogramar,
   onExpandir, 
   expandido,
   getAccionDescripcion,
