@@ -983,6 +983,30 @@ body {
   margin: 0;
 }
 
+.pieza-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.m2-display {
+  background: linear-gradient(135deg, var(--accent) 0%, #0ea5e9 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.total-display {
+  background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .btn-delete {
   background: transparent;
   border: none;
@@ -1035,6 +1059,92 @@ body {
 .pieza-grid .form-group textarea:focus {
   outline: none;
   border-color: var(--secondary);
+}
+
+.field-help {
+  font-size: 0.75rem;
+  color: var(--neutral2);
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Precio General */
+.precio-general {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid var(--secondary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.precio-general .form-group {
+  margin: 0;
+}
+
+.precio-general .form-group label {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.precio-general .form-group input {
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 2px solid var(--secondary);
+}
+
+/* Totales Section */
+.totales-section {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--neutral2) 100%);
+  color: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+}
+
+.totales-section h4 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: var(--secondary);
+}
+
+.totales-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.total-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.total-item.primary {
+  background: var(--secondary);
+  color: var(--primary);
+  border: 2px solid var(--secondary);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.total-label {
+  font-weight: 600;
+}
+
+.total-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.total-item.primary .total-value {
+  font-size: 1.3rem;
 }
 
 /* Foto Upload */
