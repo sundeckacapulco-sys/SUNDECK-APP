@@ -362,18 +362,23 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
             cursor: 'pointer',
             fontSize: '1rem'
           }}
-          onClick={() => {
-            console.log('Navegando al dashboard...', onNavigate);
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('NAVEGACIÓN DIRECTA AL DASHBOARD');
+            
+            // Navegación directa sin usar variables externas
             try {
-              if (onNavigate && typeof onNavigate === 'function') {
+              if (typeof onNavigate === 'function') {
+                console.log('Ejecutando onNavigate con dashboard');
                 onNavigate('dashboard');
               } else {
-                console.error('onNavigate no es una función válida:', onNavigate);
-                window.location.reload(); // Fallback: recargar página
+                console.log('onNavigate no disponible, recargando página');
+                window.location.href = window.location.origin;
               }
             } catch (error) {
-              console.error('Error en navegación:', error);
-              window.location.reload();
+              console.error('Error crítico:', error);
+              window.location.href = window.location.origin;
             }
           }}
         >
