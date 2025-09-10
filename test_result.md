@@ -154,64 +154,64 @@ backend:
 
 frontend:
   - task: "Agregar etapa Pedido a lista de etapas disponibles"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Insertar 'Pedido' entre Medición y Cotización Aprobada"
+        comment: "✅ Etapa 'Pedido' agregada entre Medición y Cotización Aprobada con descripción"
 
   - task: "Implementar botón Generar Pedido en medición"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Botón que transfiere datos automáticamente de medición a pedido"
+        comment: "✅ Botón implementado con transferencia automática de datos y validación de medición existente"
 
   - task: "Implementar regla mínimo 1 m² para cálculo comercial"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Mostrar m² real vs m² comercial (mínimo 1 m²)"
+        comment: "✅ Función calcularM2Comercial() implementada con Math.max(m2Real, 1.0). Totales muestran m² real vs comercial"
 
   - task: "Crear interfaz para campos de pedido"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Formulario con monto total, anticipo, saldo, forma de pago, vencimiento"
+        comment: "✅ Formulario completo con campos de pago, archivos y resumen de piezas. Cálculo automático de saldo pendiente"
 
   - task: "Actualizar documentos PDF/Excel con m² comercial"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Mostrar columnas m² real y m² cobrado para transparencia"
+        comment: "✅ Documentos actualizados con columnas 'm² Real' y 'm² Comercial', totales diferenciados y nota de regla mínimo"
 
 metadata:
   created_by: "main_agent"
