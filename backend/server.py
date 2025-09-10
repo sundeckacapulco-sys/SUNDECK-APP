@@ -838,9 +838,16 @@ async def mover_prospecto_etapa(request: dict):
 async def obtener_logs_prospecto(prospecto_id: str):
     """Obtener logs de actividad de un prospecto específico"""
     try:
-        logs = await db.logs_actividad.find(
+        logs_raw = await db.logs_actividad.find(
             {"prospecto_id": prospecto_id}
         ).sort("fecha", -1).to_list(length=50)
+        
+        # Clean up ObjectIds from logs
+        logs = []
+        for log in logs_raw:
+            if '_id' in log:
+                del log['_id']  # Remove MongoDB ObjectId
+            logs.append(log)
         
         return {"logs": logs}
         
