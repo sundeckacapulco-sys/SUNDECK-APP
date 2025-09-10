@@ -236,20 +236,28 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
 
                 {grupos.hoy.length > 0 && (
                   <div className="grupo-urgencia">
-                    <h3 className="grupo-titulo hoy">🟡 Hoy ({grupos.hoy.length})</h3>
-                    {grupos.hoy.map(recordatorio => (
-                      <TareaCompacta 
-                        key={recordatorio.id} 
-                        recordatorio={recordatorio}
-                        onCompletar={completarRecordatorio}
-                        onExpandir={setMensajeExpandido}
-                        expandido={mensajeExpandido === recordatorio.id}
-                        getAccionDescripcion={getAccionDescripcion}
-                        formatearFechaCompacta={formatearFechaCompacta}
-                        getExtractoMensaje={getExtractoMensaje}
-                        onNavigateToProspecto={onNavigateToProspecto}
-                      />
-                    ))}
+                    <h3 
+                      className={`grupo-titulo hoy ${gruposColapsados.hoy ? 'collapsed' : ''}`}
+                      onClick={() => toggleGrupo('hoy')}
+                    >
+                      <span>🟡 Hoy ({grupos.hoy.length})</span>
+                      <span className="toggle-icon">▼</span>
+                    </h3>
+                    <div className={`grupo-contenido ${gruposColapsados.hoy ? 'collapsed' : ''}`}>
+                      {grupos.hoy.map(recordatorio => (
+                        <TareaCompacta 
+                          key={recordatorio.id} 
+                          recordatorio={recordatorio}
+                          onCompletar={completarRecordatorio}
+                          onExpandir={setMensajeExpandido}
+                          expandido={mensajeExpandido === recordatorio.id}
+                          getAccionDescripcion={getAccionDescripcion}
+                          formatearFechaCompacta={formatearFechaCompacta}
+                          getExtractoMensaje={getExtractoMensaje}
+                          onNavigateToProspecto={onNavigateToProspecto}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
 
