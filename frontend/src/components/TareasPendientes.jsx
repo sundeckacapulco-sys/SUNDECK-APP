@@ -8,6 +8,10 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
   const [filtroActivo, setFiltroActivo] = useState('todos');
   const [mensajeExpandido, setMensajeExpandido] = useState(null);
   const [gruposColapsados, setGruposColapsados] = useState({});
+  const [modalReprogramar, setModalReprogramar] = useState(null);
+  const [fechaReprogramacion, setFechaReprogramacion] = useState('');
+  const [motivoReprogramacion, setMotivoReprogramacion] = useState('');
+  const [notasReprogramacion, setNotasReprogramacion] = useState('');
 
   // Función de navegación aislada
   const navegarAlDashboard = () => {
