@@ -4116,4 +4116,238 @@ body {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
+/* Grupos de urgencia */
+.grupo-urgencia {
+  margin-bottom: 2rem;
+}
+
+.grupo-titulo {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grupo-titulo.vencido {
+  background: #fee2e2;
+  color: #dc2626;
+  border-left: 4px solid #ef4444;
+}
+
+.grupo-titulo.hoy {
+  background: #fef3c7;
+  color: #d97706;
+  border-left: 4px solid #f59e0b;
+}
+
+.grupo-titulo.mañana {
+  background: #f0fdf4;
+  color: #059669;
+  border-left: 4px solid #10b981;
+}
+
+.grupo-titulo.futuro {
+  background: #f8fafc;
+  color: #475569;
+  border-left: 4px solid #94a3b8;
+}
+
+/* Tarea compacta */
+.tarea-compacta {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 6px var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.tarea-compacta:hover {
+  box-shadow: 0 2px 12px var(--shadow);
+  transform: translateY(-1px);
+}
+
+.tarea-info {
+  flex: 1;
+}
+
+.cliente-info {
+  font-size: 1rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.cliente-info strong {
+  font-weight: 600;
+}
+
+.accion-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.accion {
+  background: var(--primary);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.fecha-limite {
+  font-size: 0.875rem;
+  color: var(--neutral2);
+  font-weight: 500;
+  background: var(--neutral4);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.mensaje-extracto {
+  font-size: 0.875rem;
+  color: var(--neutral2);
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-expandir {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.btn-expandir:hover {
+  color: #2563eb;
+}
+
+.mensaje-completo {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--neutral4);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary);
+}
+
+.mensaje-completo p {
+  margin: 0;
+  font-style: italic;
+  color: var(--neutral1);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Acciones de tarea */
+.tarea-acciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-accion {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-accion.whatsapp {
+  background: #25d366;
+  color: white;
+}
+
+.btn-accion.whatsapp:hover {
+  background: #20ba5a;
+  transform: translateY(-1px);
+}
+
+.btn-accion.completar {
+  background: #10b981;
+  color: white;
+  font-size: 1rem;
+}
+
+.btn-accion.completar:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-accion.ver {
+  background: var(--neutral4);
+  color: var(--primary);
+  border: 1px solid var(--neutral3);
+}
+
+.btn-accion.ver:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Badge con colores */
+.notification-badge .badge.green {
+  background: #10b981;
+  animation: none;
+}
+
+.notification-badge .badge.yellow {
+  background: #f59e0b;
+  animation: pulse 2s infinite;
+}
+
+.notification-badge .badge.red {
+  background: #ef4444;
+  animation: pulse 1s infinite;
+}
+
+/* Responsive para tareas compactas */
+@media (max-width: 768px) {
+  .tarea-compacta {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .tarea-acciones {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .btn-accion {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .accion-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .grupo-titulo {
+    font-size: 1.1rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
 }
