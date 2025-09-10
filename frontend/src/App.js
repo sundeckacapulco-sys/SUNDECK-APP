@@ -1210,6 +1210,20 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
   const [piezasMedicion, setPiezasMedicion] = useState([]);
   const [precioM2General, setPrecioM2General] = useState('');
   const [unidadMedida, setUnidadMedida] = useState('m'); // 'm' o 'cm'
+  
+  // Estados específicos para etapa Pedido
+  const [camposPedido, setCamposPedido] = useState({
+    monto_total: '',
+    anticipo_recibido: '',
+    saldo_pendiente: '',
+    forma_pago: '',
+    fecha_vencimiento_saldo: '',
+    cotizacion_url: '',
+    archivo_levantamiento_url: ''
+  });
+  
+  // Estado para saber si hay una medición disponible para generar pedido
+  const [tieneMedicion, setTieneMedicion] = useState(false);
 
   // Función para obtener descripción de cada etapa
   const getEtapaDescription = (etapa) => {
