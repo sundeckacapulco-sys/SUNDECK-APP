@@ -85,6 +85,9 @@ class Etapa(BaseModel):
     comentario: str
     fotos: List[str] = Field(default_factory=list)
     piezas_medicion: Optional[List[dict]] = Field(default_factory=list)
+    precio_m2_general: Optional[float] = None
+    total_m2: Optional[float] = None
+    total_estimado: Optional[float] = None
 
 # Cloudinary service functions
 def upload_to_cloudinary(file_content, filename: str):
