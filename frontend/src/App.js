@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './App.css';
+import whatsappTemplates from './whatsappTemplates.json';
 
 // Plantillas de mensajes de WhatsApp (México)
 const WHATSAPP_TEMPLATES = {
