@@ -1532,12 +1532,17 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       });
       
       // Agregar totales corregidos
+      const totalesReales = calcularTotales(false);
+      const totalesComerciales = calcularTotales(true);
+      
       wsData.push([]);
       wsData.push(['TOTALES:']);
-      wsData.push(['Total m²:', totales.totalM2.toFixed(2)]);
+      wsData.push(['Total m² reales:', totalesReales.totalM2Real.toFixed(2)]);
+      wsData.push(['Total m² comerciales:', totalesComerciales.totalM2Comercial.toFixed(2)]);
+      wsData.push(['Regla aplicada:', 'Mínimo 1 m² por pieza para facturación']);
       if (hayPrecio) {
-        wsData.push(['Precio promedio por m²:', `$${totales.precioPromedio.toFixed(2)}`]);
-        wsData.push(['TOTAL ESTIMADO:', `$${totales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`]);
+        wsData.push(['Precio promedio por m²:', `$${totalesComerciales.precioPromedio.toFixed(2)}`]);
+        wsData.push(['TOTAL ESTIMADO:', `$${totalesComerciales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`]);
       }
       
       const ws = XLSX.utils.aoa_to_sheet(wsData);
