@@ -428,17 +428,29 @@ backend:
         agent: "testing"
         comment: "🎉 CLOUDINARY INTEGRATION RESOLVED! ✅ CORRECTED CREDENTIALS WORKING: User provided corrected API secret 'hYS25CWyVbMveJLuYgZPqpVOoyA' (removed incorrect '3.' prefix) ✅ COMPREHENSIVE TESTING PASSED: Single photo upload successful with POST /api/prospectos/{id}/etapas endpoint ✅ Photo upload to 'Pedido' stage working perfectly ✅ Valid Cloudinary URLs generated: https://res.cloudinary.com/dm0jkstgo/image/upload/... ✅ Photos accessible from generated URLs (HTTP 200) ✅ Correct cloud name 'dm0jkstgo' in URLs ✅ Backend integration code working correctly ✅ File upload handling functional ✅ Stage creation with photos successful ✅ 'Invalid Signature' error COMPLETELY RESOLVED ✅ Core Cloudinary functionality confirmed working. Minor: Some filename formatting issues with special characters in stage names, but core integration is fully functional."
 
-  - task: "Implement Phase 1 Automatic Reminder System"
+  - task: "Implement Phase 2.1: Smart Business Days with Mexican Holidays"
     implemented: true
     working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Phase 1 reminder system complete: Recordatorio & TemplateWhatsApp models, automatic reminder creation, dashboard APIs, WhatsApp templates (5 default), business days calculation, all endpoints functional. Backend testing shows 27/27 tests passed (100% success)."
+        comment: "✅ Phase 2.1 smart business days implemented: obtener_feriados_mexico_2024_2025() with official Mexican holidays (DOF), es_dia_habil() function considers both weekends and holidays, calcular_dias_habiles() correctly excludes holidays, obtener_siguiente_dia_habil() for automatic adjustment to valid business days. All automatic reminder creation now uses intelligent business day calculations."
+
+  - task: "Implement Phase 2.1: Complete Reminder Rescheduling System"
+    implemented: true
+    working: true
+    file: "server.py, components/TareasPendientes.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Phase 2.1 rescheduling system complete: Backend - POST /recordatorios/{id}/reprogramar endpoint with automatic business day validation, ReprogramacionRecordatorio model, motivos enumeration. Frontend - Modal with date/time picker, reason dropdown, notes field, full validation, integrated with all task categories (vencidas, hoy, mañana, futuras). Complete rescheduling workflow operational."
 frontend:
   - task: "Fix Embudo 360 frontend API calls"
     implemented: true
