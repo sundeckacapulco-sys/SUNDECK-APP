@@ -1328,6 +1328,12 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
     }
   };
 
+  // Calcular m² comercial (con regla mínimo 1 m²)
+  const calcularM2Comercial = (pieza) => {
+    const m2Real = calcularM2Pieza(pieza);
+    return Math.max(m2Real, 1.0); // Mínimo 1 m²
+  };
+
   // Calcular totales corregidos
   const calcularTotales = () => {
     let totalM2 = 0;
