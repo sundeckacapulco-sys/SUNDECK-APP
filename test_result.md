@@ -172,7 +172,7 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Etapa 'Pedido' agregada entre Medición y Cotización Aprobada con descripción"
+        comment: "✅ Etapa 'Pedido' agregada con orden comercial correcto: Medición → Cotización Aprobada → Pedido → Fabricación → Instalación → Entrega → Postventa"
 
   - task: "Implementar botón Generar Pedido en medición"
     implemented: true
