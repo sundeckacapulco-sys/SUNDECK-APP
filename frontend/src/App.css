@@ -1311,59 +1311,7 @@ body {
   border: 2px solid var(--secondary);
 }
 
-/* Totales Section */
-.totales-section {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--neutral2) 100%);
-  color: white;
-  border-radius: 16px;
-  padding: 2rem;
-  margin-top: 2rem;
-}
 
-.totales-section h4 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  color: var(--secondary);
-}
-
-.totales-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.total-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
-}
-
-.total-item.primary {
-  background: var(--secondary);
-  color: var(--primary);
-  border: 2px solid var(--secondary);
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.total-label {
-  font-weight: 600;
-}
-
-.total-value {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.total-item.primary .total-value {
-  font-size: 1.3rem;
-}
 
 /* Foto Upload */
 .foto-upload {
