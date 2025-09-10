@@ -352,6 +352,21 @@ const TareaCompacta = ({
   formatearFechaCompacta,
   getExtractoMensaje
 }) => {
+  // Determinar el tipo de vista según el tipo de recordatorio
+  const getTipoVista = (tipo) => {
+    const tiposProspecto = ['cotizacion_24h', 'primer_seguimiento', 'segundo_seguimiento', 'tercer_seguimiento', 'recontacto_sin_respuesta'];
+    const tiposPedido = ['cobro_anticipo', 'confirmacion_instalacion', 'entrega_final'];
+    
+    if (tiposProspecto.includes(tipo)) {
+      return { label: 'Prospecto', icon: '👤' };
+    } else if (tiposPedido.includes(tipo)) {
+      return { label: 'Pedido', icon: '📋' };
+    }
+    return { label: 'Prospecto', icon: '👤' }; // Default
+  };
+
+  const tipoVista = getTipoVista(recordatorio.tipo);
+
   return (
     <div className="tarea-compacta">
       <div className="tarea-info">
@@ -384,23 +399,27 @@ const TareaCompacta = ({
         <button 
           className="btn-accion whatsapp"
           onClick={() => onWhatsApp(recordatorio)}
-          title="Enviar WhatsApp"
+          title="Enviar mensaje por WhatsApp"
         >
-          WhatsApp
+          💬 WhatsApp
         </button>
         <button 
           className="btn-accion completar"
           onClick={() => onCompletar(recordatorio.id)}
-          title="Completar"
+          title="Marcar como completado"
         >
-          ✓
+          ✅ Completar
         </button>
         <button 
           className="btn-accion ver"
-          onClick={() => console.log('Ver prospecto:', recordatorio.prospecto_id)}
-          title="Ver detalles"
+          onClick={() => {
+            // Aquí implementarías la navegación al prospecto o pedido
+            console.log(`Ver ${tipoVista.label.toLowerCase()}:`, recordatorio.prospecto_id);
+            // onNavigate('prospecto', recordatorio.prospecto_id); // Ejemplo de implementación futura
+          }}
+          title={`Ver ${tipoVista.label}`}
         >
-          Ver
+          {tipoVista.icon} {tipoVista.label}
         </button>
       </div>
     </div>
