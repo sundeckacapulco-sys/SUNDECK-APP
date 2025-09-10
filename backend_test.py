@@ -306,7 +306,7 @@ class ProspectosAPITester:
         success, response = self.run_test(
             "Add Measurement with Pieces (JSON)",
             "POST",
-            f"prospectos/{prospect_id}/etapas",
+            f"prospectos/{prospect_id}/etapas-json",
             200,
             json_data=measurement_data
         )
