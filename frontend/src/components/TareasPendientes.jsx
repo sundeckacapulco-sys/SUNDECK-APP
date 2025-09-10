@@ -234,7 +234,7 @@ const TareasPendientes = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Lista de recordatorios */}
+      {/* Lista de recordatorios agrupados */}
       <div className="tareas-lista">
         {recordatorios.length === 0 ? (
           <div className="tareas-empty">
@@ -243,62 +243,88 @@ const TareasPendientes = ({ onNavigate }) => {
             <p>Excelente trabajo manteniendo el seguimiento al día.</p>
           </div>
         ) : (
-          recordatorios.map(recordatorio => (
-            <div 
-              key={recordatorio.id} 
-              className={`recordatorio-card ${getColorUrgencia(recordatorio.fecha_limite)}`}
-            >
-              <div className="recordatorio-header">
-                <div className="recordatorio-tipo">
-                  {getTipoDescripcion(recordatorio.tipo)}
-                </div>
-                <div className="recordatorio-urgencia">
-                  {formatearFecha(recordatorio.fecha_limite)}
-                </div>
-              </div>
-              
-              <div className="recordatorio-prospecto">
-                <div className="prospecto-info">
-                  <h4>{recordatorio.prospecto_nombre}</h4>
-                  <p>{recordatorio.prospecto_producto}</p>
-                  <span className="prospecto-telefono">{recordatorio.prospecto_telefono}</span>
-                </div>
-              </div>
-              
-              <div className="recordatorio-mensaje">
-                <p>"{recordatorio.mensaje_sugerido}"</p>
-              </div>
-              
-              <div className="recordatorio-acciones">
-                <button 
-                  className="btn-whatsapp"
-                  onClick={() => enviarWhatsApp(recordatorio)}
-                  title="Enviar mensaje por WhatsApp"
-                >
-                  💬 WhatsApp
-                </button>
-                
-                <button 
-                  className="btn-completar"
-                  onClick={() => completarRecordatorio(recordatorio.id)}
-                  title="Marcar como completado"
-                >
-                  ✅ Completar
-                </button>
-                
-                <button 
-                  className="btn-ver-prospecto"
-                  onClick={() => {
-                    // Aquí podrías navegar al detalle del prospecto
-                    console.log('Ver prospecto:', recordatorio.prospecto_id);
-                  }}
-                  title="Ver detalles del prospecto"
-                >
-                  👁️ Ver
-                </button>
-              </div>
-            </div>
-          ))
+          (() => {
+            const grupos = agruparTareasPorUrgencia(recordatorios);
+            return (
+              <>
+                {grupos.vencidas.length > 0 && (
+                  <div className="grupo-urgencia">
+                    <h3 className="grupo-titulo vencido">🔴 Vencidas ({grupos.vencidas.length})</h3>
+                    {grupos.vencidas.map(recordatorio => (
+                      <TareaCompacta 
+                        key={recordatorio.id} 
+                        recordatorio={recordatorio}
+                        onWhatsApp={enviarWhatsApp}
+                        onCompletar={completarRecordatorio}
+                        onExpandir={setMensajeExpandido}
+                        expandido={mensajeExpandido === recordatorio.id}
+                        getAccionDescripcion={getAccionDescripcion}
+                        formatearFechaCompacta={formatearFechaCompacta}
+                        getExtractoMensaje={getExtractoMensaje}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {grupos.hoy.length > 0 && (
+                  <div className="grupo-urgencia">
+                    <h3 className="grupo-titulo hoy">🟡 Hoy ({grupos.hoy.length})</h3>
+                    {grupos.hoy.map(recordatorio => (
+                      <TareaCompacta 
+                        key={recordatorio.id} 
+                        recordatorio={recordatorio}
+                        onWhatsApp={enviarWhatsApp}
+                        onCompletar={completarRecordatorio}
+                        onExpandir={setMensajeExpandido}
+                        expandido={mensajeExpandido === recordatorio.id}
+                        getAccionDescripcion={getAccionDescripcion}
+                        formatearFechaCompacta={formatearFechaCompacta}
+                        getExtractoMensaje={getExtractoMensaje}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {grupos.mañana.length > 0 && (
+                  <div className="grupo-urgencia">
+                    <h3 className="grupo-titulo mañana">🟢 Mañana ({grupos.mañana.length})</h3>
+                    {grupos.mañana.map(recordatorio => (
+                      <TareaCompacta 
+                        key={recordatorio.id} 
+                        recordatorio={recordatorio}
+                        onWhatsApp={enviarWhatsApp}
+                        onCompletar={completarRecordatorio}
+                        onExpandir={setMensajeExpandido}
+                        expandido={mensajeExpandido === recordatorio.id}
+                        getAccionDescripcion={getAccionDescripcion}
+                        formatearFechaCompacta={formatearFechaCompacta}
+                        getExtractoMensaje={getExtractoMensaje}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {grupos.futuro.length > 0 && (
+                  <div className="grupo-urgencia">
+                    <h3 className="grupo-titulo futuro">⏳ Próximas ({grupos.futuro.length})</h3>
+                    {grupos.futuro.map(recordatorio => (
+                      <TareaCompacta 
+                        key={recordatorio.id} 
+                        recordatorio={recordatorio}
+                        onWhatsApp={enviarWhatsApp}
+                        onCompletar={completarRecordatorio}
+                        onExpandir={setMensajeExpandido}
+                        expandido={mensajeExpandido === recordatorio.id}
+                        getAccionDescripcion={getAccionDescripcion}
+                        formatearFechaCompacta={formatearFechaCompacta}
+                        getExtractoMensaje={getExtractoMensaje}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            );
+          })()
         )}
       </div>
 
