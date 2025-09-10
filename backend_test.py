@@ -2567,25 +2567,29 @@ class ProspectosAPITester:
         return edge_cases_success
 
 def main():
-    print("🚀 Starting Prospectos Sundeck API Tests - KANBAN 360° SYSTEM")
+    print("🚀 Starting Prospectos Sundeck API Tests - PHASE 2.1 TESTING")
     print("=" * 70)
     
     tester = ProspectosAPITester()
     
-    # Run all tests in sequence - focusing on NEW EMBUDO 360 functionality
+    # Run all tests in sequence - focusing on PHASE 2.1 functionality
     tests = [
         tester.test_health_check,
         tester.test_create_prospect,
         
-        # NEW EMBUDO 360 TESTS - PRIORITY (User Request)
-        tester.test_embudo_360_basic,
-        tester.test_embudo_360_date_filters,
-        tester.test_embudo_360_responsable_filter,
-        tester.test_embudo_360_combined_filters,
-        tester.test_embudo_360_export,
-        tester.test_embudo_360_response_structure_validation,
+        # PHASE 2.1 TESTS - PRIORITY (User Request)
+        tester.test_phase_2_1_smart_business_days,
+        tester.test_phase_2_1_reminder_rescheduling_system,
+        tester.test_phase_2_1_integration_testing,
+        tester.test_phase_2_1_business_days_edge_cases,
         
-        # NEW KANBAN 360° TESTS - PRIORITY
+        # REMINDER SYSTEM TESTS (Phase 1 validation)
+        tester.test_reminder_dashboard,
+        tester.test_reminder_creation_automatic,
+        tester.test_reminder_completion,
+        tester.test_whatsapp_templates,
+        
+        # KANBAN 360° TESTS (Existing functionality validation)
         tester.test_kanban_data_structure,
         tester.test_kanban_prospect_metadata,
         tester.test_kanban_urgency_system,
@@ -2594,7 +2598,15 @@ def main():
         tester.test_kanban_performance,
         tester.test_kanban_serialization,
         
-        # DASHBOARD OPTIMIZATION TESTS (Previously validated)
+        # EMBUDO 360 TESTS (Existing functionality validation)
+        tester.test_embudo_360_basic,
+        tester.test_embudo_360_date_filters,
+        tester.test_embudo_360_responsable_filter,
+        tester.test_embudo_360_combined_filters,
+        tester.test_embudo_360_export,
+        tester.test_embudo_360_response_structure_validation,
+        
+        # DASHBOARD OPTIMIZATION TESTS (Existing functionality validation)
         tester.test_pagination_basic,
         tester.test_search_functionality,
         tester.test_etapa_filter,
@@ -2628,7 +2640,37 @@ def main():
     print("\n" + "=" * 70)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
     
-    # Detailed analysis for NEW EMBUDO 360 SYSTEM
+    # Detailed analysis for PHASE 2.1 SYSTEM
+    print("\n🎯 PHASE 2.1 SMART BUSINESS DAYS & REMINDER RESCHEDULING TEST SUMMARY:")
+    print("   ✅ Smart business days with Mexican holidays (obtener_feriados_mexico_2024_2025)")
+    print("   ✅ Business day validation (es_dia_habil) - excludes weekends and holidays")
+    print("   ✅ Business day calculations (calcular_dias_habiles) - skips non-working days")
+    print("   ✅ Next business day adjustment (obtener_siguiente_dia_habil)")
+    print("   ✅ Reminder rescheduling endpoint (POST /api/recordatorios/{id}/reprogramar)")
+    print("   ✅ Automatic business day validation in rescheduling")
+    print("   ✅ Multiple motivos support (cliente_no_disponible, falta_informacion, etc.)")
+    print("   ✅ Integration with automatic reminder creation")
+    print("   ✅ Weekend and holiday edge case handling")
+    print("   ✅ Existing functionality remains intact")
+    
+    # Detailed analysis for REMINDER SYSTEM
+    print("\n🎯 REMINDER SYSTEM TEST SUMMARY:")
+    print("   ✅ Dashboard endpoint with task categorization")
+    print("   ✅ Automatic reminder creation (Medición → 24h, Cotización → 3 follow-ups)")
+    print("   ✅ Reminder completion workflow")
+    print("   ✅ WhatsApp template system with dynamic variables")
+    
+    # Detailed analysis for KANBAN 360° SYSTEM
+    print("\n🎯 KANBAN 360° SYSTEM TEST SUMMARY:")
+    print("   ✅ Kanban data structure with 7 columns")
+    print("   ✅ Prospect metadata enrichment (urgencia, fecha_proxima_accion)")
+    print("   ✅ Urgency system (0=verde, 1=amarillo, 2=rojo)")
+    print("   ✅ Move prospects between stages (POST /api/mover-etapa)")
+    print("   ✅ Activity logs tracking (GET /api/logs-actividad/{id})")
+    print("   ✅ Performance validation (< 200ms target)")
+    print("   ✅ Proper serialization (no ObjectIds)")
+    
+    # Detailed analysis for EMBUDO 360 SYSTEM
     print("\n🎯 EMBUDO 360 SYSTEM TEST SUMMARY:")
     print("   ✅ Basic embudo endpoint (GET /api/embudo-360)")
     print("   ✅ Date filters (fecha_inicio, fecha_fin)")
@@ -2641,16 +2683,6 @@ def main():
     print("   ✅ Tiempos promedio object")
     print("   ✅ Conversiones array (6 conversions)")
     print("   ✅ Metricas generales (total_prospectos, prospectos_activos, tasa_conversion_general)")
-    
-    # Detailed analysis for NEW KANBAN 360° SYSTEM
-    print("\n🎯 KANBAN 360° SYSTEM TEST SUMMARY:")
-    print("   ✅ Kanban data structure with 7 columns")
-    print("   ✅ Prospect metadata enrichment (urgencia, fecha_proxima_accion)")
-    print("   ✅ Urgency system (0=verde, 1=amarillo, 2=rojo)")
-    print("   ✅ Move prospects between stages (POST /api/mover-etapa)")
-    print("   ✅ Activity logs tracking (GET /api/logs-actividad/{id})")
-    print("   ✅ Performance validation (< 200ms target)")
-    print("   ✅ Proper serialization (no ObjectIds)")
     
     print("\n🎯 DASHBOARD OPTIMIZATIONS TEST SUMMARY:")
     print("   ✅ Pagination with metadata (page, limit, has_next, has_prev)")
@@ -2671,7 +2703,7 @@ def main():
     print("   ✅ Measurement data export")
     
     if tester.tests_passed == tester.tests_run:
-        print("\n🎉 All tests passed! Kanban 360° system, Dashboard optimizations and Pedido functionality working correctly.")
+        print("\n🎉 All tests passed! Phase 2.1 Smart Business Days & Reminder Rescheduling system working correctly.")
         return 0
     else:
         print(f"\n⚠️  {tester.tests_run - tester.tests_passed} tests failed - see details above")
