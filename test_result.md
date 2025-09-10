@@ -117,40 +117,40 @@ user_problem_statement: |
 
 backend:
   - task: "Crear modelo de datos para etapa Pedido"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Necesita actualizar modelos Pydantic para soportar campos de pedido"
+        comment: "✅ Modelos Pydantic actualizados con campos específicos de pedido: monto_total, anticipo_recibido, saldo_pendiente, forma_pago, fecha_vencimiento_saldo, cotizacion_url, archivo_levantamiento_url"
 
   - task: "Implementar endpoint para generar pedido desde medición"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Crear endpoint POST /prospectos/{id}/generar-pedido"
+        comment: "✅ Endpoint POST /prospectos/{id}/generar-pedido implementado con regla mínimo 1 m² y cálculos comerciales"
 
   - task: "Agregar campos de anticipo y forma de pago"
-    implemented: false
-    working: "NA"
+    implemented: true
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Añadir campos para gestión de pagos en modelo Pedido"
+        comment: "✅ Campos integrados en modelo y endpoint de agregar etapa"
 
 frontend:
   - task: "Agregar etapa Pedido a lista de etapas disponibles"
