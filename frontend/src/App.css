@@ -920,6 +920,33 @@ body {
   gap: 1.5rem;
 }
 
+.etapa-description {
+  margin-top: 0.5rem;
+}
+
+.etapa-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.hint-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.hint-text {
+  color: var(--neutral2);
+  font-weight: 500;
+}
+
 .file-input {
   padding: 0.5rem;
   border: 2px dashed var(--accent);
