@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone
 import cloudinary
 import cloudinary.uploader
+from enum import Enum
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
