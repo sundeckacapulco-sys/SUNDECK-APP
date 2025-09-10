@@ -193,7 +193,7 @@ class CloudinaryTester:
             "POST",
             f"prospectos/{self.created_prospect_id}/etapas",
             200,
-            data=stage_data,
+            params=stage_data,
             files=files
         )
         
