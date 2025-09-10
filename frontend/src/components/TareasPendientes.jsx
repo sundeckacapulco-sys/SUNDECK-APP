@@ -349,16 +349,31 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
       </div>
 
       {/* Navegación */}
-      <div className="tareas-navigation">
+      <div className="tareas-navigation" style={{ marginTop: '3rem', textAlign: 'center' }}>
         <button 
           className="btn-secondary"
+          style={{
+            background: 'white',
+            color: '#0F172A',
+            border: '2px solid #0F172A',
+            padding: '0.75rem 2rem',
+            borderRadius: '8px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
           onClick={() => {
             console.log('Navegando al dashboard...', onNavigate);
-            if (onNavigate) {
-              onNavigate('dashboard');
-            } else {
-              console.error('onNavigate no está definido');
-              alert('Error de navegación. Recargue la página.');
+            try {
+              if (onNavigate && typeof onNavigate === 'function') {
+                onNavigate('dashboard');
+              } else {
+                console.error('onNavigate no es una función válida:', onNavigate);
+                window.location.reload(); // Fallback: recargar página
+              }
+            } catch (error) {
+              console.error('Error en navegación:', error);
+              window.location.reload();
             }
           }}
         >
