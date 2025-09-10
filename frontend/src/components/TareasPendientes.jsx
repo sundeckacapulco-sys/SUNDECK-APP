@@ -208,7 +208,14 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
             return (
               <>
                 {grupos.vencidas.length > 0 && (
-                  <div className="segmento-contenedor vencidas">
+                  <div className="segmento-contenedor vencidas" style={{
+                    background: 'white',
+                    border: '3px solid #ef4444',
+                    borderRadius: '16px',
+                    marginBottom: '3rem',
+                    overflow: 'hidden',
+                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)'
+                  }}>
                     <h3 
                       className={`segmento-titulo vencidas ${gruposColapsados.vencidas ? 'collapsed' : ''}`}
                       onClick={() => toggleGrupo('vencidas')}
