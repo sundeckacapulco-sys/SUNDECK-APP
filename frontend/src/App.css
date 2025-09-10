@@ -3113,24 +3113,160 @@ body {
   }
 }
 
-@media (max-width: 480px) {
-  .kanban-board {
+/* Estilos para Editor de Plantillas WhatsApp */
+
+.btn-config-templates {
+  background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+}
+
+.btn-config-templates:hover {
+  background: linear-gradient(135deg, #128c7e 0%, #0a5d55 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.plantillas-form {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.plantillas-info {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border-radius: 12px;
+  border: 1px solid var(--accent);
+}
+
+.plantillas-info h4 {
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.variables-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.variable {
+  background: var(--secondary);
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.plantillas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.plantilla-item {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px var(--shadow);
+  border: 1px solid #e2e8f0;
+}
+
+.plantilla-item label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+}
+
+.plantilla-item label strong {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.plantilla-item label small {
+  font-size: 0.85rem;
+  color: var(--neutral2);
+  font-style: italic;
+}
+
+.plantilla-item textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.plantilla-item textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.plantilla-item textarea::placeholder {
+  color: #a0aec0;
+  font-style: italic;
+}
+
+/* Responsive para editor de plantillas */
+@media (max-width: 768px) {
+  .header-title {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .btn-config-templates {
+    margin-left: 0;
+    width: auto;
+  }
+  
+  .plantillas-grid {
     grid-template-columns: 1fr;
   }
   
-  .kanban-column {
-    min-width: 100%;
+  .plantilla-item {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .variables-list {
+    justify-content: center;
   }
   
-  .tarjeta-kanban {
-    padding: 0.75rem;
+  .variable {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
   }
   
-  .tarjeta-nombre {
-    font-size: 0.9rem;
-  }
-  
-  .info-item {
-    font-size: 0.8rem;
+  .plantilla-item textarea {
+    min-height: 80px;
+    font-size: 0.85rem;
   }
 }
