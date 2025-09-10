@@ -1436,6 +1436,27 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
         formDataToSend.append('unidad_medida', unidadMedida);
       }
       
+      // Para Pedido, incluir campos específicos de pedido
+      if (formData.nombre_etapa === 'Pedido') {
+        formDataToSend.append('piezas_medicion', JSON.stringify(piezasMedicion));
+        formDataToSend.append('precio_m2_general', precioM2General || 0);
+        
+        // Usar totales comerciales para pedidos
+        const totalesComerciales = calcularTotales(true);
+        formDataToSend.append('total_m2', totalesComerciales.totalM2Comercial);
+        formDataToSend.append('total_estimado', totalesComerciales.totalEstimado);
+        formDataToSend.append('unidad_medida', unidadMedida);
+        
+        // Campos específicos de pedido
+        formDataToSend.append('monto_total', camposPedido.monto_total || 0);
+        formDataToSend.append('anticipo_recibido', camposPedido.anticipo_recibido || 0);
+        formDataToSend.append('saldo_pendiente', camposPedido.saldo_pendiente || 0);
+        formDataToSend.append('forma_pago', camposPedido.forma_pago || '');
+        formDataToSend.append('fecha_vencimiento_saldo', camposPedido.fecha_vencimiento_saldo || '');
+        formDataToSend.append('cotizacion_url', camposPedido.cotizacion_url || '');
+        formDataToSend.append('archivo_levantamiento_url', camposPedido.archivo_levantamiento_url || '');
+      }
+      
       fotos.forEach((foto, index) => {
         formDataToSend.append('fotos', foto);
       });
