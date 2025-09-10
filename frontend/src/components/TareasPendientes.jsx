@@ -350,14 +350,40 @@ const TareaCompacta = ({
       
       <div className="tarea-acciones">
         <button 
-          className="btn-accion completar"
+          className="btn-accion-small whatsapp"
+          onClick={() => {
+            // Generar WhatsApp directamente con plantilla
+            const mensaje = recordatorio.mensaje_sugerido;
+            const telefono = recordatorio.prospecto_telefono?.replace(/[^0-9]/g, '') || '';
+            
+            if (telefono.length >= 10) {
+              let cleanPhone = telefono;
+              if (cleanPhone.startsWith('52')) {
+                cleanPhone = cleanPhone.substring(2);
+              }
+              if (cleanPhone.length === 10) {
+                const whatsappUrl = `https://wa.me/52${cleanPhone}?text=${encodeURIComponent(mensaje)}`;
+                window.open(whatsappUrl, '_blank');
+              } else {
+                alert('❌ Número de teléfono inválido');
+              }
+            } else {
+              alert('❌ No hay número de teléfono válido');
+            }
+          }}
+          title="Enviar mensaje por WhatsApp"
+        >
+          WhatsApp
+        </button>
+        <button 
+          className="btn-accion-small completar"
           onClick={() => onCompletar(recordatorio.id)}
           title="Marcar como completado"
         >
-          ✅ Completar
+          ✓
         </button>
         <button 
-          className="btn-accion ver"
+          className="btn-accion-small ver"
           onClick={() => {
             if (onNavigateToProspecto) {
               onNavigateToProspecto(recordatorio.prospecto_id);
@@ -367,7 +393,7 @@ const TareaCompacta = ({
           }}
           title={`Ir a ${tipoVista.label}`}
         >
-          {tipoVista.icon} Ir a {tipoVista.label}
+          {tipoVista.label}
         </button>
       </div>
     </div>
