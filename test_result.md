@@ -103,17 +103,15 @@
 #====================================================================================================
 
 user_problem_statement: |
-  Integración de etapas "Visita Inicial / Medición" → "Pedido" → "Cotización Aprobada"
+  OPTIMIZACIÓN DEL DASHBOARD - Escalabilidad para grandes volúmenes de prospectos
   
   Implementar:
-  1. Nueva etapa "Pedido" independiente entre Medición y Cotización Aprobada
-  2. Botón "Generar Pedido" en la etapa de medición que transfiera automáticamente:
-     - Todas las piezas medidas (ubicación, ancho, alto, producto, color, observaciones)
-     - Archivos asociados (fotos, links, notas)
-     - Excel/PDF de levantamiento generado
-  3. Regla especial: piezas < 1 m² se cobran como 1 m² mínimo
-  4. Campos de pedido: Monto total, Anticipo recibido, Saldo pendiente, Forma de pago, Fecha vencimiento
-  5. Mostrar m² real vs m² comercial en documentos para transparencia
+  1. Paginación (12 prospectos por página) con controles Anterior/Siguiente
+  2. Búsqueda en tiempo real por nombre o teléfono (MongoDB)
+  3. Filtros por etapa y fecha de cita
+  4. Vista dual: tarjetas detalladas ↔ tabla resumida
+  5. Lazy loading y optimizaciones técnicas
+  6. Performance optimizada para 1000+ prospectos
 
 backend:
   - task: "Crear modelo de datos para etapa Pedido"
