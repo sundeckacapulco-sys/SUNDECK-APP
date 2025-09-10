@@ -310,7 +310,14 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
                 )}
 
                 {grupos.futuro.length > 0 && (
-                  <div className="segmento-contenedor futuras">
+                  <div className="segmento-contenedor futuras" style={{
+                    background: 'white',
+                    border: '3px solid #3b82f6',
+                    borderRadius: '16px',
+                    marginBottom: '3rem',
+                    overflow: 'hidden',
+                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)'
+                  }}>
                     <h3 
                       className={`segmento-titulo futuras ${gruposColapsados.futuro ? 'collapsed' : ''}`}
                       onClick={() => toggleGrupo('futuro')}
