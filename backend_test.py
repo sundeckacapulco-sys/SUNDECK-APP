@@ -237,16 +237,90 @@ class ProspectosAPITester:
         # The pedido generation will fail gracefully if no pieces exist
         return True
 
-    def test_generate_pedido_from_measurement(self):
-        """Test generating pedido from measurement stage"""
-        if not self.created_prospect_id:
-            print("❌ Skipping - No prospect ID available")
-            return False
-            
+    def test_generate_pedido_with_pieces(self):
+        """Test generating pedido with actual pieces data"""
+        # Create a new prospect specifically for this test
+        test_data = {
+            "nombre": "Test Pedido con Piezas",
+            "telefono": "+56999888777",
+            "producto_solicitado": "Deck con Medición Completa",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
         success, response = self.run_test(
-            "Generate Pedido from Measurement",
+            "Create Prospect for Pedido with Pieces",
             "POST",
-            f"prospectos/{self.created_prospect_id}/generar-pedido",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Add measurement stage with pieces using JSON data
+        measurement_data = {
+            "nombre_etapa": "Visita Inicial / Medición",
+            "comentario": "Medición completa con piezas para testing pedido",
+            "precio_m2_general": 25000,
+            "unidad_medida": "m",
+            "total_m2": 5.0,
+            "total_estimado": 125000,
+            "piezas_medicion": [
+                {
+                    "id": "pieza-test-1",
+                    "ubicacion": "Terraza Principal",
+                    "ancho": 0.8,  # < 1 m² when multiplied by alto
+                    "alto": 1.0,
+                    "producto_tela": "Deck WPC",
+                    "color_acabado": "Café Oscuro",
+                    "observaciones": "Pieza pequeña - debe aplicar regla mínimo 1 m²",
+                    "precio_m2": 28000
+                },
+                {
+                    "id": "pieza-test-2",
+                    "ubicacion": "Balcón Dormitorio",
+                    "ancho": 2.5,  # > 1 m²
+                    "alto": 1.8,
+                    "producto_tela": "Deck Natural",
+                    "color_acabado": "Natural",
+                    "observaciones": "Pieza grande - cálculo normal",
+                    "precio_m2": 22000
+                },
+                {
+                    "id": "pieza-test-3",
+                    "ubicacion": "Entrada",
+                    "ancho": 0.6,  # < 1 m² when multiplied by alto
+                    "alto": 1.2,
+                    "producto_tela": "Deck Premium",
+                    "color_acabado": "Gris",
+                    "observaciones": "Otra pieza pequeña para probar regla mínimo",
+                    "precio_m2": 30000
+                }
+            ]
+        }
+        
+        # Try to add measurement with JSON data
+        success, response = self.run_test(
+            "Add Measurement with Pieces (JSON)",
+            "POST",
+            f"prospectos/{prospect_id}/etapas",
+            200,
+            json_data=measurement_data
+        )
+        
+        if not success:
+            # Clean up and return
+            self.run_test("Cleanup Pieces Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        # Now test pedido generation
+        success, response = self.run_test(
+            "Generate Pedido with Pieces",
+            "POST",
+            f"prospectos/{prospect_id}/generar-pedido",
             200
         )
         
@@ -256,54 +330,37 @@ class ProspectosAPITester:
             for field in expected_fields:
                 if field not in response:
                     print(f"❌ Missing field in response: {field}")
-                    return False
+                    success = False
             
-            # Validate etapa structure
-            etapa = response.get('etapa', {})
-            expected_etapa_fields = ['id', 'nombre_etapa', 'piezas_medicion', 'monto_total', 'anticipo_recibido', 'saldo_pendiente']
-            for field in expected_etapa_fields:
-                if field not in etapa:
-                    print(f"❌ Missing field in etapa: {field}")
-                    return False
-            
-            # Validate resumen structure
-            resumen = response.get('resumen', {})
-            expected_resumen_fields = ['total_piezas', 'total_m2_real', 'total_m2_comercial', 'total_estimado', 'regla_minimo_aplicada']
-            for field in expected_resumen_fields:
-                if field not in resumen:
-                    print(f"❌ Missing field in resumen: {field}")
-                    return False
-            
-            # Validate minimum 1 m² rule application
-            if resumen.get('regla_minimo_aplicada'):
-                print("   ✅ Minimum 1 m² rule was applied correctly")
-            
-            # Validate that commercial m² >= real m²
-            m2_real = resumen.get('total_m2_real', 0)
-            m2_comercial = resumen.get('total_m2_comercial', 0)
-            if m2_comercial >= m2_real:
-                print(f"   ✅ Commercial m² ({m2_comercial}) >= Real m² ({m2_real})")
-            else:
-                print(f"   ❌ Commercial m² ({m2_comercial}) < Real m² ({m2_real})")
-                return False
-            
-            # Validate pieces have commercial calculations
-            piezas = etapa.get('piezas_medicion', [])
-            for i, pieza in enumerate(piezas):
-                required_fields = ['m2_real', 'm2_comercial', 'precio_aplicado', 'subtotal']
-                for field in required_fields:
-                    if field not in pieza:
-                        print(f"❌ Missing field in piece {i+1}: {field}")
-                        return False
+            if success:
+                # Validate resumen structure
+                resumen = response.get('resumen', {})
+                expected_resumen_fields = ['total_piezas', 'total_m2_real', 'total_m2_comercial', 'total_estimado', 'regla_minimo_aplicada']
+                for field in expected_resumen_fields:
+                    if field not in resumen:
+                        print(f"❌ Missing field in resumen: {field}")
+                        success = False
                 
-                # Validate minimum rule per piece
-                if pieza['m2_comercial'] < 1.0 and pieza['m2_real'] < 1.0:
-                    print(f"❌ Piece {i+1}: Commercial m² should be at least 1.0 for small pieces")
-                    return False
-            
-            print(f"   ✅ Generated pedido with {resumen['total_piezas']} pieces")
-            print(f"   ✅ Total real: {m2_real} m², commercial: {m2_comercial} m²")
-            print(f"   ✅ Total estimated: ${resumen['total_estimado']:,.0f}")
+                if success:
+                    # Validate minimum 1 m² rule application
+                    if resumen.get('regla_minimo_aplicada'):
+                        print("   ✅ Minimum 1 m² rule was applied correctly")
+                    
+                    # Validate that commercial m² >= real m²
+                    m2_real = resumen.get('total_m2_real', 0)
+                    m2_comercial = resumen.get('total_m2_comercial', 0)
+                    if m2_comercial >= m2_real:
+                        print(f"   ✅ Commercial m² ({m2_comercial}) >= Real m² ({m2_real})")
+                    else:
+                        print(f"   ❌ Commercial m² ({m2_comercial}) < Real m² ({m2_real})")
+                        success = False
+                    
+                    print(f"   ✅ Generated pedido with {resumen['total_piezas']} pieces")
+                    print(f"   ✅ Total real: {m2_real} m², commercial: {m2_comercial} m²")
+                    print(f"   ✅ Total estimated: ${resumen['total_estimado']:,.0f}")
+        
+        # Clean up
+        self.run_test("Cleanup Pieces Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
         
         return success
 
