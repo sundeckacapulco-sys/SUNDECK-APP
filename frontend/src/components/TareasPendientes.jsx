@@ -135,6 +135,14 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
     cargarRecordatorios(filtro === 'todos' ? null : filtro);
   };
 
+  // Toggle colapso de grupos
+  const toggleGrupo = (nombreGrupo) => {
+    setGruposColapsados(prev => ({
+      ...prev,
+      [nombreGrupo]: !prev[nombreGrupo]
+    }));
+  };
+
   if (loading) {
     return (
       <div className="tareas-loading">
