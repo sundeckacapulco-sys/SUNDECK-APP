@@ -60,7 +60,7 @@ const Embudo360 = ({ onNavigate }) => {
       });
       params.append('formato', formato);
       
-      const response = await axios.get(`${API}/embudo-360/export?${params}`);
+      const response = await axios.get(`${API}/api/embudo-360/export?${params}`);
       
       // Crear y descargar archivo
       const dataStr = JSON.stringify(response.data, null, 2);
