@@ -498,14 +498,66 @@ class ProspectosAPITester:
 
     def test_export_measurement(self):
         """Test exporting measurement data"""
-        if not self.created_prospect_id:
-            print("❌ Skipping - No prospect ID available")
+        # Create a prospect with measurement data for export testing
+        test_data = {
+            "nombre": "Test Export Medición",
+            "telefono": "+56888777666",
+            "producto_solicitado": "Deck para Export",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Export Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
             return False
-            
+        
+        prospect_id = response.get('id')
+        
+        # Add measurement stage with pieces
+        measurement_data = {
+            "nombre_etapa": "Visita Inicial / Medición",
+            "comentario": "Medición para testing export",
+            "precio_m2_general": 20000,
+            "unidad_medida": "m",
+            "total_m2": 3.0,
+            "total_estimado": 60000,
+            "piezas_medicion": [
+                {
+                    "id": "export-test-1",
+                    "ubicacion": "Área Export",
+                    "ancho": 1.5,
+                    "alto": 2.0,
+                    "producto_tela": "Deck Export",
+                    "color_acabado": "Natural",
+                    "observaciones": "Pieza para testing export"
+                }
+            ]
+        }
+        
+        # Add measurement stage
+        success, response = self.run_test(
+            "Add Measurement for Export",
+            "POST",
+            f"prospectos/{prospect_id}/etapas-json",
+            200,
+            json_data=measurement_data
+        )
+        
+        if not success:
+            self.run_test("Cleanup Export Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        # Now test export
         success, response = self.run_test(
             "Export Measurement Data",
             "GET",
-            f"prospectos/{self.created_prospect_id}/medicion/export",
+            f"prospectos/{prospect_id}/medicion/export",
             200
         )
         
@@ -515,14 +567,18 @@ class ProspectosAPITester:
             for field in expected_fields:
                 if field not in response:
                     print(f"❌ Missing field in export: {field}")
-                    return False
+                    success = False
             
-            medicion = response.get('medicion', {})
-            if 'piezas' not in medicion:
-                print("❌ Missing pieces in measurement export")
-                return False
-            
-            print(f"   ✅ Exported measurement with {len(medicion['piezas'])} pieces")
+            if success:
+                medicion = response.get('medicion', {})
+                if 'piezas' not in medicion:
+                    print("❌ Missing pieces in measurement export")
+                    success = False
+                else:
+                    print(f"   ✅ Exported measurement with {len(medicion['piezas'])} pieces")
+        
+        # Clean up
+        self.run_test("Cleanup Export Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
         
         return success
 
