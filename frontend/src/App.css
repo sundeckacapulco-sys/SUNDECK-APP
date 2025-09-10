@@ -3687,4 +3687,433 @@ body {
   .tabla-col:last-child {
     border-bottom: none;
   }
+
+/* ==========================================
+   TAREAS PENDIENTES - SISTEMA DE RECORDATORIOS
+   ========================================== */
+
+.tareas-pendientes {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--background);
+  min-height: 100vh;
+}
+
+.tareas-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.tareas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 2rem;
+}
+
+.tareas-title h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tareas-title p {
+  color: var(--neutral2);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.tareas-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.tareas-stats .stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-width: 120px;
+  box-shadow: 0 2px 10px var(--shadow);
+  text-align: center;
+  border-left: 4px solid var(--primary);
+}
+
+.tareas-stats .stat-card.pending {
+  border-left-color: #f59e0b;
+}
+
+.tareas-stats .stat-card.overdue {
+  border-left-color: #ef4444;
+}
+
+.tareas-stats .stat-card.completed {
+  border-left-color: #10b981;
+}
+
+.tareas-stats .stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.tareas-stats .stat-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+}
+
+.tareas-stats .stat-label {
+  font-size: 0.875rem;
+  color: var(--neutral2);
+  font-weight: 500;
+}
+
+.tareas-filtros {
+  margin-bottom: 2rem;
+}
+
+.filtros-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.tab-filter {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--neutral2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.tab-filter:hover {
+  background: var(--neutral4);
+  color: var(--primary);
+}
+
+.tab-filter.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.tareas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tareas-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.tareas-empty .empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.tareas-empty h3 {
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.tareas-empty p {
+  color: var(--neutral2);
+  font-size: 1rem;
+}
+
+.recordatorio-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px var(--shadow);
+  border-left: 5px solid var(--primary);
+  transition: all 0.2s ease;
+}
+
+.recordatorio-card:hover {
+  box-shadow: 0 4px 20px var(--shadow);
+  transform: translateY(-2px);
+}
+
+.recordatorio-card.red {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, white 100%);
+}
+
+.recordatorio-card.orange {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, white 100%);
+}
+
+.recordatorio-card.yellow {
+  border-left-color: #eab308;
+  background: linear-gradient(135deg, #fefce8 0%, white 100%);
+}
+
+.recordatorio-card.green {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, white 100%);
+}
+
+.recordatorio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--neutral4);
+}
+
+.recordatorio-tipo {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.recordatorio-urgencia {
+  font-size: 0.875rem;
+  color: var(--neutral2);
+  font-weight: 500;
+  background: var(--neutral4);
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+}
+
+.recordatorio-card.red .recordatorio-urgencia {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.recordatorio-card.orange .recordatorio-urgencia {
+  background: #fed7aa;
+  color: #ea580c;
+}
+
+.recordatorio-card.yellow .recordatorio-urgencia {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.recordatorio-prospecto {
+  margin-bottom: 1rem;
+}
+
+.prospecto-info h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+}
+
+.prospecto-info p {
+  color: var(--neutral2);
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.prospecto-telefono {
+  font-size: 0.875rem;
+  color: var(--neutral2);
+  background: var(--neutral4);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.recordatorio-mensaje {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--neutral4);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+}
+
+.recordatorio-mensaje p {
+  margin: 0;
+  font-style: italic;
+  color: var(--neutral1);
+  line-height: 1.5;
+}
+
+.recordatorio-acciones {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-whatsapp {
+  background: #25d366;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-whatsapp:hover {
+  background: #20ba5a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.btn-completar {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btn-completar:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-ver-prospecto {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btn-ver-prospecto:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.tareas-navigation {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.tareas-navigation .btn-secondary {
+  background: white;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.tareas-navigation .btn-secondary:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Responsive para Tareas Pendientes */
+@media (max-width: 768px) {
+  .tareas-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .tareas-stats {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .tareas-stats .stat-card {
+    min-width: unset;
+  }
+  
+  .filtros-tabs {
+    flex-direction: column;
+  }
+  
+  .recordatorio-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .recordatorio-acciones {
+    flex-direction: column;
+  }
+  
+  .recordatorio-acciones button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Icono de notificación en el header */
+.notification-badge {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-badge .badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
 }
