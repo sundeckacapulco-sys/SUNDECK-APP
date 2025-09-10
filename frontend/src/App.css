@@ -4385,60 +4385,66 @@ body {
   line-height: 1.5;
 }
 
-/* Botones Sundeck Pill Style */
-.tarea-acciones {
+/* Botones en fila compactos */
+.botones-fila {
   display: flex;
-  gap: 0.75rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: flex-end;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
 }
 
-.btn-accion-small {
-  padding: 0.6rem 1rem;
-  border: none;
-  border-radius: 25px;
-  font-size: 0.8rem;
+.btn-compacto {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  gap: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 }
 
-.btn-accion-small:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.btn-compacto:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.btn-accion-small.whatsapp {
-  background: linear-gradient(135deg, #25d366 0%, #20ba5a 100%);
+.btn-compacto.whatsapp {
+  background: #25d366;
   color: white;
+  border-color: #25d366;
 }
 
-.btn-accion-small.whatsapp:hover {
-  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+.btn-compacto.whatsapp:hover {
+  background: #20ba5a;
+  box-shadow: 0 3px 10px rgba(37, 211, 102, 0.4);
 }
 
-.btn-accion-small.completar {
-  background: linear-gradient(135deg, var(--sundeck-gold) 0%, var(--sundeck-gold-light) 100%);
+.btn-compacto.completar {
+  background: var(--sundeck-gold);
   color: white;
+  border-color: var(--sundeck-gold);
 }
 
-.btn-accion-small.completar:hover {
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+.btn-compacto.completar:hover {
+  background: var(--sundeck-gold-light);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
 }
 
-.btn-accion-small.ver {
-  background: linear-gradient(135deg, var(--sundeck-purple) 0%, #7c3aed 100%);
+.btn-compacto.ver {
+  background: var(--sundeck-purple);
   color: white;
+  border-color: var(--sundeck-purple);
 }
 
-.btn-accion-small.ver:hover {
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+.btn-compacto.ver:hover {
+  background: #7c3aed;
+  box-shadow: 0 3px 10px rgba(139, 92, 246, 0.4);
 }
 
 /* Badge con colores */
