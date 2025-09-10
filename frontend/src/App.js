@@ -4,63 +4,37 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './App.css';
 import whatsappTemplates from './whatsappTemplates.json';
 
-// Plantillas de mensajes de WhatsApp (México)
-const WHATSAPP_TEMPLATES = {
-  prospecto: "Hola {nombre}, gracias por su interés en Sundeck. Somos especialistas en {producto}. ¿Podríamos agendar una cita para platicarle sobre nuestros servicios?",
-  confirmacion_cita: "Hola {nombre}, le confirmamos su instalación de {producto} el {fecha}. ¿Se mantiene la cita programada?",
-  instalacion: "Hola {nombre}, somos de Sundeck. Nos comunicamos para coordinar la instalación de su {producto}. ¿Está disponible para la fecha programada?",
-  postventa: "Hola {nombre}, ¿cómo le fue con su instalación de {producto}? Queremos asegurarnos de que quedó completamente satisfecho con nuestro servicio.",
-  general: "Hola {nombre}, le escribo de Sundeck para darle seguimiento. ¿En qué podemos ayudarle?"
-};
-
-// Función para generar URL de WhatsApp (formato México)
-const generateWhatsAppURL = (telefono, mensaje) => {
-  if (!telefono) return null;
-  
-  // Limpiar el número de teléfono (solo números)
-  let cleanPhone = telefono.replace(/[^\d]/g, '');
-  
-  // Remover cualquier código de país existente si está presente
-  if (cleanPhone.startsWith('52')) {
-    cleanPhone = cleanPhone.substring(2);
-  } else if (cleanPhone.startsWith('1') && cleanPhone.length === 11) {
-    cleanPhone = cleanPhone.substring(1);
-  }
-  
-  // Asegurar que tengamos exactamente 10 dígitos
-  if (cleanPhone.length === 10) {
-    // Anteponer 521 (código de México + 1 para celular)
-    const phoneWithCountryCode = `521${cleanPhone}`;
-    
-    // Codificar el mensaje para URL
-    const encodedMessage = encodeURIComponent(mensaje);
-    
-    return `https://wa.me/${phoneWithCountryCode}?text=${encodedMessage}`;
-  }
-  
-  return null; // Número inválido
-};
-
-// Función para generar mensaje personalizado
-const generateWhatsAppMessage = (prospecto, tipo = 'general') => {
-  const template = WHATSAPP_TEMPLATES[tipo] || WHATSAPP_TEMPLATES.general;
+// Función para generar mensaje personalizado usando plantillas JSON
+const generateWhatsAppMessage = (prospecto, tipo = 'prospecto') => {
+  const template = whatsappTemplates[tipo] || whatsappTemplates.prospecto;
   
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('es-MX', {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
-      year: 'numeric',
+      year: 'numeric'
+    });
+  };
+  
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-MX', {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
   
+  // Reemplazar variables dinámicamente
   return template
-    .replace('{nombre}', prospecto.nombre)
-    .replace('{producto}', prospecto.producto_solicitado)
-    .replace('{fecha}', formatDate(prospecto.fecha_cita));
+    .replace(/{nombre}/g, prospecto.nombre || 'Cliente')
+    .replace(/{telefono}/g, prospecto.telefono || '')
+    .replace(/{producto}/g, prospecto.producto_solicitado || 'su producto')
+    .replace(/{fecha}/g, formatDate(prospecto.fecha_cita))
+    .replace(/{hora}/g, formatTime(prospecto.fecha_cita));
 };
 
 // Componente Botón WhatsApp
