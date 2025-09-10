@@ -271,65 +271,77 @@ backend:
         comment: "✅ TESTED: Casos edge manejados correctamente. Páginas vacías (page 999), búsquedas sin resultados, filtros de etapa inválidos. Metadata de paginación consistente en todos los casos."
 
 frontend:
-  - task: "Agregar etapa Pedido a lista de etapas disponibles"
+  - task: "Implementar paginación con controles navegación"
     implemented: true
     working: true
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Etapa 'Pedido' agregada con orden comercial correcto: Medición → Cotización Aprobada → Pedido → Fabricación → Instalación → Entrega → Postventa"
+        comment: "✅ Paginación 12 por página con controles Anterior/Siguiente y números de página implementados"
 
-  - task: "Implementar botón Generar Pedido en medición"
+  - task: "Implementar búsqueda en tiempo real"
     implemented: true
     working: true
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Botón implementado con transferencia automática de datos y validación de medición existente"
+        comment: "✅ Campo de búsqueda con debounce 300ms, búsqueda por nombre/teléfono en tiempo real"
 
-  - task: "Implementar regla mínimo 1 m² para cálculo comercial"
+  - task: "Implementar filtros dinámicos"
     implemented: true
     working: true
     file: "App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Función calcularM2Comercial() implementada con Math.max(m2Real, 1.0). Totales muestran m² real vs comercial"
+        comment: "✅ Filtros por etapa y rango de fechas, botón limpiar filtros, combinación de filtros funcional"
 
-  - task: "Crear interfaz para campos de pedido"
+  - task: "Implementar vista dual tarjetas/tabla"
     implemented: true
     working: true
     file: "App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Formulario completo con campos de pago, archivos y resumen de piezas. Cálculo automático de saldo pendiente"
+        comment: "✅ Toggle entre vista tarjetas detalladas y tabla resumida, responsive design"
 
-  - task: "Actualizar documentos PDF/Excel con m² comercial"
+  - task: "Implementar lazy loading y optimizaciones"
     implemented: true
     working: true
     file: "App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Documentos actualizados con columnas 'm² Real' y 'm² Comercial', totales diferenciados y nota de regla mínimo"
+        comment: "✅ Solo carga datos de página actual, debounce en búsqueda, estado optimizado para performance"
+
+  - task: "Agregar metadata y stats dinámicas"
+    implemented: true
+    working: true
+    file: "App.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "✅ Información de resultados, contadores dinámicos, indicadores de filtros activos"
 
 metadata:
   created_by: "main_agent"
