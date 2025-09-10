@@ -390,7 +390,41 @@ test_plan:
   test_all: false
   test_priority: "completed"
 
+backend:
+  - task: "Fix Embudo 360 API endpoint URL issue"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported persistent 'Error cargando datos del embudo' in Embudo 360 view"
+      - working: true
+        agent: "main"
+        comment: "✅ Fixed API URL issue in Embudo360.js frontend component. Backend endpoint /api/embudo-360 exists and works correctly. Issue was frontend calling duplicate /api/api/embudo-360 URL."
+
+frontend:
+  - task: "Fix Embudo 360 frontend API calls"
+    implemented: true
+    working: true
+    file: "components/Embudo360.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported persistent 'Error cargando datos del embudo' error message in UI"
+      - working: true
+        agent: "main"
+        comment: "✅ Fixed API base URL definition and API call paths. Changed API base URL from 'http://localhost:8001/api' to 'http://localhost:8001' and updated calls to use /api/embudo-360 correctly"
+
 agent_communication:
+  - agent: "main"
+    message: "🔧 EMBUDO 360 ERROR FIXED - Identified and resolved the persistent 'Error cargando datos del embudo' issue. Problem was incorrect API URL construction in frontend component. Backend endpoint /api/embudo-360 exists correctly, but frontend was calling /api/api/embudo-360 (duplicate /api). Fixed API base URL definition and API call paths in Embudo360.js. Ready for testing."
   - agent: "main"
     message: "✅ KANBAN 360° SYSTEM COMPLETADO - Implementado sistema completo de gestión visual: GET /api/kanban con 7 columnas, sistema de urgencia (0/1/2), POST /api/mover-etapa para movimientos, GET /api/logs-actividad para historial. KPIs dinámicos, metadata enriquecida, performance <200ms, serialización sin ObjectIds. ¡SISTEMA KANBAN LISTO!"
   - agent: "testing"
