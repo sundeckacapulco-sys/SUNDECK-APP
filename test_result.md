@@ -161,6 +161,102 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: Campos de anticipo, saldo pendiente, forma de pago funcionan correctamente. Etapa Pedido manual creada exitosamente con todos los campos requeridos."
 
+  - task: "Optimizar endpoint GET /api/prospectos con paginación"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Paginación funcional con parámetros page, limit. Metadata completa: current_page, total_pages, total_count, page_size, has_next, has_prev. Límite de 12 prospectos por página por defecto. Performance excelente: 54ms."
+
+  - task: "Implementar búsqueda por nombre y teléfono"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Búsqueda case-insensitive funcionando perfectamente. Regex search por nombre y teléfono. Parámetro 'search' funciona con términos parciales. Performance: 56ms."
+
+  - task: "Implementar filtro por etapa usando aggregation pipeline"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Filtro por etapa funciona correctamente usando aggregation pipeline. Filtra por última etapa del prospecto. Parámetro 'etapa_filter' funcional. Conteo correcto de totales con filtros aplicados."
+
+  - task: "Implementar filtro por rango de fechas"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Filtro por rango de fechas funcionando. Parámetros fecha_inicio y fecha_fin operativos. Filtra correctamente por fecha_cita del prospecto."
+
+  - task: "Implementar filtros combinados"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Filtros combinados funcionan perfectamente. Combinación de paginación + búsqueda + filtro de etapa + fechas. Metadata de paginación se mantiene correcta con todos los filtros aplicados."
+
+  - task: "Endpoint GET /api/etapas-disponibles"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Endpoint funcional. Lista completa de 7 etapas disponibles. Orden correcto: Medición → Cotización Aprobada → Pedido → Fabricación → Instalación → Entrega → Postventa."
+
+  - task: "Validar performance de optimizaciones"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Performance excelente. Paginación: 54ms, Búsqueda: 56ms. Ambos muy por debajo del target de 500ms. Aggregation pipeline eficiente para filtros de etapa."
+
+  - task: "Manejo de casos edge en dashboard"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Casos edge manejados correctamente. Páginas vacías (page 999), búsquedas sin resultados, filtros de etapa inválidos. Metadata de paginación consistente en todos los casos."
+
 frontend:
   - task: "Agregar etapa Pedido a lista de etapas disponibles"
     implemented: true
