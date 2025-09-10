@@ -432,6 +432,8 @@ frontend:
 agent_communication:
   - agent: "main"
     message: "🔧 EMBUDO 360 ERROR FIXED - Identified and resolved the persistent 'Error cargando datos del embudo' issue. Problem was incorrect API URL construction in frontend component. Backend endpoint /api/embudo-360 exists correctly, but frontend was calling /api/api/embudo-360 (duplicate /api). Fixed API base URL definition and API call paths in Embudo360.js. Ready for testing."
+  - agent: "testing"
+    message: "🎯 EMBUDO 360 TESTING COMPLETED - EXCELLENT RESULTS (6/6 tests ✅). ✅ CRITICAL VALIDATIONS: GET /api/embudo-360 basic endpoint working perfectly (200 OK) ✅ Date filters (fecha_inicio, fecha_fin) functioning correctly ✅ Responsable filter working as expected ✅ Combined filters support validated ✅ GET /api/embudo-360/export endpoint fully functional ✅ Complete response structure validation: embudo.etapas (7 stages), embudo.contadores (integer counts), embudo.tiempos_promedio (numeric values), embudo.conversiones (6 conversions), metricas.total_prospectos, metricas.prospectos_activos, metricas.tasa_conversion_general ✅ Export structure validated: datos_etapas, datos_conversiones, metricas_generales, formato, fecha_generacion. EMBUDO 360 SYSTEM FULLY OPERATIONAL - Frontend fix resolved the API URL issue completely."
   - agent: "main"
     message: "✅ KANBAN 360° SYSTEM COMPLETADO - Implementado sistema completo de gestión visual: GET /api/kanban con 7 columnas, sistema de urgencia (0/1/2), POST /api/mover-etapa para movimientos, GET /api/logs-actividad para historial. KPIs dinámicos, metadata enriquecida, performance <200ms, serialización sin ObjectIds. ¡SISTEMA KANBAN LISTO!"
   - agent: "testing"
