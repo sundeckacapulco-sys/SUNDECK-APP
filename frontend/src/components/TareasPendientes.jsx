@@ -326,7 +326,6 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
                           key={recordatorio.id} 
                           recordatorio={recordatorio}
                           onCompletar={completarRecordatorio}
-                          onReprogramar={abrirModalReprogramar}
                           onExpandir={setMensajeExpandido}
                           expandido={mensajeExpandido === recordatorio.id}
                           getAccionDescripcion={getAccionDescripcion}
