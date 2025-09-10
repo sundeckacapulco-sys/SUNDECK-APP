@@ -3709,73 +3709,61 @@ body {
   text-align: center;
 }
 
-.tareas-header {
+/* Header compacto */
+.tareas-header-compacto {
+  margin-bottom: 1.5rem;
+}
+
+.tareas-title-compacto {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 2rem;
-}
-
-.tareas-title h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 0.5rem;
-  display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.tareas-title p {
-  color: var(--neutral2);
-  font-size: 1rem;
-  margin: 0;
-}
-
-.tareas-stats {
-  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
-.tareas-stats .stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  min-width: 120px;
-  box-shadow: 0 2px 10px var(--shadow);
-  text-align: center;
-  border-left: 4px solid var(--primary);
-}
-
-.tareas-stats .stat-card.pending {
-  border-left-color: #f59e0b;
-}
-
-.tareas-stats .stat-card.overdue {
-  border-left-color: #ef4444;
-}
-
-.tareas-stats .stat-card.completed {
-  border-left-color: #10b981;
-}
-
-.tareas-stats .stat-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.tareas-stats .stat-number {
-  font-size: 1.8rem;
+.tareas-title-compacto h2 {
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary);
-  margin-bottom: 0.25rem;
+  margin: 0;
 }
 
-.tareas-stats .stat-label {
+.stats-badges {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
   font-size: 0.875rem;
-  color: var(--neutral2);
   font-weight: 500;
+  box-shadow: 0 1px 4px var(--shadow);
+  border: 1px solid #e5e7eb;
+}
+
+.stat-badge.pending {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #f59e0b;
+}
+
+.stat-badge.overdue {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.stat-badge.completed {
+  background: #f0fdf4;
+  color: #059669;
+  border-color: #10b981;
 }
 
 .tareas-filtros {
