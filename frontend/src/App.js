@@ -1586,23 +1586,25 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       
       // Tabla de piezas con cálculos corregidos
       const tableData = piezasMedicion.map(pieza => {
-        const m2 = calcularM2Pieza(pieza);
+        const m2Real = calcularM2Pieza(pieza);
+        const m2Comercial = calcularM2Comercial(pieza);
         const precioAplicado = parseFloat(pieza.precio_m2) || parseFloat(precioM2General) || 0;
-        const subtotal = m2 * precioAplicado;
+        const subtotal = m2Comercial * precioAplicado; // Usar m² comercial para subtotal
         
         return [
           pieza.ubicacion,
           `${pieza.ancho} × ${pieza.alto} ${unidadMedida}`,
           pieza.producto_tela,
           pieza.color_acabado,
-          m2.toFixed(2),
+          m2Real.toFixed(2),
+          m2Comercial.toFixed(2),
           precioAplicado > 0 ? `$${precioAplicado.toFixed(2)}` : 'Sin precio',
           precioAplicado > 0 ? `$${subtotal.toLocaleString('es-MX', {minimumFractionDigits: 2})}` : 'Sin precio'
         ];
       });
       
       doc.autoTable({
-        head: [['Ubicación', 'Medidas', 'Producto', 'Color', 'm²', 'Precio/m²', 'Subtotal']],
+        head: [['Ubicación', 'Medidas', 'Producto', 'Color', 'm² Real', 'm² Comercial', 'Precio/m²', 'Subtotal']],
         body: tableData,
         startY: 80,
         theme: 'grid',
@@ -1611,20 +1613,25 @@ const AgregarEtapaModal = ({ prospectoId, onClose, onUpdate }) => {
       });
       
       // Totales corregidos
+      const totalesReales = calcularTotales(false);
+      const totalesComerciales = calcularTotales(true);
+      
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(12);
-      doc.text(`Total m²: ${totales.totalM2.toFixed(2)}`, 20, finalY);
-      doc.text(`Precio promedio: $${totales.precioPromedio.toFixed(2)}/m²`, 20, finalY + 10);
+      doc.text(`Total m² reales: ${totalesReales.totalM2Real.toFixed(2)}`, 20, finalY);
+      doc.text(`Total m² comerciales: ${totalesComerciales.totalM2Comercial.toFixed(2)}`, 20, finalY + 10);
+      doc.text(`Precio promedio: $${totalesComerciales.precioPromedio.toFixed(2)}/m²`, 20, finalY + 20);
       
       doc.setFontSize(14);
       doc.setTextColor(212, 175, 55);
-      doc.text(`TOTAL ESTIMADO: $${totales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`, 20, finalY + 25);
+      doc.text(`TOTAL ESTIMADO: $${totalesComerciales.totalEstimado.toLocaleString('es-MX', {minimumFractionDigits: 2})}`, 20, finalY + 35);
       
       // Términos y condiciones
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
-      doc.text('Cotización sujeta a confirmación y condiciones de pago.', 20, finalY + 40);
-      doc.text('Válida por 30 días. Precios pueden variar según especificaciones finales.', 20, finalY + 50);
+      doc.text('Cotización sujeta a confirmación y condiciones de pago.', 20, finalY + 50);
+      doc.text('Válida por 30 días. Precios pueden variar según especificaciones finales.', 20, finalY + 60);
+      doc.text('* Piezas menores a 1 m² se facturan como 1 m² mínimo.', 20, finalY + 70);
       
       // Descargar PDF
       doc.save(`Cotizacion_Sundeck_${new Date().toISOString().split('T')[0]}.pdf`);
