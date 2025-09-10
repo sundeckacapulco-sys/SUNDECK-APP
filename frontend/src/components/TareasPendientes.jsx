@@ -318,17 +318,28 @@ const TareaCompacta = ({
 
   const tipoVista = getTipoVista(recordatorio.tipo);
 
+  // Determinar clase de estado para la tarjeta
+  const getEstadoClase = (fechaLimite) => {
+    const estado = getEstadoUrgencia(fechaLimite);
+    switch(estado) {
+      case 'vencido': return 'vencida';
+      case 'hoy': return 'hoy';
+      case 'mañana': return 'manana';
+      default: return 'futura';
+    }
+  };
+
   return (
-    <div className="tarea-compacta">
+    <div className={`tarea-compacta ${getEstadoClase(recordatorio.fecha_limite)}`}>
       <div className="tarea-info">
         <div className="cliente-principal">
-          <strong>Cliente: {recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
+          👤 <strong>Cliente: {recordatorio.prospecto_nombre}</strong> – {recordatorio.prospecto_producto}
         </div>
         <div className="accion-principal">
-          <span className="accion-label">Acción:</span> {getAccionDescripcion(recordatorio.tipo)}
+          📌 <strong>Acción:</strong> {getAccionDescripcion(recordatorio.tipo)}
         </div>
         <div className="fecha-principal">
-          <span className="fecha-label">Fecha límite:</span> {formatearFechaCompacta(recordatorio.fecha_limite)}
+          🗓 <strong>Fecha límite:</strong> {formatearFechaCompacta(recordatorio.fecha_limite)}
         </div>
         {expandido && (
           <div className="mensaje-completo">
