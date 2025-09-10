@@ -4243,63 +4243,44 @@ body {
   background: linear-gradient(135deg, #fefefe 0%, #f7f9fb 100%);
 }
 
-/* Tarjeta de Tarea Sundeck Profesional */
-.tarea-compacta {
+/* Tarjeta Individual Rectangular */
+.tarea-individual {
   background: white;
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-  border-left: 4px solid transparent;
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.tarea-compacta::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, var(--sundeck-gold) 50%, transparent 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.tarea-individual:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--sundeck-gold);
 }
 
-.tarea-compacta:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-  transform: translateY(-3px);
+/* Estados de color por urgencia */
+.tarea-individual.vencida {
+  border-left: 4px solid var(--sundeck-red);
+  background: linear-gradient(135deg, white 0%, #fef7f7 100%);
 }
 
-.tarea-compacta:hover::before {
-  opacity: 1;
+.tarea-individual.hoy {
+  border-left: 4px solid var(--sundeck-gold);
+  background: linear-gradient(135deg, white 0%, #fffef7 100%);
 }
 
-/* Estados de urgencia para tarjetas */
-.tarea-compacta.vencida {
-  border-left-color: var(--sundeck-red);
-  background: linear-gradient(135deg, white 0%, var(--sundeck-red-bg) 100%);
+.tarea-individual.manana {
+  border-left: 4px solid var(--sundeck-green);
+  background: linear-gradient(135deg, white 0%, #f7fef7 100%);
 }
 
-.tarea-compacta.hoy {
-  border-left-color: var(--sundeck-gold);
-  background: linear-gradient(135deg, white 0%, var(--sundeck-gold-bg) 100%);
-}
-
-.tarea-compacta.manana {
-  border-left-color: var(--sundeck-green);
-  background: linear-gradient(135deg, white 0%, var(--sundeck-green-bg) 100%);
-}
-
-.tarea-compacta.futura {
-  border-left-color: var(--sundeck-blue);
-  background: linear-gradient(135deg, white 0%, #dbeafe 100%);
+.tarea-individual.futura {
+  border-left: 4px solid var(--sundeck-blue);
+  background: linear-gradient(135deg, white 0%, #f7f9fb 100%);
 }
 
 .tarea-info {
