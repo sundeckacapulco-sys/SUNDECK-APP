@@ -29,7 +29,8 @@ class CloudinaryTester:
                 response = requests.get(url, headers=headers, params=params)
             elif method == 'POST':
                 if files is not None:  # Multipart form data
-                    response = requests.post(url, data=data, files=files, params=params)
+                    # For multipart, data goes in the data parameter, not params
+                    response = requests.post(url, data=data, files=files)
                 elif json_data:  # JSON data for complex structures
                     response = requests.post(url, json=json_data, headers=headers)
                 elif params:  # Query parameters
