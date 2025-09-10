@@ -151,13 +151,13 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
           <h2>📋 Centro de Seguimiento</h2>
           <div className="stats-badges">
             <span className="stat-badge pending">
-              ⏳ Pendientes: {estadisticas.pendientes || 0}
+              ⏳ Pendientes: <span className="badge-number">{estadisticas.pendientes || 0}</span>
             </span>
             <span className="stat-badge overdue">
-              🚨 Vencidos: {estadisticas.vencidos || 0}
+              🚨 Vencidos: <span className="badge-number">{estadisticas.vencidos || 0}</span>
             </span>
             <span className="stat-badge completed">
-              ✅ Completados: {estadisticas.completados || 0}
+              ✅ Completados: <span className="badge-number">{estadisticas.completados || 0}</span>
             </span>
           </div>
         </div>
