@@ -247,6 +247,20 @@ const RegistroProspecto = ({ onUpdate, onNavigate }) => {
     fecha_cita: ''
   });
   const [loading, setLoading] = useState(false);
+
+  // Estado del catálogo de productos
+  const [catalogoProductos, setCatalogoProductos] = useState(() => {
+    try { 
+      return JSON.parse(localStorage.getItem('catalogo_productos')) || DEFAULT_PRODUCTOS; 
+    } catch { 
+      return DEFAULT_PRODUCTOS; 
+    }
+  });
+
+  // Persistir catálogo en localStorage
+  useEffect(() => {
+    localStorage.setItem('catalogo_productos', JSON.stringify(catalogoProductos));
+  }, [catalogoProductos]);
   
   // Estado del catálogo de productos
   const [catalogoProductos, setCatalogoProductos] = useState(() => {
