@@ -4262,43 +4262,47 @@ body {
   background: linear-gradient(135deg, #fefefe 0%, #f7f9fb 100%);
 }
 
-/* Tarjeta Individual Rectangular */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* Tarjeta Individual con Bordes Claros y Espaciado */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .tarea-individual {
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .tarea-individual:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-3px);
   border-color: var(--sundeck-gold);
+  border-width: 3px;
 }
 
-/* Estados de color por urgencia */
+/* Estados de color por urgencia con bordes más definidos */
 .tarea-individual.vencida {
-  border-left: 4px solid var(--sundeck-red);
+  border: 3px solid var(--sundeck-red);
   background: linear-gradient(135deg, white 0%, #fef7f7 100%);
 }
 
 .tarea-individual.hoy {
-  border-left: 4px solid var(--sundeck-gold);
+  border: 3px solid var(--sundeck-gold);
   background: linear-gradient(135deg, white 0%, #fffef7 100%);
 }
 
 .tarea-individual.manana {
-  border-left: 4px solid var(--sundeck-green);
+  border: 3px solid var(--sundeck-green);
   background: linear-gradient(135deg, white 0%, #f7fef7 100%);
 }
 
 .tarea-individual.futura {
-  border-left: 4px solid var(--sundeck-blue);
+  border: 3px solid var(--sundeck-blue);
   background: linear-gradient(135deg, white 0%, #f7f9fb 100%);
 }
 
