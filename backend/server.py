@@ -2805,6 +2805,235 @@ def calcular_dias_vencido(fecha_limite: str) -> int:
         print(f"Error calculando días vencidos: {str(e)}")
         return 0
 
+# ENDPOINTS OPTIMIZACIONES DETALLE PROSPECTO
+# ============================================
+
+@api_router.post("/prospectos/{prospecto_id}/reagendar-cita")
+async def reagendar_cita_prospecto(
+    prospecto_id: str,
+    request: ReagendarCitaRequest
+):
+    """Reagendar cita de un prospecto con motivo y comentarios"""
+    try:
+        # Verificar que el prospecto existe
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Obtener fecha original de la cita
+        fecha_original = None
+        if prospecto.get("fecha_cita"):
+            if isinstance(prospecto["fecha_cita"], str):
+                fecha_original = datetime.fromisoformat(prospecto["fecha_cita"])
+            else:
+                fecha_original = prospecto["fecha_cita"]
+        
+        if not fecha_original:
+            raise HTTPException(status_code=400, detail="El prospecto no tiene fecha de cita asignada")
+        
+        # Validar que la nueva fecha sea en día hábil
+        nueva_fecha_habil = obtener_siguiente_dia_habil(request.nueva_fecha)
+        fecha_fue_ajustada = nueva_fecha_habil != request.nueva_fecha
+        
+        if fecha_fue_ajustada:
+            print(f"Fecha de cita ajustada de {request.nueva_fecha} a {nueva_fecha_habil} (día hábil)")
+            nueva_fecha_final = nueva_fecha_habil
+        else:
+            nueva_fecha_final = request.nueva_fecha
+        
+        # Crear registro de reagendamiento
+        reagendamiento = {
+            "id": str(uuid.uuid4()),
+            "prospecto_id": prospecto_id,
+            "fecha_original": fecha_original.isoformat(),
+            "fecha_nueva": nueva_fecha_final.isoformat(),
+            "motivo": request.motivo,
+            "comentarios": request.comentarios,
+            "usuario_reagendo": request.usuario_reagendo,
+            "fecha_reagendamiento": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Guardar reagendamiento en DB
+        await db.reagendamientos.insert_one(reagendamiento)
+        
+        # Actualizar fecha de cita en el prospecto
+        await db.prospectos.update_one(
+            {"id": prospecto_id},
+            {
+                "$set": {
+                    "fecha_cita": nueva_fecha_final.isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "reagendado": True,
+                    "ultimo_reagendamiento": reagendamiento["id"]
+                }
+            }
+        )
+        
+        # Recalcular recordatorios relacionados con la cita
+        await recalcular_recordatorios_por_cita(prospecto_id, nueva_fecha_final)
+        
+        return {
+            "message": "Cita reagendada exitosamente",
+            "reagendamiento_id": reagendamiento["id"],
+            "fecha_original": fecha_original.isoformat(),
+            "fecha_nueva": nueva_fecha_final.isoformat(),
+            "fecha_ajustada": fecha_fue_ajustada,
+            "motivo": request.motivo,
+            "usuario": request.usuario_reagendo
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reagendando cita: {str(e)}")
+
+@api_router.post("/prospectos/{prospecto_id}/comentarios-supervision")
+async def agregar_comentario_supervision(
+    prospecto_id: str,
+    request: ComentarioSupervisionRequest
+):
+    """Agregar comentario de supervisión a un prospecto"""
+    try:
+        # Verificar que el prospecto existe
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Crear comentario
+        comentario = {
+            "id": str(uuid.uuid4()),
+            "prospecto_id": prospecto_id,
+            "comentario": request.comentario,
+            "usuario_comenta": request.usuario_comenta,
+            "fecha_comentario": datetime.now(timezone.utc).isoformat(),
+            "tipo_comentario": request.tipo_comentario or "general"
+        }
+        
+        # Guardar comentario en DB
+        await db.comentarios_supervision.insert_one(comentario)
+        
+        # Actualizar contador de comentarios en prospecto
+        await db.prospectos.update_one(
+            {"id": prospecto_id},
+            {
+                "$set": {
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                },
+                "$inc": {
+                    "total_comentarios": 1
+                }
+            }
+        )
+        
+        return {
+            "message": "Comentario agregado exitosamente",
+            "comentario_id": comentario["id"],
+            "prospecto_id": prospecto_id,
+            "usuario": request.usuario_comenta,
+            "fecha": comentario["fecha_comentario"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error agregando comentario: {str(e)}")
+
+@api_router.get("/prospectos/{prospecto_id}/comentarios-supervision")
+async def obtener_comentarios_supervision(prospecto_id: str):
+    """Obtener todos los comentarios de supervisión de un prospecto"""
+    try:
+        # Verificar que el prospecto existe
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Obtener comentarios ordenados por fecha (más reciente primero)
+        comentarios = await db.comentarios_supervision.find({
+            "prospecto_id": prospecto_id
+        }).sort("fecha_comentario", -1).to_list(length=None)
+        
+        return {
+            "prospecto_id": prospecto_id,
+            "total_comentarios": len(comentarios),
+            "comentarios": comentarios
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo comentarios: {str(e)}")
+
+@api_router.get("/prospectos/{prospecto_id}/historial-reagendamientos")
+async def obtener_historial_reagendamientos(prospecto_id: str):
+    """Obtener historial de reagendamientos de un prospecto"""
+    try:
+        # Verificar que el prospecto existe
+        prospecto = await db.prospectos.find_one({"id": prospecto_id})
+        if not prospecto:
+            raise HTTPException(status_code=404, detail="Prospecto not found")
+        
+        # Obtener reagendamientos ordenados por fecha
+        reagendamientos = await db.reagendamientos.find({
+            "prospecto_id": prospecto_id
+        }).sort("fecha_reagendamiento", -1).to_list(length=None)
+        
+        return {
+            "prospecto_id": prospecto_id,
+            "total_reagendamientos": len(reagendamientos),
+            "reagendamientos": reagendamientos,
+            "fecha_cita_actual": prospecto.get("fecha_cita")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo reagendamientos: {str(e)}")
+
+async def recalcular_recordatorios_por_cita(prospecto_id: str, nueva_fecha_cita: datetime):
+    """Recalcular recordatorios relacionados con la cita reagendada"""
+    try:
+        # Buscar recordatorios relacionados con este prospecto
+        recordatorios_relacionados = await db.recordatorios.find({
+            "prospecto_id": prospecto_id,
+            "estado": EstadoRecordatorio.PENDIENTE,
+            "tipo": {"$in": ["confirmacion_instalacion", "recordatorio_cita", "seguimiento_instalacion"]}
+        }).to_list(length=None)
+        
+        for recordatorio in recordatorios_relacionados:
+            # Calcular nueva fecha límite basada en la nueva fecha de cita
+            if recordatorio["tipo"] == "confirmacion_instalacion":
+                # Confirmar instalación 1 día antes de la cita
+                nueva_fecha_limite = nueva_fecha_cita - timedelta(days=1)
+            elif recordatorio["tipo"] == "recordatorio_cita":
+                # Recordatorio de cita el mismo día por la mañana
+                nueva_fecha_limite = nueva_fecha_cita.replace(hour=9, minute=0, second=0, microsecond=0)
+            else:
+                # Seguimiento 1 día después de la cita
+                nueva_fecha_limite = nueva_fecha_cita + timedelta(days=1)
+            
+            # Asegurar que sea día hábil
+            nueva_fecha_limite_habil = obtener_siguiente_dia_habil(nueva_fecha_limite)
+            
+            # Actualizar recordatorio
+            await db.recordatorios.update_one(
+                {"id": recordatorio["id"]},
+                {
+                    "$set": {
+                        "fecha_limite": nueva_fecha_limite_habil.isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                        "recalculado_por_reagendamiento": True
+                    }
+                }
+            )
+            
+            print(f"Recordatorio {recordatorio['id']} recalculado: nueva fecha {nueva_fecha_limite_habil}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error recalculando recordatorios: {str(e)}")
+        return False
+
 # ==========================================
 # ENDPOINTS PLANTILLAS WHATSAPP
 # ==========================================
