@@ -1655,7 +1655,7 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
   // Cargar comentarios de supervisión
   const cargarComentarios = async () => {
     try {
-      const response = await axios.get(`${API}/api/prospectos/${prospecto.id}/comentarios-supervision`);
+      const response = await axios.get(`${API}/prospectos/${prospecto.id}/comentarios-supervision`);
       setComentarios(response.data.comentarios || []);
     } catch (error) {
       console.error('Error cargando comentarios:', error);
