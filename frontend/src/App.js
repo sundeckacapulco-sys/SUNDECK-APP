@@ -9,6 +9,7 @@ import TareasPendientes from './components/TareasPendientes';
 import DashboardMetricas from './components/DashboardMetricas';
 import GestionEscalaciones from './components/GestionEscalaciones';
 import ExportacionDatos from './components/ExportacionDatos';
+import ReporteSupervision from './components/ReporteSupervision';
 
 // Función para generar URL de WhatsApp (formato México limpio)
 const generateWhatsAppURL = (telefono, mensaje) => {
