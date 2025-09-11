@@ -3583,12 +3583,18 @@ def main():
     
     tester = ProspectosAPITester()
     
-    # Run all tests in sequence - focusing on PHASE 2.1 functionality
+    # Run all tests in sequence - focusing on PHASE 2.2 functionality
     tests = [
         tester.test_health_check,
         tester.test_create_prospect,
         
-        # PHASE 2.1 TESTS - PRIORITY (User Request)
+        # PHASE 2.2 TESTS - PRIORITY (Current Request)
+        tester.test_phase_2_2_escalation_system,
+        tester.test_phase_2_2_advanced_metrics,
+        tester.test_phase_2_2_excel_csv_export,
+        tester.test_phase_2_2_integration,
+        
+        # PHASE 2.1 TESTS - VALIDATION (Ensure still working)
         tester.test_phase_2_1_smart_business_days,
         tester.test_phase_2_1_reminder_rescheduling_system,
         tester.test_phase_2_1_integration_testing,
