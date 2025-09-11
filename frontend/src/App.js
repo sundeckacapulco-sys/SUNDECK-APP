@@ -3038,4 +3038,225 @@ const TablaPieza = ({ pieza, index, onUpdate, onDelete, onUploadFoto, precioM2Ge
   }
 };
 
+// Modal de Reagendar Cita
+const ReagendarCitaModal = ({ prospecto, onClose, onUpdate }) => {
+  const [nuevaFecha, setNuevaFecha] = useState('');
+  const [motivo, setMotivo] = useState('cliente_pidio');
+  const [comentarios, setComentarios] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Inicializar con fecha mínima (mañana)
+  useEffect(() => {
+    const mañana = new Date();
+    mañana.setDate(mañana.getDate() + 1);
+    mañana.setHours(9, 0, 0, 0); // 9:00 AM por defecto
+    setNuevaFecha(mañana.toISOString().slice(0, 16));
+  }, []);
+
+  const motivosReagendamiento = {
+    'cliente_pidio': 'Cliente lo pidió',
+    'instalador_retrasado': 'Instalador retrasado',
+    'clima_adverso': 'Clima adverso',
+    'emergencia_cliente': 'Emergencia del cliente',
+    'problema_tecnico': 'Problema técnico',
+    'otro': 'Otro motivo'
+  };
+
+  const handleReagendar = async () => {
+    if (!nuevaFecha) {
+      alert('⚠️ Debe seleccionar una nueva fecha y hora');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const response = await axios.post(`${API}/api/prospectos/${prospecto.id}/reagendar-cita`, {
+        nueva_fecha: nuevaFecha,
+        motivo: motivo,
+        comentarios: comentarios,
+        usuario_reagendo: 'Usuario Actual' // En producción: obtener del contexto
+      });
+
+      if (response.data.fecha_ajustada) {
+        alert(`✅ Cita reagendada exitosamente\n📅 Fecha ajustada a día hábil: ${new Date(response.data.fecha_nueva).toLocaleString('es-ES')}`);
+      } else {
+        alert('✅ Cita reagendada exitosamente');
+      }
+
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error reagendando cita:', error);
+      alert('❌ Error al reagendar cita: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div 
+        className="modal-content"
+        style={{ maxWidth: '500px', width: '90%' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="modal-header">
+          <h2>🔄 Reagendar Cita</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-body" style={{ padding: '2rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <p style={{ 
+              color: '#6b7280', 
+              fontSize: '0.95rem',
+              margin: '0 0 1rem 0'
+            }}>
+              <strong>{prospecto.nombre}</strong> - Fecha actual: {new Date(prospecto.fecha_cita).toLocaleString('es-ES')}
+            </p>
+          </div>
+
+          {/* Nueva Fecha y Hora */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem', 
+              fontWeight: '600',
+              color: '#374151'
+            }}>
+              📅 Nueva Fecha y Hora:
+            </label>
+            <input
+              type="datetime-local"
+              value={nuevaFecha}
+              onChange={(e) => setNuevaFecha(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          {/* Motivo del Cambio */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem', 
+              fontWeight: '600',
+              color: '#374151'
+            }}>
+              📝 Motivo del Cambio:
+            </label>
+            <select
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                boxSizing: 'border-box'
+              }}
+            >
+              {Object.entries(motivosReagendamiento).map(([key, value]) => (
+                <option key={key} value={key}>{value}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Comentarios Opcionales */}
+          <div style={{ marginBottom: '2rem' }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: '0.5rem', 
+              fontWeight: '600',
+              color: '#374151'
+            }}>
+              💬 Comentarios (opcional):
+            </label>
+            <textarea
+              value={comentarios}
+              onChange={(e) => setComentarios(e.target.value)}
+              placeholder="Detalles adicionales sobre el reagendamiento..."
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                boxSizing: 'border-box',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          {/* Botones */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '1rem', 
+            justifyContent: 'flex-end' 
+          }}>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '0.75rem 1.5rem',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px',
+                background: 'white',
+                color: '#6b7280',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.background = '#f9fafb';
+                e.target.style.borderColor = '#d1d5db';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = 'white';
+                e.target.style.borderColor = '#e5e7eb';
+              }}
+            >
+              Cancelar
+            </button>
+            
+            <button
+              onClick={handleReagendar}
+              disabled={loading || !nuevaFecha}
+              style={{
+                padding: '0.75rem 1.5rem',
+                border: 'none',
+                borderRadius: '8px',
+                background: loading || !nuevaFecha ? '#9ca3af' : '#3b82f6',
+                color: 'white',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: loading || !nuevaFecha ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                if (!loading && nuevaFecha) e.target.style.background = '#2563eb';
+              }}
+              onMouseOut={(e) => {
+                if (!loading && nuevaFecha) e.target.style.background = '#3b82f6';
+              }}
+            >
+              {loading ? '⏳ Reagendando...' : '🔄 Reagendar Cita'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default App;
