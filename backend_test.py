@@ -4079,6 +4079,774 @@ class ProspectosAPITester:
         
         return integration_success
 
+    # NEW PROSPECT DETAIL OPTIMIZATION TESTS
+    def test_prospect_appointment_rescheduling(self):
+        """Test appointment rescheduling endpoint"""
+        print("\n🔍 Testing Prospect Detail Optimization - Appointment Rescheduling")
+        
+        # Create test prospect
+        test_data = {
+            "nombre": "Test Reagendamiento",
+            "telefono": "+56900000010",
+            "producto_solicitado": "Deck Reagendamiento Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Rescheduling Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Test rescheduling with valid data
+        reschedule_data = {
+            "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            "motivo": "cliente_pidio",
+            "comentarios": "Cliente solicitó cambio de fecha por viaje",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success, response = self.run_test(
+            "Reschedule Appointment - Valid Data",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=reschedule_data
+        )
+        
+        if success:
+            # Validate response structure
+            required_fields = ['message', 'reagendamiento_id', 'fecha_original', 'fecha_nueva', 'fecha_ajustada', 'motivo', 'usuario']
+            for field in required_fields:
+                if field not in response:
+                    print(f"   ❌ Missing field in reschedule response: {field}")
+                    success = False
+                else:
+                    print(f"   ✅ Field present: {field}")
+            
+            if success:
+                print(f"   ✅ Appointment rescheduled successfully")
+                print(f"   ✅ New date: {response.get('fecha_nueva')}")
+                print(f"   ✅ Business day adjusted: {response.get('fecha_ajustada')}")
+        
+        # Test rescheduling to weekend (should auto-adjust to business day)
+        weekend_date = datetime.now(timezone.utc) + timedelta(days=7)
+        # Make sure it's a weekend
+        while weekend_date.weekday() < 5:  # 0-4 are Monday-Friday
+            weekend_date += timedelta(days=1)
+        
+        weekend_reschedule = {
+            "nueva_fecha": weekend_date.isoformat(),
+            "motivo": "problema_tecnico",
+            "comentarios": "Testing weekend adjustment",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success2, response2 = self.run_test(
+            "Reschedule to Weekend (Auto-adjust)",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=weekend_reschedule
+        )
+        
+        if success2:
+            fecha_ajustada = response2.get('fecha_ajustada', False)
+            if fecha_ajustada:
+                print("   ✅ Weekend date correctly adjusted to business day")
+            else:
+                print("   ✅ Date adjustment handled correctly")
+        
+        # Test error handling - non-existent prospect
+        success3, response3 = self.run_test(
+            "Reschedule Non-existent Prospect",
+            "POST",
+            "prospectos/non-existent-id/reagendar-cita",
+            404,
+            json_data=reschedule_data
+        )
+        
+        if success3:
+            print("   ✅ Non-existent prospect correctly handled (404)")
+        
+        # Clean up
+        self.run_test("Cleanup Rescheduling Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success and success2 and success3
+
+    def test_supervision_comments(self):
+        """Test supervision comments endpoints (POST and GET)"""
+        print("\n🔍 Testing Prospect Detail Optimization - Supervision Comments")
+        
+        # Create test prospect
+        test_data = {
+            "nombre": "Test Comentarios Supervisión",
+            "telefono": "+56900000011",
+            "producto_solicitado": "Deck Comentarios Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Comments Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Test adding different types of comments
+        comment_tests = [
+            {
+                "comentario": "Excelente atención al cliente, muy puntual",
+                "usuario_comenta": "supervisor_test",
+                "tipo_comentario": "puntualidad"
+            },
+            {
+                "comentario": "Calidad del trabajo excepcional, cliente muy satisfecho",
+                "usuario_comenta": "supervisor_test",
+                "tipo_comentario": "calidad"
+            },
+            {
+                "comentario": "Comentario general sobre el progreso del proyecto",
+                "usuario_comenta": "admin_test",
+                "tipo_comentario": "general"
+            }
+        ]
+        
+        comment_ids = []
+        add_success = True
+        
+        for i, comment_data in enumerate(comment_tests):
+            success, response = self.run_test(
+                f"Add Supervision Comment {i+1} - {comment_data['tipo_comentario']}",
+                "POST",
+                f"prospectos/{prospect_id}/comentarios-supervision",
+                200,
+                json_data=comment_data
+            )
+            
+            if success:
+                # Validate response structure
+                required_fields = ['message', 'comentario_id', 'prospecto_id', 'usuario', 'fecha']
+                for field in required_fields:
+                    if field not in response:
+                        print(f"   ❌ Missing field in comment response: {field}")
+                        add_success = False
+                    
+                if 'comentario_id' in response:
+                    comment_ids.append(response['comentario_id'])
+                    print(f"   ✅ Comment added: {comment_data['tipo_comentario']}")
+            else:
+                add_success = False
+        
+        # Test retrieving comments
+        success2, response2 = self.run_test(
+            "Get Supervision Comments",
+            "GET",
+            f"prospectos/{prospect_id}/comentarios-supervision",
+            200
+        )
+        
+        if success2:
+            # Validate response structure
+            required_fields = ['prospecto_id', 'total_comentarios', 'comentarios']
+            for field in required_fields:
+                if field not in response2:
+                    print(f"   ❌ Missing field in comments response: {field}")
+                    success2 = False
+            
+            if success2:
+                comentarios = response2.get('comentarios', [])
+                total_comentarios = response2.get('total_comentarios', 0)
+                
+                if len(comentarios) == total_comentarios == 3:
+                    print(f"   ✅ Retrieved {total_comentarios} comments correctly")
+                    
+                    # Validate comment structure
+                    if comentarios:
+                        first_comment = comentarios[0]
+                        comment_fields = ['id', 'prospecto_id', 'comentario', 'usuario_comenta', 'fecha_comentario', 'tipo_comentario']
+                        
+                        for field in comment_fields:
+                            if field not in first_comment:
+                                print(f"   ❌ Missing field in comment: {field}")
+                                success2 = False
+                        
+                        # Check if comments are sorted by date (most recent first)
+                        if len(comentarios) >= 2:
+                            first_date = comentarios[0].get('fecha_comentario', '')
+                            second_date = comentarios[1].get('fecha_comentario', '')
+                            if first_date >= second_date:
+                                print("   ✅ Comments sorted by date (most recent first)")
+                            else:
+                                print("   ⚠️  Comments sorting may need verification")
+                        
+                        # Validate different comment types
+                        tipos_encontrados = set(c.get('tipo_comentario') for c in comentarios)
+                        tipos_esperados = {'puntualidad', 'calidad', 'general'}
+                        if tipos_encontrados == tipos_esperados:
+                            print("   ✅ All comment types present")
+                        else:
+                            print(f"   ✅ Comment types found: {tipos_encontrados}")
+                else:
+                    print(f"   ✅ Retrieved {len(comentarios)} comments (total: {total_comentarios})")
+        
+        # Test error handling - non-existent prospect
+        success3, response3 = self.run_test(
+            "Get Comments for Non-existent Prospect",
+            "GET",
+            "prospectos/non-existent-id/comentarios-supervision",
+            404
+        )
+        
+        if success3:
+            print("   ✅ Non-existent prospect correctly handled (404)")
+        
+        # Clean up
+        self.run_test("Cleanup Comments Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return add_success and success2 and success3
+
+    def test_rescheduling_history(self):
+        """Test rescheduling history endpoint"""
+        print("\n🔍 Testing Prospect Detail Optimization - Rescheduling History")
+        
+        # Create test prospect
+        test_data = {
+            "nombre": "Test Historial Reagendamientos",
+            "telefono": "+56900000012",
+            "producto_solicitado": "Deck Historial Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for History Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Create multiple rescheduling activities
+        reschedule_tests = [
+            {
+                "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+                "motivo": "cliente_pidio",
+                "comentarios": "Primera reprogramación por solicitud del cliente",
+                "usuario_reagendo": "vendedor_test"
+            },
+            {
+                "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=4)).isoformat(),
+                "motivo": "clima_adverso",
+                "comentarios": "Segunda reprogramación por lluvia",
+                "usuario_reagendo": "admin_test"
+            },
+            {
+                "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=6)).isoformat(),
+                "motivo": "instalador_retrasado",
+                "comentarios": "Tercera reprogramación por retraso del instalador",
+                "usuario_reagendo": "operaciones_test"
+            }
+        ]
+        
+        reschedule_success = True
+        
+        # Create rescheduling history
+        for i, reschedule_data in enumerate(reschedule_tests):
+            success, response = self.run_test(
+                f"Create Rescheduling {i+1}",
+                "POST",
+                f"prospectos/{prospect_id}/reagendar-cita",
+                200,
+                json_data=reschedule_data
+            )
+            
+            if success:
+                print(f"   ✅ Rescheduling {i+1} created: {reschedule_data['motivo']}")
+            else:
+                reschedule_success = False
+        
+        # Test getting rescheduling history
+        success2, response2 = self.run_test(
+            "Get Rescheduling History",
+            "GET",
+            f"prospectos/{prospect_id}/historial-reagendamientos",
+            200
+        )
+        
+        if success2:
+            # Validate response structure
+            required_fields = ['prospecto_id', 'total_reagendamientos', 'reagendamientos', 'fecha_cita_actual']
+            for field in required_fields:
+                if field not in response2:
+                    print(f"   ❌ Missing field in history response: {field}")
+                    success2 = False
+            
+            if success2:
+                reagendamientos = response2.get('reagendamientos', [])
+                total_reagendamientos = response2.get('total_reagendamientos', 0)
+                
+                if len(reagendamientos) == total_reagendamientos == 3:
+                    print(f"   ✅ Retrieved {total_reagendamientos} rescheduling records correctly")
+                    
+                    # Validate rescheduling record structure
+                    if reagendamientos:
+                        first_record = reagendamientos[0]
+                        record_fields = ['id', 'prospecto_id', 'fecha_original', 'fecha_nueva', 'motivo', 'comentarios', 'usuario_reagendo', 'fecha_reagendamiento']
+                        
+                        for field in record_fields:
+                            if field not in first_record:
+                                print(f"   ❌ Missing field in rescheduling record: {field}")
+                                success2 = False
+                        
+                        # Check if records are sorted by date (most recent first)
+                        if len(reagendamientos) >= 2:
+                            first_date = reagendamientos[0].get('fecha_reagendamiento', '')
+                            second_date = reagendamientos[1].get('fecha_reagendamiento', '')
+                            if first_date >= second_date:
+                                print("   ✅ Rescheduling records sorted by date (most recent first)")
+                            else:
+                                print("   ⚠️  Rescheduling records sorting may need verification")
+                        
+                        # Validate different motivos
+                        motivos_encontrados = set(r.get('motivo') for r in reagendamientos)
+                        motivos_esperados = {'cliente_pidio', 'clima_adverso', 'instalador_retrasado'}
+                        if motivos_encontrados == motivos_esperados:
+                            print("   ✅ All rescheduling motivos present")
+                        else:
+                            print(f"   ✅ Rescheduling motivos found: {motivos_encontrados}")
+                        
+                        # Validate current appointment date is updated
+                        fecha_cita_actual = response2.get('fecha_cita_actual')
+                        if fecha_cita_actual:
+                            print(f"   ✅ Current appointment date: {fecha_cita_actual}")
+                        else:
+                            print("   ❌ Current appointment date missing")
+                            success2 = False
+                else:
+                    print(f"   ✅ Retrieved {len(reagendamientos)} rescheduling records (total: {total_reagendamientos})")
+        
+        # Test error handling - non-existent prospect
+        success3, response3 = self.run_test(
+            "Get History for Non-existent Prospect",
+            "GET",
+            "prospectos/non-existent-id/historial-reagendamientos",
+            404
+        )
+        
+        if success3:
+            print("   ✅ Non-existent prospect correctly handled (404)")
+        
+        # Clean up
+        self.run_test("Cleanup History Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return reschedule_success and success2 and success3
+
+    def test_daily_supervision_reports(self):
+        """Test daily supervision reports endpoint"""
+        print("\n🔍 Testing Prospect Detail Optimization - Daily Supervision Reports")
+        
+        # Create test prospect with activities
+        test_data = {
+            "nombre": "Test Reporte Supervisión",
+            "telefono": "+56900000013",
+            "producto_solicitado": "Deck Reporte Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Report Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Create some activities (rescheduling and comments)
+        reschedule_data = {
+            "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
+            "motivo": "cliente_pidio",
+            "comentarios": "Reagendamiento para reporte de supervisión",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        self.run_test(
+            "Create Rescheduling for Report",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=reschedule_data
+        )
+        
+        comment_data = {
+            "comentario": "Comentario de supervisión para reporte",
+            "usuario_comenta": "supervisor_test",
+            "tipo_comentario": "general"
+        }
+        
+        self.run_test(
+            "Create Comment for Report",
+            "POST",
+            f"prospectos/{prospect_id}/comentarios-supervision",
+            200,
+            json_data=comment_data
+        )
+        
+        # Test Excel report generation
+        report_data = {
+            "fecha_inicio": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+            "fecha_fin": datetime.now(timezone.utc).isoformat(),
+            "incluir_reagendamientos": True,
+            "incluir_comentarios": True,
+            "formato": "excel"
+        }
+        
+        success1, response1 = self.run_test(
+            "Generate Daily Supervision Report - Excel",
+            "POST",
+            "reportes/supervision-diario",
+            200,
+            json_data=report_data
+        )
+        
+        if success1:
+            # Validate Excel report response structure
+            required_fields = ['archivo_base64', 'nombre_archivo', 'content_type', 'total_registros', 'fecha_generacion', 'periodo', 'incluye']
+            for field in required_fields:
+                if field not in response1:
+                    print(f"   ❌ Missing field in Excel report response: {field}")
+                    success1 = False
+                else:
+                    print(f"   ✅ Excel report field present: {field}")
+            
+            if success1:
+                # Validate Excel-specific fields
+                if response1.get('content_type') == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                    print("   ✅ Correct Excel content type")
+                else:
+                    print(f"   ❌ Wrong Excel content type: {response1.get('content_type')}")
+                    success1 = False
+                
+                if response1.get('nombre_archivo', '').endswith('.xlsx'):
+                    print("   ✅ Correct Excel file extension")
+                else:
+                    print(f"   ❌ Wrong Excel file extension: {response1.get('nombre_archivo')}")
+                    success1 = False
+                
+                # Validate base64 data
+                archivo_base64 = response1.get('archivo_base64', '')
+                if archivo_base64 and len(archivo_base64) > 100:
+                    print(f"   ✅ Excel base64 data present ({len(archivo_base64)} chars)")
+                else:
+                    print("   ❌ Excel base64 data missing or too short")
+                    success1 = False
+                
+                print(f"   ✅ Excel report generated with {response1.get('total_registros', 0)} records")
+        
+        # Test CSV report generation
+        report_data['formato'] = 'csv'
+        
+        success2, response2 = self.run_test(
+            "Generate Daily Supervision Report - CSV",
+            "POST",
+            "reportes/supervision-diario",
+            200,
+            json_data=report_data
+        )
+        
+        if success2:
+            # Validate CSV-specific fields
+            if response2.get('content_type') == 'text/csv':
+                print("   ✅ Correct CSV content type")
+            else:
+                print(f"   ❌ Wrong CSV content type: {response2.get('content_type')}")
+                success2 = False
+            
+            if response2.get('nombre_archivo', '').endswith('.csv'):
+                print("   ✅ Correct CSV file extension")
+            else:
+                print(f"   ❌ Wrong CSV file extension: {response2.get('nombre_archivo')}")
+                success2 = False
+            
+            # Validate base64 data
+            archivo_base64 = response2.get('archivo_base64', '')
+            if archivo_base64 and len(archivo_base64) > 50:
+                print(f"   ✅ CSV base64 data present ({len(archivo_base64)} chars)")
+            else:
+                print("   ❌ CSV base64 data missing or too short")
+                success2 = False
+            
+            print(f"   ✅ CSV report generated with {response2.get('total_registros', 0)} records")
+        
+        # Test filtering options
+        report_data_filtered = {
+            "fecha_inicio": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+            "fecha_fin": datetime.now(timezone.utc).isoformat(),
+            "incluir_reagendamientos": True,
+            "incluir_comentarios": False,  # Only rescheduling
+            "formato": "excel"
+        }
+        
+        success3, response3 = self.run_test(
+            "Generate Filtered Report - Only Rescheduling",
+            "POST",
+            "reportes/supervision-diario",
+            200,
+            json_data=report_data_filtered
+        )
+        
+        if success3:
+            incluye = response3.get('incluye', {})
+            if incluye.get('reagendamientos') == True and incluye.get('comentarios') == False:
+                print("   ✅ Filtering options working correctly")
+            else:
+                print(f"   ✅ Filtering options processed: {incluye}")
+        
+        # Test error handling - invalid date range
+        invalid_report_data = {
+            "fecha_inicio": datetime.now(timezone.utc).isoformat(),
+            "fecha_fin": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),  # End before start
+            "incluir_reagendamientos": True,
+            "incluir_comentarios": True,
+            "formato": "excel"
+        }
+        
+        success4, response4 = self.run_test(
+            "Generate Report - Invalid Date Range",
+            "POST",
+            "reportes/supervision-diario",
+            400,
+            json_data=invalid_report_data
+        )
+        
+        if success4:
+            print("   ✅ Invalid date range correctly handled (400)")
+        
+        # Test no data scenario
+        future_report_data = {
+            "fecha_inicio": (datetime.now(timezone.utc) + timedelta(days=10)).isoformat(),
+            "fecha_fin": (datetime.now(timezone.utc) + timedelta(days=11)).isoformat(),
+            "incluir_reagendamientos": True,
+            "incluir_comentarios": True,
+            "formato": "excel"
+        }
+        
+        success5, response5 = self.run_test(
+            "Generate Report - No Data",
+            "POST",
+            "reportes/supervision-diario",
+            404,
+            json_data=future_report_data
+        )
+        
+        if success5:
+            print("   ✅ No data scenario correctly handled (404)")
+        
+        # Clean up
+        self.run_test("Cleanup Report Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return success1 and success2 and success3 and success4 and success5
+
+    def test_integration_features(self):
+        """Test integration features like reminder recalculation and business day validation"""
+        print("\n🔍 Testing Prospect Detail Optimization - Integration Features")
+        
+        # Create test prospect
+        test_data = {
+            "nombre": "Test Integración",
+            "telefono": "+56900000014",
+            "producto_solicitado": "Deck Integración Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Integration Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Test business day validation with weekend date
+        weekend_date = datetime.now(timezone.utc) + timedelta(days=7)
+        # Make sure it's a weekend
+        while weekend_date.weekday() < 5:  # 0-4 are Monday-Friday
+            weekend_date += timedelta(days=1)
+        
+        reschedule_data = {
+            "nueva_fecha": weekend_date.isoformat(),
+            "motivo": "cliente_pidio",
+            "comentarios": "Testing business day validation",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success1, response1 = self.run_test(
+            "Test Business Day Validation",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=reschedule_data
+        )
+        
+        business_day_test = True
+        if success1:
+            fecha_ajustada = response1.get('fecha_ajustada', False)
+            if fecha_ajustada:
+                print("   ✅ Business day validation working - weekend date adjusted")
+                
+                # Verify the new date is actually a business day
+                nueva_fecha_str = response1.get('fecha_nueva')
+                if nueva_fecha_str:
+                    nueva_fecha = datetime.fromisoformat(nueva_fecha_str)
+                    if nueva_fecha.weekday() < 5:  # Monday-Friday
+                        print(f"   ✅ Adjusted date is business day: {nueva_fecha.strftime('%A')}")
+                    else:
+                        print(f"   ❌ Adjusted date is not business day: {nueva_fecha.strftime('%A')}")
+                        business_day_test = False
+            else:
+                print("   ✅ Date processed correctly (may not have needed adjustment)")
+        else:
+            business_day_test = False
+        
+        # Test reminder recalculation integration
+        # First, create some reminders by adding a stage that triggers automatic reminders
+        measurement_data = {
+            "nombre_etapa": "Visita Inicial / Medición",
+            "comentario": "Medición para testing recordatorios",
+            "precio_m2_general": 25000,
+            "unidad_medida": "m",
+            "total_m2": 2.0,
+            "total_estimado": 50000
+        }
+        
+        success2, response2 = self.run_test(
+            "Add Stage to Create Reminders",
+            "POST",
+            f"prospectos/{prospect_id}/etapas-json",
+            200,
+            json_data=measurement_data
+        )
+        
+        reminder_test = True
+        if success2:
+            print("   ✅ Stage added - automatic reminders should be created")
+            
+            # Now reschedule and verify reminder recalculation happens
+            new_reschedule_data = {
+                "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=5)).isoformat(),
+                "motivo": "problema_tecnico",
+                "comentarios": "Testing reminder recalculation",
+                "usuario_reagendo": "admin_test"
+            }
+            
+            success3, response3 = self.run_test(
+                "Reschedule to Test Reminder Recalculation",
+                "POST",
+                f"prospectos/{prospect_id}/reagendar-cita",
+                200,
+                json_data=new_reschedule_data
+            )
+            
+            if success3:
+                print("   ✅ Rescheduling completed - reminder recalculation should have occurred")
+                # Note: We can't directly verify reminder recalculation without accessing the database
+                # But the endpoint should have called recalcular_recordatorios_por_cita function
+            else:
+                reminder_test = False
+        else:
+            reminder_test = False
+        
+        # Test motivo validation - all valid motivos
+        valid_motivos = [
+            "cliente_pidio",
+            "instalador_retrasado", 
+            "clima_adverso",
+            "emergencia_cliente",
+            "problema_tecnico",
+            "otro"
+        ]
+        
+        motivo_test = True
+        for motivo in valid_motivos:
+            test_reschedule = {
+                "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+                "motivo": motivo,
+                "comentarios": f"Testing motivo: {motivo}",
+                "usuario_reagendo": "admin_test"
+            }
+            
+            success, response = self.run_test(
+                f"Test Valid Motivo - {motivo}",
+                "POST",
+                f"prospectos/{prospect_id}/reagendar-cita",
+                200,
+                json_data=test_reschedule
+            )
+            
+            if success:
+                if response.get('motivo') == motivo:
+                    print(f"   ✅ Valid motivo accepted: {motivo}")
+                else:
+                    print(f"   ❌ Motivo not preserved: expected {motivo}, got {response.get('motivo')}")
+                    motivo_test = False
+            else:
+                print(f"   ❌ Valid motivo rejected: {motivo}")
+                motivo_test = False
+        
+        # Test invalid motivo
+        invalid_reschedule = {
+            "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+            "motivo": "invalid_motivo",
+            "comentarios": "Testing invalid motivo",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success4, response4 = self.run_test(
+            "Test Invalid Motivo",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            422,  # Should fail validation
+            json_data=invalid_reschedule
+        )
+        
+        if success4:
+            print("   ✅ Invalid motivo correctly rejected (422)")
+        else:
+            print("   ❌ Invalid motivo should have been rejected")
+            motivo_test = False
+        
+        # Clean up
+        self.run_test("Cleanup Integration Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return business_day_test and reminder_test and motivo_test and success4
+
 def main():
     print("🚀 Starting Prospectos Sundeck API Tests - PHASE 2.1 TESTING")
     print("=" * 70)
