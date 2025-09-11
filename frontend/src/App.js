@@ -1737,6 +1737,140 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
               </div>
             </div>
 
+            {/* Sección de Comentarios de Supervisión */}
+            <div className="info-section">
+              <h3>Comentarios de Supervisión</h3>
+              
+              {/* Formulario para agregar comentario */}
+              <div style={{
+                background: '#f8fafc',
+                padding: '1rem',
+                borderRadius: '8px',
+                marginBottom: '1rem',
+                border: '2px solid #e5e7eb'
+              }}>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                  <select
+                    value={tipoComentario}
+                    onChange={(e) => setTipoComentario(e.target.value)}
+                    style={{
+                      padding: '0.5rem',
+                      border: '2px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    <option value="general">General</option>
+                    <option value="puntualidad">Puntualidad</option>
+                    <option value="calidad">Calidad</option>
+                    <option value="cliente">Cliente</option>
+                  </select>
+                </div>
+                
+                <textarea
+                  value={nuevoComentario}
+                  onChange={(e) => setNuevoComentario(e.target.value)}
+                  placeholder="Ej: El cliente llegó 30 min tarde, Se pospuso por lluvia..."
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '0.75rem',
+                    border: '2px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    resize: 'vertical',
+                    marginBottom: '0.75rem',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                
+                <button
+                  onClick={agregarComentario}
+                  disabled={!nuevoComentario.trim()}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: nuevoComentario.trim() ? '#10b981' : '#9ca3af',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    cursor: nuevoComentario.trim() ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  💬 Agregar Comentario
+                </button>
+              </div>
+
+              {/* Timeline de comentarios */}
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {comentarios.length > 0 ? (
+                  comentarios.map((comentario, index) => (
+                    <div key={comentario.id} style={{
+                      padding: '1rem',
+                      marginBottom: '0.75rem',
+                      backgroundColor: 'white',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      borderLeft: `4px solid ${
+                        comentario.tipo_comentario === 'puntualidad' ? '#10b981' :
+                        comentario.tipo_comentario === 'calidad' ? '#3b82f6' :
+                        comentario.tipo_comentario === 'cliente' ? '#f59e0b' : '#6b7280'
+                      }`
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start',
+                        marginBottom: '0.5rem'
+                      }}>
+                        <div>
+                          <span style={{
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            color: '#374151',
+                            textTransform: 'capitalize'
+                          }}>
+                            {comentario.tipo_comentario}
+                          </span>
+                          <span style={{
+                            fontSize: '0.8rem',
+                            color: '#6b7280',
+                            marginLeft: '0.5rem'
+                          }}>
+                            por {comentario.usuario_comenta}
+                          </span>
+                        </div>
+                        <span style={{
+                          fontSize: '0.75rem',
+                          color: '#9ca3af'
+                        }}>
+                          {new Date(comentario.fecha_comentario).toLocaleString('es-ES')}
+                        </span>
+                      </div>
+                      <p style={{ 
+                        margin: 0, 
+                        fontSize: '0.9rem', 
+                        color: '#1f2937',
+                        lineHeight: '1.4'
+                      }}>
+                        {comentario.comentario}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    color: '#6b7280',
+                    fontSize: '0.9rem',
+                    padding: '2rem'
+                  }}>
+                    No hay comentarios de supervisión registrados
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="etapas-section">
               <div className="section-header">
                 <h3>Timeline de Instalación</h3>
