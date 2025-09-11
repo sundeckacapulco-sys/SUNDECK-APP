@@ -3156,10 +3156,16 @@ async def obtener_historial_reagendamientos(prospecto_id: str):
             "prospecto_id": prospecto_id
         }).sort("fecha_reagendamiento", -1).to_list(length=None)
         
+        # Limpiar ObjectIds de los reagendamientos
+        reagendamientos_limpios = []
+        for reagendamiento in reagendamientos:
+            reagendamiento_limpio = {k: v for k, v in reagendamiento.items() if k != "_id"}
+            reagendamientos_limpios.append(reagendamiento_limpio)
+        
         return {
             "prospecto_id": prospecto_id,
-            "total_reagendamientos": len(reagendamientos),
-            "reagendamientos": reagendamientos,
+            "total_reagendamientos": len(reagendamientos_limpios),
+            "reagendamientos": reagendamientos_limpios,
             "fecha_cita_actual": prospecto.get("fecha_cita")
         }
         
