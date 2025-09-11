@@ -5899,7 +5899,347 @@ def main():
         return 1
 
 
+    def test_critical_422_add_stage_investigation(self):
+        """CRITICAL: Investigate 422 error when adding stages - detailed validation testing"""
+        print("\n🚨 CRITICAL BUG INVESTIGATION - 422 Error Adding Stages")
+        
+        # Create a test prospect first
+        test_data = {
+            "nombre": "Test 422 Investigation",
+            "telefono": "+56999422422",
+            "producto_solicitado": "Deck 422 Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for 422 Investigation",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            print("❌ Failed to create test prospect for 422 investigation")
+            return False
+        
+        prospect_id = response.get('id')
+        print(f"   Created test prospect ID: {prospect_id}")
+        
+        # Test 1: Minimal data test - just required fields
+        print("\n🔍 Test 1: Minimal required fields only")
+        minimal_data = {
+            'nombre_etapa': 'Visita Inicial / Medición',
+            'comentario': 'Test minimal data'
+        }
+        
+        success1, response1 = self.run_test(
+            "Add Stage - Minimal Data",
+            "POST",
+            f"prospectos/{prospect_id}/etapas",
+            200,
+            params=minimal_data
+        )
+        
+        if not success1:
+            print("❌ CRITICAL: Minimal data test failed")
+            try:
+                error_detail = response1 if isinstance(response1, dict) else {}
+                print(f"   Error details: {error_detail}")
+            except:
+                pass
+        
+        # Test 2: Add fields incrementally to identify problematic field
+        print("\n🔍 Test 2: Incremental field addition")
+        
+        incremental_tests = [
+            {
+                'nombre_etapa': 'Visita Inicial / Medición',
+                'comentario': 'Test with precio_m2_general',
+                'precio_m2_general': '25000'
+            },
+            {
+                'nombre_etapa': 'Visita Inicial / Medición',
+                'comentario': 'Test with precio and unidad',
+                'precio_m2_general': '25000',
+                'unidad_medida': 'm'
+            },
+            {
+                'nombre_etapa': 'Visita Inicial / Medición',
+                'comentario': 'Test with precio, unidad, total_m2',
+                'precio_m2_general': '25000',
+                'unidad_medida': 'm',
+                'total_m2': '5.0'
+            },
+            {
+                'nombre_etapa': 'Visita Inicial / Medición',
+                'comentario': 'Test with all basic fields',
+                'precio_m2_general': '25000',
+                'unidad_medida': 'm',
+                'total_m2': '5.0',
+                'total_estimado': '125000'
+            }
+        ]
+        
+        incremental_success = True
+        for i, test_data in enumerate(incremental_tests):
+            success, response = self.run_test(
+                f"Incremental Test {i+1} - {len(test_data)} fields",
+                "POST",
+                f"prospectos/{prospect_id}/etapas",
+                200,
+                params=test_data
+            )
+            
+            if not success:
+                print(f"❌ CRITICAL: Incremental test {i+1} failed")
+                print(f"   Failed with {len(test_data)} fields: {list(test_data.keys())}")
+                try:
+                    if isinstance(response, dict):
+                        print(f"   Error details: {response}")
+                    else:
+                        print(f"   Response: {response}")
+                except:
+                    pass
+                incremental_success = False
+                break
+            else:
+                print(f"   ✅ Incremental test {i+1} passed with {len(test_data)} fields")
+        
+        # Test 3: Test different data types and formats
+        print("\n🔍 Test 3: Data type and format validation")
+        
+        format_tests = [
+            {
+                'name': 'Integer precio_m2_general',
+                'data': {
+                    'nombre_etapa': 'Visita Inicial / Medición',
+                    'comentario': 'Test integer precio',
+                    'precio_m2_general': 25000  # Integer instead of string
+                }
+            },
+            {
+                'name': 'Float total_m2',
+                'data': {
+                    'nombre_etapa': 'Visita Inicial / Medición',
+                    'comentario': 'Test float total',
+                    'total_m2': 5.5  # Float instead of string
+                }
+            },
+            {
+                'name': 'String numbers',
+                'data': {
+                    'nombre_etapa': 'Visita Inicial / Medición',
+                    'comentario': 'Test string numbers',
+                    'precio_m2_general': '25000.50',
+                    'total_m2': '5.75'
+                }
+            }
+        ]
+        
+        format_success = True
+        for test in format_tests:
+            success, response = self.run_test(
+                f"Format Test - {test['name']}",
+                "POST",
+                f"prospectos/{prospect_id}/etapas",
+                200,
+                json_data=test['data']  # Use JSON for proper type handling
+            )
+            
+            if not success:
+                print(f"❌ Format test failed: {test['name']}")
+                try:
+                    if isinstance(response, dict):
+                        print(f"   Error details: {response}")
+                except:
+                    pass
+                format_success = False
+            else:
+                print(f"   ✅ Format test passed: {test['name']}")
+        
+        # Test 4: Test with exact frontend data format
+        print("\n🔍 Test 4: Exact frontend data simulation")
+        
+        frontend_data = {
+            "nombre_etapa": "Visita Inicial / Medición",
+            "comentario": "Medición inicial realizada",
+            "precio_m2_general": 25000,
+            "unidad_medida": "m",
+            "total_m2": 5.0,
+            "total_estimado": 125000,
+            "piezas_medicion": []
+        }
+        
+        success4, response4 = self.run_test(
+            "Frontend Data Simulation",
+            "POST",
+            f"prospectos/{prospect_id}/etapas-json",  # Use JSON endpoint
+            200,
+            json_data=frontend_data
+        )
+        
+        if not success4:
+            print("❌ CRITICAL: Frontend data simulation failed")
+            try:
+                if isinstance(response4, dict):
+                    print(f"   Error details: {response4}")
+                    # Check for specific validation errors
+                    if 'detail' in response4:
+                        detail = response4['detail']
+                        if isinstance(detail, list):
+                            print("   Validation errors:")
+                            for error in detail:
+                                if isinstance(error, dict):
+                                    print(f"     - Field: {error.get('loc', 'unknown')}")
+                                    print(f"       Message: {error.get('msg', 'unknown')}")
+                                    print(f"       Type: {error.get('type', 'unknown')}")
+                        else:
+                            print(f"   Detail: {detail}")
+            except Exception as e:
+                print(f"   Error parsing response: {e}")
+        else:
+            print("   ✅ Frontend data simulation passed")
+        
+        # Test 5: Test with form data (multipart) - the actual endpoint format
+        print("\n🔍 Test 5: Form data (multipart) format test")
+        
+        form_data = {
+            'nombre_etapa': 'Visita Inicial / Medición',
+            'comentario': 'Test form data format',
+            'precio_m2_general': '25000',
+            'unidad_medida': 'm',
+            'total_m2': '5.0',
+            'total_estimado': '125000'
+        }
+        
+        # Test with empty files list (no photos)
+        success5, response5 = self.run_test(
+            "Form Data Test - No Photos",
+            "POST",
+            f"prospectos/{prospect_id}/etapas",
+            200,
+            data=form_data,
+            files=[]  # Empty files list
+        )
+        
+        if not success5:
+            print("❌ CRITICAL: Form data test failed")
+            try:
+                if isinstance(response5, dict):
+                    print(f"   Error details: {response5}")
+            except:
+                pass
+        else:
+            print("   ✅ Form data test passed")
+        
+        # Test 6: Test with non-existent prospect ID
+        print("\n🔍 Test 6: Non-existent prospect ID test")
+        
+        fake_id = "non-existent-prospect-id"
+        success6, response6 = self.run_test(
+            "Non-existent Prospect ID",
+            "POST",
+            f"prospectos/{fake_id}/etapas",
+            404,  # Should return 404
+            params=minimal_data
+        )
+        
+        if success6:
+            print("   ✅ Non-existent prospect correctly returns 404")
+        else:
+            print("   ❌ Non-existent prospect should return 404")
+        
+        # Test 7: Test different stage names
+        print("\n🔍 Test 7: Different stage names test")
+        
+        stage_names = [
+            "Visita Inicial / Medición",
+            "Cotización Aprobada", 
+            "Pedido",
+            "Fabricación",
+            "Instalación en Proceso",
+            "Entrega Final",
+            "Postventa"
+        ]
+        
+        stage_success = True
+        for stage_name in stage_names:
+            stage_data = {
+                'nombre_etapa': stage_name,
+                'comentario': f'Test stage: {stage_name}'
+            }
+            
+            success, response = self.run_test(
+                f"Stage Name Test - {stage_name}",
+                "POST",
+                f"prospectos/{prospect_id}/etapas",
+                200,
+                params=stage_data
+            )
+            
+            if not success:
+                print(f"❌ Stage name test failed: {stage_name}")
+                try:
+                    if isinstance(response, dict):
+                        print(f"   Error details: {response}")
+                except:
+                    pass
+                stage_success = False
+            else:
+                print(f"   ✅ Stage name test passed: {stage_name}")
+        
+        # Clean up test prospect
+        self.run_test("Cleanup 422 Investigation Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        # Summary
+        print(f"\n📊 422 Investigation Results:")
+        print(f"   Minimal data test: {'✅ PASSED' if success1 else '❌ FAILED'}")
+        print(f"   Incremental tests: {'✅ PASSED' if incremental_success else '❌ FAILED'}")
+        print(f"   Format tests: {'✅ PASSED' if format_success else '❌ FAILED'}")
+        print(f"   Frontend simulation: {'✅ PASSED' if success4 else '❌ FAILED'}")
+        print(f"   Form data test: {'✅ PASSED' if success5 else '❌ FAILED'}")
+        print(f"   Non-existent ID test: {'✅ PASSED' if success6 else '❌ FAILED'}")
+        print(f"   Stage names test: {'✅ PASSED' if stage_success else '❌ FAILED'}")
+        
+        overall_success = all([success1, incremental_success, format_success, success4, success5, success6, stage_success])
+        
+        if not overall_success:
+            print("\n🚨 CRITICAL FINDINGS:")
+            print("   - 422 errors detected in add stage functionality")
+            print("   - Detailed error information logged above")
+            print("   - Backend validation or model issues identified")
+        else:
+            print("\n✅ NO 422 ERRORS FOUND:")
+            print("   - All add stage tests passed successfully")
+            print("   - Backend endpoint appears to be working correctly")
+            print("   - Issue may be frontend-related or data-specific")
+        
+        return overall_success
+
+
 if __name__ == "__main__":
     tester = ProspectosAPITester()
-    # Run only critical endpoint tests as requested
-    tester.run_critical_endpoint_tests()
+    
+    # Run the critical 422 investigation first
+    print("🚨 RUNNING CRITICAL 422 ERROR INVESTIGATION")
+    tester.test_critical_422_add_stage_investigation()
+    
+    print("\n" + "="*80)
+    print("🚀 RUNNING ADDITIONAL TESTS")
+    
+    # Run a few key tests to validate the backend
+    key_tests = [
+        tester.test_health_check,
+        tester.test_create_prospect,
+        tester.test_add_stage_without_photos,
+        tester.test_add_measurement_stage,
+    ]
+    
+    for test in key_tests:
+        try:
+            test()
+        except Exception as e:
+            print(f"❌ Test {test.__name__} failed with exception: {str(e)}")
+    
+    print(f"\n📊 Test Results: {tester.tests_passed}/{tester.tests_run} passed")
