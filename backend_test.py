@@ -4181,6 +4181,197 @@ class ProspectosAPITester:
         
         return success and success2 and success3
 
+    def test_critical_404_investigation(self):
+        """CRITICAL: Test specific prospect rescheduling that's failing with 404"""
+        print("\n🚨 CRITICAL 404 ERROR INVESTIGATION - Testing specific prospect rescheduling")
+        
+        # The exact prospect ID that's failing
+        failing_prospect_id = "126b8395-e8d6-4db0-a093-517bb3a26f74"
+        
+        # Step 1: Check if the prospect exists in database
+        success1, response1 = self.run_test(
+            f"CRITICAL - Check if prospect {failing_prospect_id} exists",
+            "GET",
+            f"prospectos/{failing_prospect_id}",
+            200  # Should return 200 if exists, 404 if not
+        )
+        
+        if not success1:
+            print(f"❌ CRITICAL ISSUE: Prospect {failing_prospect_id} does NOT exist in database")
+            print("   This explains the 404 error - the prospect ID is invalid")
+            
+            # Let's check all prospects to see what IDs actually exist
+            success_all, response_all = self.run_test(
+                "Get all prospects to check existing IDs",
+                "GET",
+                "prospectos",
+                200,
+                params={"limit": 100}  # Get more prospects to check IDs
+            )
+            
+            if success_all:
+                prospectos = response_all.get('prospectos', [])
+                print(f"   Found {len(prospectos)} prospects in database:")
+                for i, p in enumerate(prospectos[:10]):  # Show first 10
+                    print(f"   - {p.get('id', 'NO_ID')}: {p.get('nombre', 'NO_NAME')}")
+                if len(prospectos) > 10:
+                    print(f"   ... and {len(prospectos) - 10} more")
+            
+            return False
+        
+        print(f"✅ Prospect {failing_prospect_id} EXISTS in database")
+        prospect_data = response1
+        print(f"   Prospect name: {prospect_data.get('nombre', 'N/A')}")
+        print(f"   Phone: {prospect_data.get('telefono', 'N/A')}")
+        print(f"   Current date: {prospect_data.get('fecha_cita', 'N/A')}")
+        
+        # Step 2: Test the exact rescheduling endpoint with exact frontend data
+        reschedule_data = {
+            "nueva_fecha": "2025-09-13T12:00:00",
+            "motivo": "clima_adverso", 
+            "comentarios": "test",
+            "usuario_reagendo": "Usuario Actual"
+        }
+        
+        success2, response2 = self.run_test(
+            f"CRITICAL - Test rescheduling endpoint for prospect {failing_prospect_id}",
+            "POST",
+            f"prospectos/{failing_prospect_id}/reagendar-cita",
+            200,
+            json_data=reschedule_data
+        )
+        
+        if not success2:
+            print(f"❌ CRITICAL ISSUE: Rescheduling endpoint failed for existing prospect")
+            print("   This indicates a problem with the endpoint itself, not the prospect ID")
+            
+            # Let's test the endpoint structure
+            success3, response3 = self.run_test(
+                "Test rescheduling endpoint with invalid prospect (should get 404)",
+                "POST",
+                "prospectos/invalid-id-test/reagendar-cita",
+                404,  # Should return 404 for invalid prospect
+                json_data=reschedule_data
+            )
+            
+            if success3:
+                print("   ✅ Endpoint correctly returns 404 for invalid prospect ID")
+                print("   ❌ But fails for valid prospect - this is the bug!")
+            else:
+                print("   ❌ Endpoint doesn't even handle invalid IDs correctly")
+            
+            return False
+        
+        print(f"✅ Rescheduling endpoint works correctly for prospect {failing_prospect_id}")
+        print(f"   Response: {response2.get('message', 'No message')}")
+        
+        # Step 3: Test various edge cases with this specific prospect
+        edge_cases = [
+            {
+                "name": "Missing required field - nueva_fecha",
+                "data": {
+                    "motivo": "clima_adverso", 
+                    "comentarios": "test",
+                    "usuario_reagendo": "Usuario Actual"
+                },
+                "expected_status": 422
+            },
+            {
+                "name": "Invalid motivo",
+                "data": {
+                    "nueva_fecha": "2025-09-14T12:00:00",
+                    "motivo": "invalid_motivo", 
+                    "comentarios": "test",
+                    "usuario_reagendo": "Usuario Actual"
+                },
+                "expected_status": 422
+            },
+            {
+                "name": "Invalid date format",
+                "data": {
+                    "nueva_fecha": "invalid-date",
+                    "motivo": "clima_adverso", 
+                    "comentarios": "test",
+                    "usuario_reagendo": "Usuario Actual"
+                },
+                "expected_status": 422
+            }
+        ]
+        
+        edge_case_success = True
+        for case in edge_cases:
+            success, response = self.run_test(
+                f"Edge case: {case['name']}",
+                "POST",
+                f"prospectos/{failing_prospect_id}/reagendar-cita",
+                case['expected_status'],
+                json_data=case['data']
+            )
+            if not success:
+                edge_case_success = False
+        
+        # Step 4: Test URL structure and routing
+        print("\n🔍 Testing URL structure and routing:")
+        
+        # Test different URL patterns
+        url_tests = [
+            {
+                "name": "With /api prefix explicitly",
+                "url": f"{self.base_url}/prospectos/{failing_prospect_id}/reagendar-cita",
+                "should_work": True
+            },
+            {
+                "name": "Without /api prefix",
+                "url": f"https://tareas-pendientes-2.preview.emergentagent.com/prospectos/{failing_prospect_id}/reagendar-cita",
+                "should_work": False
+            }
+        ]
+        
+        for url_test in url_tests:
+            try:
+                import requests
+                response = requests.post(
+                    url_test["url"],
+                    json=reschedule_data,
+                    headers={'Content-Type': 'application/json'}
+                )
+                
+                if url_test["should_work"]:
+                    if response.status_code == 200:
+                        print(f"   ✅ {url_test['name']}: Works correctly")
+                    else:
+                        print(f"   ❌ {url_test['name']}: Failed with {response.status_code}")
+                        edge_case_success = False
+                else:
+                    if response.status_code != 200:
+                        print(f"   ✅ {url_test['name']}: Correctly fails (expected)")
+                    else:
+                        print(f"   ⚠️  {url_test['name']}: Unexpectedly works")
+                        
+            except Exception as e:
+                print(f"   ❌ {url_test['name']}: Exception - {str(e)}")
+                if url_test["should_work"]:
+                    edge_case_success = False
+        
+        # Step 5: Verify the rescheduling was actually saved
+        success4, response4 = self.run_test(
+            f"Verify rescheduling history for prospect {failing_prospect_id}",
+            "GET",
+            f"prospectos/{failing_prospect_id}/historial-reagendamientos",
+            200
+        )
+        
+        if success4:
+            reagendamientos = response4.get('reagendamientos', [])
+            if len(reagendamientos) > 0:
+                print(f"   ✅ Found {len(reagendamientos)} rescheduling records")
+                latest = reagendamientos[0]
+                print(f"   ✅ Latest rescheduling: {latest.get('motivo', 'N/A')} on {latest.get('fecha_reagendamiento', 'N/A')}")
+            else:
+                print("   ⚠️  No rescheduling history found - data may not be persisting")
+        
+        return success1 and success2 and edge_case_success
+
     def test_critical_rescheduling_bug_investigation(self):
         """CRITICAL BUG INVESTIGATION - Comprehensive rescheduling endpoint testing"""
         print("\n🚨 CRITICAL BUG INVESTIGATION - Appointment Rescheduling Error")
