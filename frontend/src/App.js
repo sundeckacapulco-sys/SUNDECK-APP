@@ -275,6 +275,7 @@ const Header = ({ currentView, onNavigate }) => {
     { id: 'metricas', label: 'Métricas', icon: '📊' },
     { id: 'escalaciones', label: 'Escalaciones', icon: '🚨' },
     { id: 'exportar', label: 'Exportar', icon: '📋' },
+    { id: 'reportes', label: 'Reportes', icon: '📊' },
     { id: 'sundeck360', label: 'Sundeck 360', icon: '🎯' },
     { id: 'embudo360', label: 'Embudo 360', icon: '📈' }
   ];
