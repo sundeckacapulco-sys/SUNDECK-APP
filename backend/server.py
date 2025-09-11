@@ -2475,6 +2475,188 @@ async def calcular_conversion_instalacion(recordatorios: List[dict]) -> float:
         print(f"Error calculando conversión instalación: {str(e)}")
         return 0.0
 
+import pandas as pd
+from io import BytesIO
+import base64
+
+@api_router.post("/recordatorios/exportar")
+async def exportar_recordatorios(request: ExportacionRequest):
+    """Exportar recordatorios a Excel/CSV para Mesa de Control"""
+    try:
+        # Construir filtros de consulta
+        filtros = {}
+        
+        if request.fecha_inicio and request.fecha_fin:
+            filtros["created_at"] = {
+                "$gte": request.fecha_inicio.isoformat(),
+                "$lte": request.fecha_fin.isoformat()
+            }
+        
+        if request.estado_filtro:
+            filtros["estado"] = request.estado_filtro
+            
+        if request.usuario_filtro:
+            filtros["usuario_asignado"] = request.usuario_filtro
+        
+        # Obtener recordatorios
+        recordatorios = await db.recordatorios.find(filtros).to_list(length=None)
+        
+        if not recordatorios:
+            raise HTTPException(status_code=404, detail="No se encontraron recordatorios para exportar")
+        
+        # Enriquecer datos con información de prospectos
+        datos_exportacion = []
+        
+        for recordatorio in recordatorios:
+            try:
+                # Obtener información del prospecto
+                prospecto = await db.prospectos.find_one({"id": recordatorio.get("prospecto_id")})
+                
+                # Formatear fecha límite
+                fecha_limite = recordatorio.get("fecha_limite", "")
+                if isinstance(fecha_limite, str):
+                    try:
+                        fecha_dt = datetime.fromisoformat(fecha_limite)
+                        fecha_formateada = fecha_dt.strftime("%d/%m/%Y %H:%M")
+                    except:
+                        fecha_formateada = fecha_limite
+                else:
+                    fecha_formateada = str(fecha_limite)
+                
+                # Formatear fecha de creación
+                fecha_creacion = recordatorio.get("created_at", "")
+                if isinstance(fecha_creacion, str):
+                    try:
+                        fecha_dt = datetime.fromisoformat(fecha_creacion)
+                        fecha_creacion_formateada = fecha_dt.strftime("%d/%m/%Y %H:%M")
+                    except:
+                        fecha_creacion_formateada = fecha_creacion
+                else:
+                    fecha_creacion_formateada = str(fecha_creacion)
+                
+                # Determinar estado visual
+                estado_visual = recordatorio.get("estado", "pendiente")
+                if recordatorio.get("escalado_at"):
+                    estado_visual = f"{estado_visual} (escalado)"
+                if recordatorio.get("reprogramado"):
+                    estado_visual = f"{estado_visual} (reprogramado)"
+                
+                # Construir fila para exportación
+                fila = {
+                    "ID_Recordatorio": recordatorio.get("id", ""),
+                    "Cliente": prospecto.get("nombre", "N/A") if prospecto else "N/A",
+                    "Teléfono": prospecto.get("telefono", "N/A") if prospecto else "N/A",
+                    "Producto": prospecto.get("producto_solicitado", "N/A") if prospecto else "N/A",
+                    "Acción": traducir_tipo_recordatorio(recordatorio.get("tipo", "")),
+                    "Fecha_Límite": fecha_formateada,
+                    "Estado": estado_visual.title(),
+                    "Responsable": recordatorio.get("usuario_asignado", "No asignado"),
+                    "Etapa_Relacionada": recordatorio.get("etapa_relacionada", "N/A"),
+                    "Fecha_Creación": fecha_creacion_formateada,
+                    "Días_Vencido": calcular_dias_vencido(fecha_limite),
+                    "Nivel_Escalación": recordatorio.get("nivel_escalacion", "Normal"),
+                    "Supervisor_Notificado": recordatorio.get("supervisor_notificado", "N/A"),
+                    "Motivo_Reprogramación": recordatorio.get("motivo_reprogramacion", "N/A"),
+                    "Notas": recordatorio.get("notas_seguimiento", "")
+                }
+                
+                datos_exportacion.append(fila)
+                
+            except Exception as e:
+                print(f"Error procesando recordatorio {recordatorio.get('id', 'unknown')}: {str(e)}")
+                continue
+        
+        if not datos_exportacion:
+            raise HTTPException(status_code=404, detail="No se pudieron procesar los recordatorios para exportar")
+        
+        # Crear DataFrame
+        df = pd.DataFrame(datos_exportacion)
+        
+        # Generar archivo según formato
+        if request.formato.lower() == "excel":
+            # Crear archivo Excel
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Recordatorios', index=False)
+                
+                # Formatear hoja
+                worksheet = writer.sheets['Recordatorios']
+                
+                # Auto-ajustar ancho de columnas
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+            
+            buffer.seek(0)
+            archivo_base64 = base64.b64encode(buffer.getvalue()).decode()
+            nombre_archivo = f"recordatorios_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            
+        else:  # CSV
+            buffer = BytesIO()
+            df.to_csv(buffer, index=False, encoding='utf-8-sig')  # utf-8-sig para Excel
+            buffer.seek(0)
+            archivo_base64 = base64.b64encode(buffer.getvalue()).decode()
+            nombre_archivo = f"recordatorios_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            content_type = "text/csv"
+        
+        return {
+            "archivo_base64": archivo_base64,
+            "nombre_archivo": nombre_archivo,
+            "content_type": content_type,
+            "total_registros": len(datos_exportacion),
+            "fecha_generacion": datetime.now(timezone.utc).isoformat(),
+            "filtros_aplicados": {
+                "fecha_inicio": request.fecha_inicio.isoformat() if request.fecha_inicio else None,
+                "fecha_fin": request.fecha_fin.isoformat() if request.fecha_fin else None,
+                "estado": request.estado_filtro,
+                "usuario": request.usuario_filtro
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error exporting recordatorios: {str(e)}")
+
+def traducir_tipo_recordatorio(tipo: str) -> str:
+    """Traducir tipo de recordatorio a descripción legible"""
+    traducciones = {
+        "cotizacion_24h": "Enviar cotización (24h)",
+        "primer_seguimiento": "Primer seguimiento",
+        "segundo_seguimiento": "Segundo seguimiento (3 días)",
+        "tercer_seguimiento": "Tercer seguimiento (7 días)",
+        "recontacto_sin_respuesta": "Recontacto sin respuesta",
+        "cobro_anticipo": "Cobro de anticipo",
+        "confirmacion_instalacion": "Confirmación de instalación",
+        "entrega_final": "Entrega final"
+    }
+    return traducciones.get(tipo, tipo.replace("_", " ").title())
+
+def calcular_dias_vencido(fecha_limite: str) -> int:
+    """Calcular días vencidos desde la fecha límite"""
+    try:
+        if not fecha_limite:
+            return 0
+        
+        fecha_dt = datetime.fromisoformat(fecha_limite) if isinstance(fecha_limite, str) else fecha_limite
+        fecha_actual = datetime.now(timezone.utc)
+        
+        diferencia = (fecha_actual - fecha_dt).days
+        return max(diferencia, 0)  # Solo valores positivos
+        
+    except Exception as e:
+        print(f"Error calculando días vencidos: {str(e)}")
+        return 0
+
 # ==========================================
 # ENDPOINTS PLANTILLAS WHATSAPP
 # ==========================================
