@@ -3055,7 +3055,16 @@ const ReagendarCitaModal = ({ prospecto, onClose, onUpdate }) => {
     mañana.setDate(mañana.getDate() + 1);
     mañana.setHours(9, 0, 0, 0); // 9:00 AM por defecto
     setNuevaFecha(mañana.toISOString().slice(0, 16));
-  }, []);
+    
+    // Debug: Log prospect data
+    console.log('🔍 Prospecto data for rescheduling:', {
+      id: prospecto?.id,
+      nombre: prospecto?.nombre,
+      fecha_cita: prospecto?.fecha_cita,
+      fecha_cita_type: typeof prospecto?.fecha_cita,
+      complete_prospecto: prospecto
+    });
+  }, [prospecto]);
 
   const motivosReagendamiento = {
     'cliente_pidio': 'Cliente lo pidió',
