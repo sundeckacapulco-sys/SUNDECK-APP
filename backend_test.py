@@ -3414,6 +3414,360 @@ class ProspectosAPITester:
         
         return metrics_success
 
+    def test_embudo_360_excel_export_fixed(self):
+        """Test the FIXED Embudo 360 Excel export functionality - CRITICAL BUG FIX TESTING"""
+        print("\n🔍 CRITICAL BUG FIX TESTING - Embudo 360 Excel Export")
+        
+        # Test Excel export with formato="excel" parameter
+        success1, response1 = self.run_test(
+            "FIXED Excel Export - formato=excel",
+            "GET",
+            "embudo-360/export",
+            200,
+            params={"formato": "excel"}
+        )
+        
+        excel_test_passed = True
+        
+        if success1:
+            # Verify proper response structure with required fields
+            required_fields = ['archivo_base64', 'nombre_archivo', 'content_type', 'total_registros', 'fecha_generacion', 'filtros_aplicados']
+            for field in required_fields:
+                if field not in response1:
+                    print(f"❌ Missing required field in Excel export: {field}")
+                    excel_test_passed = False
+                else:
+                    print(f"   ✅ Required field present: {field}")
+            
+            if excel_test_passed:
+                # Verify Excel-specific validations
+                if response1.get('content_type') == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                    print("   ✅ Correct Excel content type")
+                else:
+                    print(f"   ❌ Wrong Excel content type: {response1.get('content_type')}")
+                    excel_test_passed = False
+                
+                if response1.get('nombre_archivo', '').endswith('.xlsx'):
+                    print("   ✅ Correct Excel file extension (.xlsx)")
+                else:
+                    print(f"   ❌ Wrong Excel file extension: {response1.get('nombre_archivo')}")
+                    excel_test_passed = False
+                
+                # Verify base64 encoding is working
+                archivo_base64 = response1.get('archivo_base64', '')
+                if archivo_base64 and len(archivo_base64) > 100:  # Should be substantial base64 data
+                    print(f"   ✅ Base64 encoding working - {len(archivo_base64)} characters")
+                    
+                    # Try to decode base64 to verify it's valid
+                    try:
+                        import base64
+                        decoded_data = base64.b64decode(archivo_base64)
+                        if len(decoded_data) > 0:
+                            print("   ✅ Base64 data is valid and decodable")
+                        else:
+                            print("   ❌ Base64 decoded to empty data")
+                            excel_test_passed = False
+                    except Exception as e:
+                        print(f"   ❌ Base64 decoding failed: {str(e)}")
+                        excel_test_passed = False
+                else:
+                    print("   ❌ Base64 encoding appears to be empty or invalid")
+                    excel_test_passed = False
+                
+                # Verify metadata fields
+                if isinstance(response1.get('total_registros'), int):
+                    print(f"   ✅ total_registros is integer: {response1.get('total_registros')}")
+                else:
+                    print("   ❌ total_registros should be integer")
+                    excel_test_passed = False
+                
+                if response1.get('fecha_generacion'):
+                    print(f"   ✅ fecha_generacion present: {response1.get('fecha_generacion')}")
+                else:
+                    print("   ❌ fecha_generacion missing")
+                    excel_test_passed = False
+                
+                if isinstance(response1.get('filtros_aplicados'), dict):
+                    print("   ✅ filtros_aplicados is dict structure")
+                else:
+                    print("   ❌ filtros_aplicados should be dict")
+                    excel_test_passed = False
+        
+        # Test CSV export with formato="csv" parameter
+        success2, response2 = self.run_test(
+            "FIXED CSV Export - formato=csv",
+            "GET",
+            "embudo-360/export",
+            200,
+            params={"formato": "csv"}
+        )
+        
+        csv_test_passed = True
+        
+        if success2:
+            # Verify CSV-specific validations
+            if response2.get('content_type') == "text/csv":
+                print("   ✅ Correct CSV content type")
+            else:
+                print(f"   ❌ Wrong CSV content type: {response2.get('content_type')}")
+                csv_test_passed = False
+            
+            if response2.get('nombre_archivo', '').endswith('.csv'):
+                print("   ✅ Correct CSV file extension (.csv)")
+            else:
+                print(f"   ❌ Wrong CSV file extension: {response2.get('nombre_archivo')}")
+                csv_test_passed = False
+            
+            # Verify base64 encoding for CSV
+            archivo_base64 = response2.get('archivo_base64', '')
+            if archivo_base64 and len(archivo_base64) > 50:
+                print(f"   ✅ CSV Base64 encoding working - {len(archivo_base64)} characters")
+            else:
+                print("   ❌ CSV Base64 encoding appears to be empty or invalid")
+                csv_test_passed = False
+        
+        # Test with filter parameters
+        success3, response3 = self.run_test(
+            "FIXED Export with Filters - fecha_inicio, fecha_fin, responsable",
+            "GET",
+            "embudo-360/export",
+            200,
+            params={
+                "formato": "excel",
+                "fecha_inicio": "2024-01-01",
+                "fecha_fin": "2024-12-31",
+                "responsable": "test_user"
+            }
+        )
+        
+        filter_test_passed = True
+        
+        if success3:
+            filtros = response3.get('filtros_aplicados', {})
+            expected_filters = {
+                'fecha_inicio': '2024-01-01',
+                'fecha_fin': '2024-12-31',
+                'responsable': 'test_user'
+            }
+            
+            for key, expected_value in expected_filters.items():
+                if filtros.get(key) == expected_value:
+                    print(f"   ✅ Filter {key} applied correctly: {expected_value}")
+                else:
+                    print(f"   ❌ Filter {key} not applied correctly. Expected: {expected_value}, Got: {filtros.get(key)}")
+                    filter_test_passed = False
+        
+        # Test error handling - no data scenario
+        success4, response4 = self.run_test(
+            "FIXED Export Error Handling - No Data Scenario",
+            "GET",
+            "embudo-360/export",
+            404,  # Should return 404 when no data
+            params={
+                "formato": "excel",
+                "fecha_inicio": "2030-01-01",  # Future date with no data
+                "fecha_fin": "2030-01-02"
+            }
+        )
+        
+        error_handling_passed = True
+        
+        if success4:
+            # Should return 404 with meaningful message
+            if 'detail' in response4 and 'no hay datos' in response4['detail'].lower():
+                print("   ✅ Proper 404 error with meaningful message for no data")
+            else:
+                print(f"   ❌ Expected meaningful 404 error message, got: {response4}")
+                error_handling_passed = False
+        
+        # Test invalid parameters
+        success5, response5 = self.run_test(
+            "FIXED Export Error Handling - Invalid Parameters",
+            "GET",
+            "embudo-360/export",
+            200,  # Should handle gracefully
+            params={
+                "formato": "invalid_format",
+                "fecha_inicio": "invalid_date"
+            }
+        )
+        
+        # This should either work (defaulting to CSV) or return proper error
+        if success5:
+            print("   ✅ Invalid parameters handled gracefully")
+        else:
+            print("   ⚠️  Invalid parameters handling could be improved")
+        
+        overall_success = excel_test_passed and csv_test_passed and filter_test_passed and error_handling_passed
+        
+        if overall_success:
+            print("   🎉 CRITICAL BUG FIX VERIFIED - Embudo 360 Excel/CSV export working correctly!")
+            print("   ✅ archivo_base64 field contains valid Excel/CSV data")
+            print("   ✅ content_type is correctly set for both formats")
+            print("   ✅ File extensions are proper (.xlsx/.csv)")
+            print("   ✅ Response includes all required metadata fields")
+            print("   ✅ Filter parameters are working correctly")
+            print("   ✅ Error handling for no data scenarios working")
+        else:
+            print("   ❌ CRITICAL BUG FIX FAILED - Issues found in Embudo 360 export")
+        
+        return overall_success
+
+    def test_embudo_360_excel_file_structure(self):
+        """Test Excel file structure validation - Multiple sheets (Etapas, Conversiones)"""
+        print("\n🔍 Testing Embudo 360 Excel File Structure")
+        
+        success, response = self.run_test(
+            "Get Excel Export for Structure Validation",
+            "GET",
+            "embudo-360/export",
+            200,
+            params={"formato": "excel"}
+        )
+        
+        if success:
+            archivo_base64 = response.get('archivo_base64', '')
+            if archivo_base64:
+                try:
+                    import base64
+                    import pandas as pd
+                    from io import BytesIO
+                    
+                    # Decode base64 and create Excel file in memory
+                    decoded_data = base64.b64decode(archivo_base64)
+                    excel_buffer = BytesIO(decoded_data)
+                    
+                    # Try to read Excel file and check sheets
+                    excel_file = pd.ExcelFile(excel_buffer)
+                    sheet_names = excel_file.sheet_names
+                    
+                    print(f"   ✅ Excel file readable, found sheets: {sheet_names}")
+                    
+                    # Verify expected sheets exist
+                    expected_sheets = ['Etapas', 'Conversiones']
+                    sheets_valid = True
+                    
+                    for expected_sheet in expected_sheets:
+                        if expected_sheet in sheet_names:
+                            print(f"   ✅ Sheet '{expected_sheet}' found")
+                            
+                            # Try to read the sheet
+                            df = pd.read_excel(excel_buffer, sheet_name=expected_sheet)
+                            print(f"   ✅ Sheet '{expected_sheet}' has {len(df)} rows")
+                            
+                            # Validate column headers
+                            if expected_sheet == 'Etapas':
+                                expected_columns = ['Etapa', 'Cantidad', 'Tiempo_Promedio_Dias']
+                                for col in expected_columns:
+                                    if col in df.columns:
+                                        print(f"   ✅ Etapas sheet has column: {col}")
+                                    else:
+                                        print(f"   ❌ Etapas sheet missing column: {col}")
+                                        sheets_valid = False
+                            
+                            elif expected_sheet == 'Conversiones':
+                                expected_columns = ['Desde', 'Hacia', 'Tasa_Conversion_%']
+                                for col in expected_columns:
+                                    if col in df.columns:
+                                        print(f"   ✅ Conversiones sheet has column: {col}")
+                                    else:
+                                        print(f"   ❌ Conversiones sheet missing column: {col}")
+                                        sheets_valid = False
+                        else:
+                            print(f"   ❌ Expected sheet '{expected_sheet}' not found")
+                            sheets_valid = False
+                    
+                    if sheets_valid:
+                        print("   🎉 Excel file structure validation PASSED")
+                        print("   ✅ Multiple sheets (Etapas, Conversiones) confirmed")
+                        print("   ✅ Proper column headers and data formatting verified")
+                        return True
+                    else:
+                        print("   ❌ Excel file structure validation FAILED")
+                        return False
+                        
+                except Exception as e:
+                    print(f"   ❌ Excel file structure validation failed: {str(e)}")
+                    return False
+            else:
+                print("   ❌ No base64 data found for structure validation")
+                return False
+        else:
+            print("   ❌ Could not get Excel export for structure validation")
+            return False
+
+    def test_embudo_360_csv_structure(self):
+        """Test CSV format creates single combined data structure"""
+        print("\n🔍 Testing Embudo 360 CSV Structure")
+        
+        success, response = self.run_test(
+            "Get CSV Export for Structure Validation",
+            "GET",
+            "embudo-360/export",
+            200,
+            params={"formato": "csv"}
+        )
+        
+        if success:
+            archivo_base64 = response.get('archivo_base64', '')
+            if archivo_base64:
+                try:
+                    import base64
+                    import pandas as pd
+                    from io import BytesIO
+                    
+                    # Decode base64 and create CSV data
+                    decoded_data = base64.b64decode(archivo_base64)
+                    csv_buffer = BytesIO(decoded_data)
+                    
+                    # Read CSV file
+                    df = pd.read_csv(csv_buffer)
+                    
+                    print(f"   ✅ CSV file readable, {len(df)} rows found")
+                    print(f"   ✅ CSV columns: {list(df.columns)}")
+                    
+                    # Verify expected columns for combined data structure
+                    expected_columns = ['Tipo', 'Nombre', 'Cantidad', 'Tiempo_Promedio_Dias', 'Desde', 'Hacia', 'Tasa_Conversion_%']
+                    columns_valid = True
+                    
+                    for col in expected_columns:
+                        if col in df.columns:
+                            print(f"   ✅ CSV has column: {col}")
+                        else:
+                            print(f"   ❌ CSV missing column: {col}")
+                            columns_valid = False
+                    
+                    # Verify data types (Etapa and Conversión)
+                    if 'Tipo' in df.columns:
+                        tipos_found = df['Tipo'].unique()
+                        expected_tipos = ['Etapa', 'Conversión']
+                        
+                        for tipo in expected_tipos:
+                            if tipo in tipos_found:
+                                print(f"   ✅ CSV contains data type: {tipo}")
+                            else:
+                                print(f"   ❌ CSV missing data type: {tipo}")
+                                columns_valid = False
+                    
+                    if columns_valid:
+                        print("   🎉 CSV structure validation PASSED")
+                        print("   ✅ Single combined data structure confirmed")
+                        print("   ✅ Proper column headers and data formatting verified")
+                        return True
+                    else:
+                        print("   ❌ CSV structure validation FAILED")
+                        return False
+                        
+                except Exception as e:
+                    print(f"   ❌ CSV structure validation failed: {str(e)}")
+                    return False
+            else:
+                print("   ❌ No base64 data found for CSV structure validation")
+                return False
+        else:
+            print("   ❌ Could not get CSV export for structure validation")
+            return False
+
     def test_phase_2_2_excel_csv_export(self):
         """Test Phase 2.2 Excel/CSV Export System"""
         print("\n🔍 Testing Phase 2.2 - Excel/CSV Export System")
