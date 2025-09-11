@@ -116,6 +116,18 @@ user_problem_statement: |
   8. Performance optimizada para 100+ casos activos
 
 backend:
+  - task: "CRITICAL BUG INVESTIGATION - 422 Error Adding Stages"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "🚨 CRITICAL 422 ERROR ROOT CAUSE IDENTIFIED: The add stage endpoint has a validation issue with form data vs JSON data handling. ✅ WORKING SCENARIOS: Minimal form data with params (nombre_etapa, comentario), JSON endpoint (/etapas-json) with complex data, all stage names work correctly ❌ FAILING SCENARIOS: Form data with JSON body (422 'Field required' errors for query parameters), multipart form data with files=[] fails validation ❌ SPECIFIC ERROR: When sending JSON data to /etapas endpoint, FastAPI expects query parameters but receives JSON body, causing 'Field required' errors for 'nombre_etapa' and 'comentario' in query location ✅ BACKEND VALIDATION: All 7 stage names work, non-existent prospects return proper 404, incremental field addition works with params ❌ FRONTEND ISSUE: Frontend likely sending JSON data to /etapas endpoint instead of form parameters or using wrong endpoint. SOLUTION: Frontend should use /etapas-json endpoint for complex data or send form parameters to /etapas endpoint."
+
   - task: "Phase 2.2: Advanced Escalation System"
     implemented: true
     working: true
