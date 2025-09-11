@@ -165,6 +165,16 @@ function AppContent() {
   // Cargar prospectos al iniciar
   useEffect(() => {
     cargarProspectos();
+    
+    // Establecer función global para actualizar desde componentes hijos
+    window.globalUpdateProspectos = cargarProspectos;
+    
+    // Cleanup
+    return () => {
+      if (window.globalUpdateProspectos) {
+        delete window.globalUpdateProspectos;
+      }
+    };
   }, []);
 
   const cargarProspectos = async () => {
