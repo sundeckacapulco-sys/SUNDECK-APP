@@ -529,7 +529,66 @@ async def crear_recordatorios_automaticos(prospecto_id: str, etapa_nombre: str):
     except Exception as e:
         print(f"❌ Error creando recordatorios automáticos: {str(e)}")
 
-async def optimizar_recordatorios_inteligente():
+def determinar_nivel_prioridad(dias_vencido: int) -> NivelPrioridad:
+    """Determinar nivel de prioridad basado en días vencidos"""
+    if dias_vencido >= 7:
+        return NivelPrioridad.CRITICO
+    elif dias_vencido >= 3:
+        return NivelPrioridad.URGENTE
+    else:
+        return NivelPrioridad.NORMAL
+
+def determinar_accion_escalacion(nivel_prioridad: NivelPrioridad, dias_vencido: int) -> tuple[AccionEscalacion, str]:
+    """Determinar acción de escalación y supervisor asignado"""
+    if nivel_prioridad == NivelPrioridad.CRITICO:
+        return AccionEscalacion.ESCALADO_ADMIN_CEO, "admin_ceo"
+    elif nivel_prioridad == NivelPrioridad.URGENTE:
+        return AccionEscalacion.ESCALADO_COORDINADORA, "abigail"
+    else:
+        return AccionEscalacion.RECORDATORIO_URGENTE, "vendedor"
+
+async def enviar_notificacion_escalacion(escalacion: dict, recordatorio: dict, prospecto: dict = None):
+    """Enviar notificaciones de escalación (placeholder para futuras integraciones de email)"""
+    try:
+        # Obtener información del prospecto si no se proporcionó
+        if not prospecto:
+            prospecto = await db.prospectos.find_one({"id": recordatorio["prospecto_id"]})
+        
+        nivel = escalacion["nivel_prioridad"]
+        supervisor = escalacion["supervisor_asignado"]
+        dias_vencido = escalacion["dias_vencido"]
+        
+        # Construir mensaje de notificación
+        mensaje_base = f"""
+        🚨 ESCALACIÓN DE RECORDATORIO - NIVEL {nivel.upper()}
+        
+        Cliente: {prospecto.get('nombre', 'N/A') if prospecto else 'N/A'}
+        Acción: {recordatorio['tipo']}
+        Días vencido: {dias_vencido}
+        Fecha límite original: {recordatorio['fecha_limite']}
+        
+        Vendedor responsable: {recordatorio.get('usuario_asignado', 'No asignado')}
+        """
+        
+        # Determinar destinatarios según supervisor
+        if supervisor == "admin_ceo":
+            # Notificar a Admin y CEO
+            print(f"📧 NOTIFICACIÓN CRÍTICA enviada a Admin/CEO: {mensaje_base}")
+            # Aquí se integraría con sistema de email/notificaciones
+            
+        elif supervisor == "abigail":
+            # Notificar a Coordinadora Abigail
+            print(f"📧 NOTIFICACIÓN URGENTE enviada a Coordinadora Abigail: {mensaje_base}")
+            # Aquí se integraría con sistema de email/notificaciones
+            
+        # Log de la notificación
+        print(f"✅ Notificación de escalación procesada - Nivel: {nivel}, Supervisor: {supervisor}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error enviando notificación de escalación: {str(e)}")
+        return False
     """Optimizar recordatorios basado en patrones de comportamiento"""
     try:
         fecha_actual = datetime.now(timezone.utc)
