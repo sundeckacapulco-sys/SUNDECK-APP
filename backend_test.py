@@ -3031,6 +3031,552 @@ class ProspectosAPITester:
         
         return success
 
+    # PHASE 2.2 ADVANCED FEATURES TESTS
+    def test_phase_2_2_escalation_system(self):
+        """Test Phase 2.2 Advanced Escalation System"""
+        print("\n🔍 Testing Phase 2.2 - Advanced Escalation System")
+        
+        # First, create some test recordatorios that are overdue
+        test_recordatorios = []
+        
+        # Create test prospects for recordatorios
+        for i in range(3):
+            prospect_data = {
+                "nombre": f"Test Escalation Cliente {i+1}",
+                "telefono": f"+5690000000{i+1}",
+                "producto_solicitado": "Deck Escalation Test",
+                "fecha_cita": datetime.now(timezone.utc).isoformat()
+            }
+            
+            success, response = self.run_test(
+                f"Create Prospect for Escalation Test {i+1}",
+                "POST",
+                "prospectos",
+                200,
+                data=prospect_data
+            )
+            
+            if success and 'id' in response:
+                prospect_id = response['id']
+                
+                # Create overdue recordatorio manually in database
+                # This simulates recordatorios that are already overdue
+                overdue_date = (datetime.now(timezone.utc) - timedelta(days=(i+1)*2)).isoformat()
+                
+                recordatorio_data = {
+                    "prospecto_id": prospect_id,
+                    "tipo": "cotizacion_24h",
+                    "fecha_limite": overdue_date,
+                    "mensaje_sugerido": f"Test escalation message {i+1}",
+                    "etapa_relacionada": "Visita Inicial / Medición",
+                    "usuario_asignado": "vendedor_test"
+                }
+                
+                # Create recordatorio via API
+                success_rec, response_rec = self.run_test(
+                    f"Create Overdue Recordatorio {i+1}",
+                    "POST",
+                    "recordatorios",
+                    200,
+                    data=recordatorio_data
+                )
+                
+                if success_rec:
+                    test_recordatorios.append({
+                        'prospect_id': prospect_id,
+                        'recordatorio_id': response_rec.get('id'),
+                        'days_overdue': (i+1)*2
+                    })
+        
+        # Now test the escalation management endpoint
+        success, response = self.run_test(
+            "Test Escalation Management Endpoint",
+            "GET",
+            "recordatorios/vencidos/gestionar",
+            200
+        )
+        
+        escalation_success = True
+        
+        if success:
+            # Validate response structure
+            required_fields = ['recordatorios_vencidos', 'escalaciones_creadas', 'notificaciones_enviadas', 'por_nivel', 'acciones']
+            for field in required_fields:
+                if field not in response:
+                    print(f"❌ Missing field in escalation response: {field}")
+                    escalation_success = False
+                else:
+                    print(f"   ✅ Field present: {field}")
+            
+            if escalation_success:
+                # Validate priority levels
+                por_nivel = response.get('por_nivel', {})
+                priority_levels = ['normal', 'urgente', 'critico']
+                for level in priority_levels:
+                    if level not in por_nivel:
+                        print(f"   ❌ Missing priority level: {level}")
+                        escalation_success = False
+                    else:
+                        print(f"   ✅ Priority level {level}: {por_nivel[level]} escalations")
+                
+                # Validate escalation logic
+                escalaciones_creadas = response.get('escalaciones_creadas', 0)
+                if escalaciones_creadas > 0:
+                    print(f"   ✅ Created {escalaciones_creadas} escalations")
+                    
+                    # Check that different priority levels were assigned based on days overdue
+                    if por_nivel.get('normal', 0) > 0:
+                        print("   ✅ Normal priority escalations created (1-2 days overdue)")
+                    if por_nivel.get('urgente', 0) > 0:
+                        print("   ✅ Urgent priority escalations created (3-6 days overdue)")
+                    if por_nivel.get('critico', 0) > 0:
+                        print("   ✅ Critical priority escalations created (7+ days overdue)")
+                else:
+                    print("   ⚠️  No escalations created - may be expected if no overdue recordatorios exist")
+                
+                # Validate actions array
+                acciones = response.get('acciones', [])
+                expected_actions = ['recordatorio_urgente', 'escalado_coordinadora', 'escalado_admin_ceo']
+                for action in acciones:
+                    if action in expected_actions:
+                        print(f"   ✅ Valid escalation action: {action}")
+                    else:
+                        print(f"   ❌ Unexpected escalation action: {action}")
+        
+        # Clean up test data
+        for test_data in test_recordatorios:
+            self.run_test("Cleanup Escalation Test Prospect", "DELETE", f"prospectos/{test_data['prospect_id']}", 200)
+        
+        return success and escalation_success
+
+    def test_phase_2_2_advanced_metrics(self):
+        """Test Phase 2.2 Advanced Metrics and KPIs"""
+        print("\n🔍 Testing Phase 2.2 - Advanced Metrics and KPIs")
+        
+        # Test different time periods
+        periods = ["diario", "semanal", "mensual"]
+        metrics_success = True
+        
+        for periodo in periods:
+            success, response = self.run_test(
+                f"Get Advanced Metrics - {periodo}",
+                "GET",
+                "recordatorios/metricas/avanzadas",
+                200,
+                params={"periodo": periodo}
+            )
+            
+            if success:
+                # Validate main structure
+                required_fields = ['periodo', 'fecha_inicio', 'fecha_fin', 'metricas_generales', 'metricas_conversion', 'distribucion_estados', 'distribucion_tipos', 'metricas_usuarios', 'graficas']
+                for field in required_fields:
+                    if field not in response:
+                        print(f"   ❌ Missing field in {periodo} metrics: {field}")
+                        metrics_success = False
+                
+                if metrics_success:
+                    # Validate metricas_generales structure
+                    metricas_generales = response.get('metricas_generales', {})
+                    general_fields = ['total_recordatorios', 'completados_tiempo', 'completados_tarde', 'vencidos', 'reprogramados', 'escalados', 'tasa_cumplimiento', 'tiempo_promedio_resolucion']
+                    for field in general_fields:
+                        if field not in metricas_generales:
+                            print(f"   ❌ Missing general metric: {field}")
+                            metrics_success = False
+                    
+                    # Validate metricas_conversion structure
+                    metricas_conversion = response.get('metricas_conversion', {})
+                    conversion_fields = ['cotizacion_revisada', 'pedido_generado', 'instalacion_confirmada']
+                    for field in conversion_fields:
+                        if field not in metricas_conversion:
+                            print(f"   ❌ Missing conversion metric: {field}")
+                            metrics_success = False
+                        else:
+                            # Validate that conversion rates are percentages (0-100)
+                            rate = metricas_conversion[field]
+                            if not isinstance(rate, (int, float)) or rate < 0 or rate > 100:
+                                print(f"   ❌ Invalid conversion rate for {field}: {rate}")
+                                metrics_success = False
+                    
+                    # Validate distribucion_estados
+                    distribucion_estados = response.get('distribucion_estados', {})
+                    estado_fields = ['pendiente', 'completado', 'vencido', 'escalado', 'reprogramado']
+                    for field in estado_fields:
+                        if field not in distribucion_estados:
+                            print(f"   ❌ Missing estado distribution: {field}")
+                            metrics_success = False
+                        elif not isinstance(distribucion_estados[field], int):
+                            print(f"   ❌ Estado count should be integer: {field}")
+                            metrics_success = False
+                    
+                    # Validate graficas structure (chart-ready data)
+                    graficas = response.get('graficas', {})
+                    if 'estados_para_pastel' not in graficas or 'tipos_para_barras' not in graficas:
+                        print("   ❌ Missing chart data structures")
+                        metrics_success = False
+                    else:
+                        # Validate pie chart data
+                        estados_pastel = graficas['estados_para_pastel']
+                        if isinstance(estados_pastel, list) and len(estados_pastel) > 0:
+                            first_item = estados_pastel[0]
+                            if 'name' in first_item and 'value' in first_item and 'color' in first_item:
+                                print(f"   ✅ Chart data structure valid for {periodo}")
+                            else:
+                                print(f"   ❌ Invalid pie chart data structure for {periodo}")
+                                metrics_success = False
+                        
+                        # Validate bar chart data
+                        tipos_barras = graficas['tipos_para_barras']
+                        if isinstance(tipos_barras, list):
+                            print(f"   ✅ Bar chart data structure valid for {periodo}")
+                        else:
+                            print(f"   ❌ Invalid bar chart data structure for {periodo}")
+                            metrics_success = False
+                    
+                    if metrics_success:
+                        print(f"   ✅ {periodo.title()} metrics structure validated")
+                        print(f"   ✅ Total recordatorios: {metricas_generales.get('total_recordatorios', 0)}")
+                        print(f"   ✅ Tasa cumplimiento: {metricas_generales.get('tasa_cumplimiento', 0)}%")
+                        print(f"   ✅ Conversión cotización: {metricas_conversion.get('cotizacion_revisada', 0)}%")
+            else:
+                metrics_success = False
+        
+        # Test custom date range
+        fecha_inicio = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        fecha_fin = datetime.now(timezone.utc).isoformat()
+        
+        success, response = self.run_test(
+            "Get Advanced Metrics - Custom Date Range",
+            "GET",
+            "recordatorios/metricas/avanzadas",
+            200,
+            params={
+                "fecha_inicio": fecha_inicio,
+                "fecha_fin": fecha_fin
+            }
+        )
+        
+        if success:
+            if response.get('fecha_inicio') and response.get('fecha_fin'):
+                print("   ✅ Custom date range metrics working")
+            else:
+                print("   ❌ Custom date range not properly applied")
+                metrics_success = False
+        else:
+            metrics_success = False
+        
+        return metrics_success
+
+    def test_phase_2_2_excel_csv_export(self):
+        """Test Phase 2.2 Excel/CSV Export System"""
+        print("\n🔍 Testing Phase 2.2 - Excel/CSV Export System")
+        
+        export_success = True
+        
+        # Test Excel export
+        excel_request = {
+            "formato": "excel",
+            "fecha_inicio": (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(),
+            "fecha_fin": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Export Recordatorios - Excel Format",
+            "POST",
+            "recordatorios/exportar",
+            200,
+            json_data=excel_request
+        )
+        
+        if success:
+            # Validate Excel export response structure
+            required_fields = ['archivo_base64', 'nombre_archivo', 'content_type', 'total_registros', 'fecha_generacion', 'filtros_aplicados']
+            for field in required_fields:
+                if field not in response:
+                    print(f"   ❌ Missing field in Excel export: {field}")
+                    export_success = False
+                else:
+                    print(f"   ✅ Excel export field present: {field}")
+            
+            if export_success:
+                # Validate file properties
+                if response.get('content_type') == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                    print("   ✅ Correct Excel content type")
+                else:
+                    print(f"   ❌ Wrong Excel content type: {response.get('content_type')}")
+                    export_success = False
+                
+                if response.get('nombre_archivo', '').endswith('.xlsx'):
+                    print("   ✅ Correct Excel file extension")
+                else:
+                    print(f"   ❌ Wrong Excel file extension: {response.get('nombre_archivo')}")
+                    export_success = False
+                
+                # Validate base64 encoding
+                archivo_base64 = response.get('archivo_base64', '')
+                if archivo_base64 and len(archivo_base64) > 0:
+                    print(f"   ✅ Excel file encoded to base64 ({len(archivo_base64)} chars)")
+                    
+                    # Try to decode base64 to validate
+                    try:
+                        import base64
+                        decoded = base64.b64decode(archivo_base64)
+                        if len(decoded) > 0:
+                            print("   ✅ Base64 decoding successful")
+                        else:
+                            print("   ❌ Base64 decoded to empty content")
+                            export_success = False
+                    except Exception as e:
+                        print(f"   ❌ Base64 decoding failed: {str(e)}")
+                        export_success = False
+                else:
+                    print("   ❌ No base64 content in Excel export")
+                    export_success = False
+                
+                # Validate filtros_aplicados
+                filtros = response.get('filtros_aplicados', {})
+                if 'fecha_inicio' in filtros and 'fecha_fin' in filtros:
+                    print("   ✅ Date filters properly applied to Excel export")
+                else:
+                    print("   ❌ Date filters not properly applied to Excel export")
+                    export_success = False
+        else:
+            export_success = False
+        
+        # Test CSV export
+        csv_request = {
+            "formato": "csv",
+            "estado_filtro": "pendiente"
+        }
+        
+        success, response = self.run_test(
+            "Export Recordatorios - CSV Format",
+            "POST",
+            "recordatorios/exportar",
+            200,
+            json_data=csv_request
+        )
+        
+        if success:
+            # Validate CSV export response structure
+            if response.get('content_type') == 'text/csv':
+                print("   ✅ Correct CSV content type")
+            else:
+                print(f"   ❌ Wrong CSV content type: {response.get('content_type')}")
+                export_success = False
+            
+            if response.get('nombre_archivo', '').endswith('.csv'):
+                print("   ✅ Correct CSV file extension")
+            else:
+                print(f"   ❌ Wrong CSV file extension: {response.get('nombre_archivo')}")
+                export_success = False
+            
+            # Validate estado filter was applied
+            filtros = response.get('filtros_aplicados', {})
+            if filtros.get('estado') == 'pendiente':
+                print("   ✅ Estado filter properly applied to CSV export")
+            else:
+                print("   ❌ Estado filter not properly applied to CSV export")
+                export_success = False
+        else:
+            export_success = False
+        
+        # Test export with all filters
+        full_request = {
+            "formato": "excel",
+            "fecha_inicio": (datetime.now(timezone.utc) - timedelta(days=7)).isoformat(),
+            "fecha_fin": datetime.now(timezone.utc).isoformat(),
+            "estado_filtro": "completado",
+            "usuario_filtro": "vendedor_test"
+        }
+        
+        success, response = self.run_test(
+            "Export Recordatorios - All Filters",
+            "POST",
+            "recordatorios/exportar",
+            200,
+            json_data=full_request
+        )
+        
+        if success:
+            filtros = response.get('filtros_aplicados', {})
+            expected_filters = ['fecha_inicio', 'fecha_fin', 'estado', 'usuario']
+            filters_applied = 0
+            for filter_key in expected_filters:
+                if filtros.get(filter_key):
+                    filters_applied += 1
+            
+            if filters_applied >= 3:  # At least 3 of 4 filters should be applied
+                print(f"   ✅ Multiple filters applied successfully ({filters_applied}/4)")
+            else:
+                print(f"   ❌ Not enough filters applied ({filters_applied}/4)")
+                export_success = False
+        else:
+            export_success = False
+        
+        # Test export with no data (should return 404)
+        empty_request = {
+            "formato": "excel",
+            "fecha_inicio": "2020-01-01T00:00:00Z",
+            "fecha_fin": "2020-01-02T00:00:00Z"
+        }
+        
+        success, response = self.run_test(
+            "Export Recordatorios - No Data (Should Fail)",
+            "POST",
+            "recordatorios/exportar",
+            404,
+            json_data=empty_request
+        )
+        
+        if success:
+            print("   ✅ Empty export correctly returns 404")
+        else:
+            print("   ❌ Empty export should return 404")
+            export_success = False
+        
+        return export_success
+
+    def test_phase_2_2_integration(self):
+        """Test Phase 2.2 Integration with existing Phase 2.1 functionality"""
+        print("\n🔍 Testing Phase 2.2 - Integration with Phase 2.1")
+        
+        integration_success = True
+        
+        # Test that Phase 2.1 rescheduling still works
+        # First create a test recordatorio
+        prospect_data = {
+            "nombre": "Test Integration Cliente",
+            "telefono": "+56900000099",
+            "producto_solicitado": "Deck Integration Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Integration Test",
+            "POST",
+            "prospectos",
+            200,
+            data=prospect_data
+        )
+        
+        if not success:
+            return False
+        
+        prospect_id = response.get('id')
+        
+        # Create recordatorio
+        recordatorio_data = {
+            "prospecto_id": prospect_id,
+            "tipo": "cotizacion_24h",
+            "fecha_limite": datetime.now(timezone.utc).isoformat(),
+            "mensaje_sugerido": "Test integration message",
+            "etapa_relacionada": "Visita Inicial / Medición"
+        }
+        
+        success, response = self.run_test(
+            "Create Recordatorio for Integration Test",
+            "POST",
+            "recordatorios",
+            200,
+            data=recordatorio_data
+        )
+        
+        if not success:
+            self.run_test("Cleanup Integration Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            return False
+        
+        recordatorio_id = response.get('id')
+        
+        # Test Phase 2.1 rescheduling functionality
+        reschedule_data = {
+            "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
+            "motivo": "cliente_no_disponible",
+            "notas": "Integration test rescheduling"
+        }
+        
+        success, response = self.run_test(
+            "Test Phase 2.1 Rescheduling Still Works",
+            "POST",
+            f"recordatorios/{recordatorio_id}/reprogramar",
+            200,
+            json_data=reschedule_data
+        )
+        
+        if success:
+            # Validate rescheduling response
+            if 'message' in response and 'nueva_fecha' in response:
+                print("   ✅ Phase 2.1 rescheduling functionality intact")
+            else:
+                print("   ❌ Phase 2.1 rescheduling response structure changed")
+                integration_success = False
+        else:
+            print("   ❌ Phase 2.1 rescheduling functionality broken")
+            integration_success = False
+        
+        # Test that business day logic still works
+        weekend_date = datetime.now(timezone.utc)
+        # Find next Saturday
+        days_ahead = 5 - weekend_date.weekday()  # Saturday is 5
+        if days_ahead <= 0:
+            days_ahead += 7
+        weekend_date = weekend_date + timedelta(days=days_ahead)
+        
+        weekend_reschedule = {
+            "nueva_fecha": weekend_date.isoformat(),
+            "motivo": "falta_informacion",
+            "notas": "Testing weekend adjustment"
+        }
+        
+        success, response = self.run_test(
+            "Test Business Day Logic Still Works",
+            "POST",
+            f"recordatorios/{recordatorio_id}/reprogramar",
+            200,
+            json_data=weekend_reschedule
+        )
+        
+        if success:
+            if response.get('fecha_ajustada'):
+                print("   ✅ Business day adjustment logic still working")
+            else:
+                print("   ✅ Business day logic processed (no adjustment needed)")
+        else:
+            print("   ❌ Business day logic broken")
+            integration_success = False
+        
+        # Test that existing recordatorio endpoints still work
+        success, response = self.run_test(
+            "Test Basic Recordatorios Endpoint Still Works",
+            "GET",
+            "recordatorios",
+            200
+        )
+        
+        if success:
+            print("   ✅ Basic recordatorios endpoint still functional")
+        else:
+            print("   ❌ Basic recordatorios endpoint broken")
+            integration_success = False
+        
+        # Test dashboard endpoint still works
+        success, response = self.run_test(
+            "Test Recordatorios Dashboard Still Works",
+            "GET",
+            "recordatorios/dashboard",
+            200
+        )
+        
+        if success:
+            print("   ✅ Recordatorios dashboard endpoint still functional")
+        else:
+            print("   ❌ Recordatorios dashboard endpoint broken")
+            integration_success = False
+        
+        # Clean up
+        self.run_test("Cleanup Integration Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        return integration_success
+
 def main():
     print("🚀 Starting Prospectos Sundeck API Tests - PHASE 2.1 TESTING")
     print("=" * 70)
