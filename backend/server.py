@@ -2181,57 +2181,87 @@ async def reprogramar_recordatorio(
 
 @api_router.get("/recordatorios/vencidos/gestionar")
 async def gestionar_recordatorios_vencidos():
-    """Identificar y gestionar recordatorios vencidos automáticamente"""
+    """Sistema de escalación automática mejorado con lógica de prioridades"""
     try:
         fecha_actual = datetime.now(timezone.utc)
         
-        # Encontrar recordatorios vencidos
+        # Encontrar recordatorios vencidos que no han sido escalados
         recordatorios_vencidos = await db.recordatorios.find({
             "estado": EstadoRecordatorio.PENDIENTE,
-            "fecha_limite": {"$lt": fecha_actual.isoformat()}
+            "fecha_limite": {"$lt": fecha_actual.isoformat()},
+            "escalado_at": {"$exists": False}  # Solo los que no han sido escalados
         }).to_list(length=None)
         
         escalaciones_creadas = []
+        notificaciones_enviadas = 0
         
         for recordatorio in recordatorios_vencidos:
-            fecha_limite = datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else recordatorio["fecha_limite"]
-            dias_vencido = (fecha_actual - fecha_limite).days
-            
-            # Crear escalación basada en días vencidos
-            accion = "recordatorio_urgente"
-            if dias_vencido >= 7:
-                accion = "escalado_supervisor"
-            elif dias_vencido >= 3:
-                accion = "cambio_responsable"
-            
-            escalacion = {
-                "id": str(uuid.uuid4()),
-                "recordatorio_id": recordatorio["id"],
-                "dias_vencido": dias_vencido,
-                "accion_tomada": accion,
-                "fecha_escalacion": fecha_actual.isoformat(),
-                "resuelto": False
-            }
-            
-            await db.escalaciones.insert_one(escalacion)
-            escalaciones_creadas.append(escalacion)
-            
-            # Marcar recordatorio como escalado
-            await db.recordatorios.update_one(
-                {"id": recordatorio["id"]},
-                {
-                    "$set": {
-                        "estado": "escalado",
-                        "escalado_at": fecha_actual.isoformat()
-                    }
+            try:
+                fecha_limite = datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else recordatorio["fecha_limite"]
+                dias_vencido = (fecha_actual - fecha_limite).days
+                
+                # Determinar nivel de prioridad y acción
+                nivel_prioridad = determinar_nivel_prioridad(dias_vencido)
+                accion, supervisor = determinar_accion_escalacion(nivel_prioridad, dias_vencido)
+                
+                # Crear escalación
+                escalacion = {
+                    "id": str(uuid.uuid4()),
+                    "recordatorio_id": recordatorio["id"],
+                    "dias_vencido": dias_vencido,
+                    "nivel_prioridad": nivel_prioridad,
+                    "accion_tomada": accion,
+                    "supervisor_asignado": supervisor,
+                    "notificaciones_enviadas": [],
+                    "fecha_escalacion": fecha_actual.isoformat(),
+                    "resuelto": False,
+                    "notas_escalacion": f"Escalación automática - {dias_vencido} días vencido"
                 }
-            )
+                
+                # Guardar escalación
+                await db.escalaciones.insert_one(escalacion)
+                escalaciones_creadas.append(escalacion)
+                
+                # Enviar notificación
+                if await enviar_notificacion_escalacion(escalacion, recordatorio):
+                    notificaciones_enviadas += 1
+                    escalacion["notificaciones_enviadas"].append(supervisor)
+                
+                # Marcar recordatorio como escalado (pero mantiene estado PENDIENTE para el vendedor)
+                await db.recordatorios.update_one(
+                    {"id": recordatorio["id"]},
+                    {
+                        "$set": {
+                            "escalado_at": fecha_actual.isoformat(),
+                            "nivel_escalacion": nivel_prioridad,
+                            "supervisor_notificado": supervisor
+                        }
+                    }
+                )
+                
+                print(f"✅ Escalación creada: ID {recordatorio['id']}, Nivel: {nivel_prioridad}, Días: {dias_vencido}")
+                
+            except Exception as e:
+                print(f"❌ Error procesando recordatorio {recordatorio.get('id', 'unknown')}: {str(e)}")
+                continue
         
-        return {
+        # Estadísticas de la escalación
+        stats = {
             "recordatorios_vencidos": len(recordatorios_vencidos),
             "escalaciones_creadas": len(escalaciones_creadas),
+            "notificaciones_enviadas": notificaciones_enviadas,
+            "por_nivel": {
+                "normal": len([e for e in escalaciones_creadas if e["nivel_prioridad"] == NivelPrioridad.NORMAL]),
+                "urgente": len([e for e in escalaciones_creadas if e["nivel_prioridad"] == NivelPrioridad.URGENTE]),
+                "critico": len([e for e in escalaciones_creadas if e["nivel_prioridad"] == NivelPrioridad.CRITICO])
+            },
             "acciones": [e["accion_tomada"] for e in escalaciones_creadas]
         }
+        
+        return stats
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error managing overdue recordatorios: {str(e)}")
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error managing overdue recordatorios: {str(e)}")
