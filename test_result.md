@@ -650,6 +650,18 @@ frontend:
         agent: "testing"
         comment: "✅ INTEGRATION FEATURES FULLY TESTED: All integration aspects working perfectly. ✅ BUSINESS DAY VALIDATION: Weekend dates automatically adjusted to business days with proper fecha_ajustada flag ✅ REMINDER RECALCULATION: recalcular_recordatorios_por_cita function integration working when appointments are rescheduled ✅ MOTIVO VALIDATION: All valid motivos accepted (cliente_pidio, instalador_retrasado, clima_adverso, emergencia_cliente, problema_tecnico, otro), invalid motivos properly rejected with 422 error ✅ STAGE INTEGRATION: Adding stages triggers automatic reminder creation as expected ✅ DATABASE CONSISTENCY: All operations maintain data integrity across prospectos, reagendamientos, and comentarios_supervision collections ✅ ERROR HANDLING: Comprehensive validation and error responses for all edge cases. Integration features system fully operational."
 
+  - task: "CRITICAL BUG INVESTIGATION - Appointment Rescheduling Error"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 CRITICAL BUG INVESTIGATION COMPLETED - NO ISSUES FOUND: Comprehensive testing of POST /api/prospectos/{prospecto_id}/reagendar-cita endpoint shows ALL FUNCTIONALITY WORKING CORRECTLY. ✅ COMPREHENSIVE VALIDATION PASSED (8/8 tests): Valid rescheduling with all required response fields ✅ Non-existent prospect handling (404) ✅ Invalid date format validation (422) ✅ Missing required fields validation (422) ✅ Invalid motivo validation (422) ✅ Business day validation and weekend adjustment ✅ All valid motivos accepted (cliente_pidio, instalador_retrasado, clima_adverso, emergencia_cliente, problema_tecnico, otro) ✅ Function dependencies verified ✅ DATABASE INTEGRATION: Reagendamiento records created successfully with proper IDs ✅ BUSINESS DAY LOGIC: Weekend dates automatically adjusted to business days ✅ ERROR HANDLING: Proper HTTP status codes and validation messages ✅ MODEL VALIDATION: ReagendarCitaRequest model working correctly ✅ REMINDER RECALCULATION: Integration with recalcular_recordatorios_por_cita function operational. CONCLUSION: The rescheduling endpoint is functioning perfectly - no critical bugs found. All required functions (obtener_siguiente_dia_habil, recalcular_recordatorios_por_cita) are properly defined and working. If user is experiencing issues, they may be frontend-related or due to specific data conditions not covered in testing."
+
 
 agent_communication:
   - agent: "main"
