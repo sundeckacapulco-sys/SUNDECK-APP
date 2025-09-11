@@ -529,6 +529,18 @@ backend:
       - working: true
         agent: "main"
         comment: "✅ Phase 2.2 export system complete: POST /recordatorios/exportar endpoint with ExportacionRequest model, pandas/openpyxl integration, comprehensive data enrichment with prospect information, filtering by date/state/user, Excel with column auto-sizing and CSV with UTF-8-BOM, base64 encoding for downloads, translateable action descriptions, overdue days calculation. Mesa de Control export ready."
+
+  - task: "CRITICAL BUG FIX: Embudo 360 Excel Export Functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "🎉 CRITICAL BUG FIX VERIFIED - Embudo 360 Excel/CSV export working correctly! ✅ COMPREHENSIVE TESTING COMPLETED: GET /api/embudo-360/export endpoint fully functional with formato='excel' and formato='csv' parameters ✅ RESPONSE STRUCTURE VALIDATED: All required fields present (archivo_base64, nombre_archivo, content_type, total_registros, fecha_generacion, filtros_aplicados) ✅ BASE64 ENCODING WORKING: Valid Excel/CSV data properly encoded (7892 chars Excel, 948 chars CSV) ✅ CONTENT TYPES CORRECT: Excel='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', CSV='text/csv' ✅ FILE EXTENSIONS PROPER: .xlsx for Excel, .csv for CSV ✅ EXCEL FILE STRUCTURE: Multiple sheets confirmed (Etapas, Conversiones) with proper column headers ✅ CSV STRUCTURE: Single combined data structure with all required columns ✅ FILTER PARAMETERS WORKING: fecha_inicio, fecha_fin, responsable filters applied correctly ✅ ERROR HANDLING: Invalid parameters handled gracefully ✅ JSON FILE DOWNLOAD ISSUE RESOLVED: archivo_base64 field contains valid data, not JSON. Export functionality fully operational for Embudo 360 system."
 frontend:
   - task: "Fix Embudo 360 frontend API calls"
     implemented: true
