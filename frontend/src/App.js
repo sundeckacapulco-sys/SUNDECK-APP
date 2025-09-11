@@ -3072,8 +3072,22 @@ const ReagendarCitaModal = ({ prospecto, onClose, onUpdate }) => {
       return;
     }
 
+    // Validar que el prospecto tenga fecha_cita
+    if (!prospecto.fecha_cita) {
+      alert('⚠️ Este prospecto no tiene fecha de cita asignada. No se puede reagendar.');
+      return;
+    }
+
     try {
       setLoading(true);
+      
+      console.log('🔄 Reagendando cita:', {
+        prospecto_id: prospecto.id,
+        nueva_fecha: nuevaFecha,
+        motivo: motivo,
+        comentarios: comentarios,
+        api_url: `${API}/api/prospectos/${prospecto.id}/reagendar-cita`
+      });
       
       const response = await axios.post(`${API}/api/prospectos/${prospecto.id}/reagendar-cita`, {
         nueva_fecha: nuevaFecha,
@@ -3081,6 +3095,8 @@ const ReagendarCitaModal = ({ prospecto, onClose, onUpdate }) => {
         comentarios: comentarios,
         usuario_reagendo: 'Usuario Actual' // En producción: obtener del contexto
       });
+
+      console.log('✅ Respuesta del servidor:', response.data);
 
       if (response.data.fecha_ajustada) {
         alert(`✅ Cita reagendada exitosamente\n📅 Fecha ajustada a día hábil: ${new Date(response.data.fecha_nueva).toLocaleString('es-ES')}`);
@@ -3091,8 +3107,30 @@ const ReagendarCitaModal = ({ prospecto, onClose, onUpdate }) => {
       onUpdate();
       onClose();
     } catch (error) {
-      console.error('Error reagendando cita:', error);
-      alert('❌ Error al reagendar cita: ' + (error.response?.data?.detail || error.message));
+      console.error('❌ Error completo reagendando cita:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error request:', error.request);
+      console.error('❌ Error config:', error.config);
+      
+      let errorMessage = '❌ Error al reagendar cita: ';
+      
+      if (error.response) {
+        // Error de respuesta del servidor
+        errorMessage += `\nCódigo: ${error.response.status}`;
+        if (error.response.data && error.response.data.detail) {
+          errorMessage += `\nDetalle: ${error.response.data.detail}`;
+        } else {
+          errorMessage += `\nRespuesta: ${JSON.stringify(error.response.data)}`;
+        }
+      } else if (error.request) {
+        // Error de red/conectividad
+        errorMessage += '\nNo se pudo conectar con el servidor. Verifique su conexión.';
+      } else {
+        // Otro error
+        errorMessage += error.message;
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
