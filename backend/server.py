@@ -2981,6 +2981,11 @@ def calcular_dias_vencido(fecha_limite: str) -> int:
 # ENDPOINTS OPTIMIZACIONES DETALLE PROSPECTO
 # ============================================
 
+@api_router.get("/test-router-working")
+async def test_router_working():
+    """Test endpoint to verify router is working"""
+    return {"message": "Router is working correctly", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 @api_router.post("/prospectos/{prospecto_id}/reagendar-cita")
 async def reagendar_cita_prospecto(
     prospecto_id: str,
