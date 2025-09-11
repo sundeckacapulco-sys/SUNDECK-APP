@@ -688,6 +688,8 @@ frontend:
 
 
 agent_communication:
+  - agent: "testing"
+    message: "🚨 CRITICAL 422 ERROR INVESTIGATION COMPLETED - ROOT CAUSE IDENTIFIED: The add stage endpoint has two different validation patterns: 1) /etapas endpoint expects form parameters (works with params) 2) /etapas-json endpoint expects JSON body (works with JSON). The 422 errors occur when frontend sends JSON data to /etapas endpoint - FastAPI expects query parameters but receives JSON body, causing validation errors. SOLUTION: Frontend must use /etapas-json endpoint for complex data OR send form parameters to /etapas endpoint. Backend validation is working correctly - all stage names work, proper 404 handling, incremental field addition works. Issue is frontend using wrong endpoint/data format combination."
   - agent: "main"
     message: "🎯 OPTIMIZACIONES DETALLE DE PROSPECTO COMPLETADAS - Sistema completo de gestión avanzada de citas y supervisión: ✅ REAGENDAMIENTO CITAS: Modal con selector fecha/hora, dropdown motivos (6 opciones), validación días hábiles, recálculo automático recordatorios, integración perfecta en modal prospecto. ✅ COMENTARIOS SUPERVISIÓN: Timeline comentarios con tipos (puntualidad/calidad/general/cliente), atribución usuario, timestamps, UI color-coded, formulario integrado en detalle prospecto. ✅ REPORTES DIARIOS: Endpoint supervision-diario con filtros fecha, Excel/CSV export, campos completos (cliente, fechas original/reprogramada, motivos, comentarios), componente ReporteSupervision con filtros rápidos, integración Mesa de Control. Sistema operativo listo para supervisión empresarial avanzada."
   - agent: "main"
