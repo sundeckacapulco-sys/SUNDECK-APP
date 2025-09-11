@@ -3095,7 +3095,7 @@ const ReagendarCitaModal = ({ prospecto, onClose, onUpdate }) => {
         nueva_fecha: nuevaFecha,
         motivo: motivo,
         comentarios: comentarios,
-        api_url: `${API}/api/prospectos/${prospecto.id}/reagendar-cita`
+        api_url: `${API}/prospectos/${prospecto.id}/reagendar-cita`
       });
       
       const response = await axios.post(`${API}/prospectos/${prospecto.id}/reagendar-cita`, {
