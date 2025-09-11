@@ -2334,6 +2334,12 @@ async def obtener_metricas_avanzadas(
                 fecha_limite = datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else recordatorio["fecha_limite"]
                 fecha_completado = datetime.fromisoformat(recordatorio["fecha_completado"]) if isinstance(recordatorio["fecha_completado"], str) else recordatorio["fecha_completado"]
                 
+                # Ensure both dates have timezone info for comparison
+                if fecha_limite.tzinfo is None:
+                    fecha_limite = fecha_limite.replace(tzinfo=timezone.utc)
+                if fecha_completado.tzinfo is None:
+                    fecha_completado = fecha_completado.replace(tzinfo=timezone.utc)
+                
                 if fecha_completado <= fecha_limite:
                     completados_tiempo += 1
                 else:
