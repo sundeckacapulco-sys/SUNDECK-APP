@@ -2290,8 +2290,17 @@ async def obtener_metricas_avanzadas(
                 siguiente_mes = fecha_inicio.replace(month=fecha_inicio.month + 1) if fecha_inicio.month < 12 else fecha_inicio.replace(year=fecha_inicio.year + 1, month=1)
                 fecha_fin = siguiente_mes
         else:
-            fecha_inicio = datetime.fromisoformat(fecha_inicio)
-            fecha_fin = datetime.fromisoformat(fecha_fin)
+            # Asegurar que las fechas personalizadas sean timezone-aware
+            if isinstance(fecha_inicio, str):
+                fecha_inicio = datetime.fromisoformat(fecha_inicio)
+            if isinstance(fecha_fin, str):
+                fecha_fin = datetime.fromisoformat(fecha_fin)
+            
+            # Si no tienen timezone, agregar UTC
+            if fecha_inicio.tzinfo is None:
+                fecha_inicio = fecha_inicio.replace(tzinfo=timezone.utc)
+            if fecha_fin.tzinfo is None:
+                fecha_fin = fecha_fin.replace(tzinfo=timezone.utc)
         
         # Consultar recordatorios en el período
         recordatorios = await db.recordatorios.find({
