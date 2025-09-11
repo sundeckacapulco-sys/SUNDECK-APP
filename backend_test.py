@@ -3737,7 +3737,8 @@ def main():
     print("   ✅ Measurement data export")
     
     if tester.tests_passed == tester.tests_run:
-        print("\n🎉 All tests passed! Phase 2.1 Smart Business Days & Reminder Rescheduling system working correctly.")
+        print("\n🎉 All tests passed! Phase 2.2 Advanced Features system working correctly.")
+        print("🎉 Phase 2.1 Smart Business Days & Reminder Rescheduling system still functional.")
         return 0
     else:
         print(f"\n⚠️  {tester.tests_run - tester.tests_passed} tests failed - see details above")
