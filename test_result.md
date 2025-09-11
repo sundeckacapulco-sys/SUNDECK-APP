@@ -130,15 +130,18 @@ backend:
 
   - task: "Phase 2.2: Advanced Metrics and KPIs"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ PHASE 2.2 ADVANCED METRICS PARTIAL FAILURE: GET /api/recordatorios/metricas/avanzadas endpoint has timezone issues. ✅ 'diario' period works perfectly with complete structure validation ✅ All required fields present: metricas_generales, metricas_conversion, distribucion_estados, graficas ✅ Chart-ready data structures working (estados_para_pastel, tipos_para_barras) ✅ Conversion metrics structure correct: cotizacion_revisada, pedido_generado, instalacion_confirmada ❌ CRITICAL ISSUE: 'semanal' and 'mensual' periods fail with timezone error: 'can't compare offset-naive and offset-aware datetimes' ❌ Custom date range also failing with same timezone issue. NEEDS FIX: Timezone handling in date calculations for weekly/monthly periods."
+      - working: true
+        agent: "testing"
+        comment: "✅ PHASE 2.2 ADVANCED METRICS TIMEZONE FIX COMPLETE: GET /api/recordatorios/metricas/avanzadas endpoint now working perfectly for all periods. ✅ TIMEZONE FIX VERIFIED: All periods (diario, semanal, mensual) working correctly without 'can't compare offset-naive and offset-aware datetimes' errors ✅ Custom date ranges working correctly with proper timezone handling ✅ Date strings without timezone handled correctly (auto-converted to UTC) ✅ Response structure remains correct after fix ✅ Chart-ready data structures working (estados_para_pastel, tipos_para_barras) ✅ Conversion metrics structure validated: cotizacion_revisada, pedido_generado, instalacion_confirmada ✅ All required fields present: periodo, fecha_inicio, fecha_fin, metricas_generales, metricas_conversion, distribucion_estados, graficas ✅ Weekly period: 104 recordatorios processed correctly ✅ Monthly period: 104 recordatorios processed correctly. TIMEZONE ISSUE COMPLETELY RESOLVED - Advanced metrics system fully operational."
 
   - task: "Phase 2.2: Excel/CSV Export System"
     implemented: true
