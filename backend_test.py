@@ -5899,10 +5899,40 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    # Check if we should run only the critical investigation
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "fecha_cita":
-        tester = ProspectosAPITester()
-        tester.run_critical_fecha_cita_investigation()
+    tester = ProspectosAPITester()
+    
+    # CRITICAL: Run the 404 investigation first
+    print("🚨 RUNNING CRITICAL 404 ERROR INVESTIGATION FIRST")
+    critical_success = tester.test_critical_404_investigation()
+    
+    if not critical_success:
+        print("\n❌ CRITICAL 404 INVESTIGATION FAILED - This is the main issue!")
+        print("   The user's problem is confirmed - prospect ID does not exist or endpoint is broken")
     else:
-        sys.exit(main())
+        print("\n✅ CRITICAL 404 INVESTIGATION PASSED - No issues found with the specific prospect")
+    
+    # Run a few other key tests if time permits
+    print("\n📊 Running additional backend tests...")
+    
+    # Test basic functionality
+    tester.test_health_check()
+    tester.test_get_all_prospects()
+    
+    # Test rescheduling system in general
+    try:
+        tester.test_prospect_appointment_rescheduling()
+    except:
+        print("❌ General rescheduling test failed")
+    
+    print(f"\n📈 Test Results Summary:")
+    print(f"   Tests Run: {tester.tests_run}")
+    print(f"   Tests Passed: {tester.tests_passed}")
+    print(f"   Tests Failed: {tester.tests_run - tester.tests_passed}")
+    print(f"   Success Rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
+    
+    if critical_success:
+        print("\n🎉 CRITICAL INVESTIGATION PASSED - No 404 issues found!")
+        sys.exit(0)
+    else:
+        print(f"\n❌ CRITICAL INVESTIGATION FAILED - 404 issue confirmed!")
+        sys.exit(1)
