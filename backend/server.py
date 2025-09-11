@@ -3125,10 +3125,16 @@ async def obtener_comentarios_supervision(prospecto_id: str):
             "prospecto_id": prospecto_id
         }).sort("fecha_comentario", -1).to_list(length=None)
         
+        # Limpiar ObjectIds de los comentarios
+        comentarios_limpios = []
+        for comentario in comentarios:
+            comentario_limpio = {k: v for k, v in comentario.items() if k != "_id"}
+            comentarios_limpios.append(comentario_limpio)
+        
         return {
             "prospecto_id": prospecto_id,
-            "total_comentarios": len(comentarios),
-            "comentarios": comentarios
+            "total_comentarios": len(comentarios_limpios),
+            "comentarios": comentarios_limpios
         }
         
     except HTTPException:
