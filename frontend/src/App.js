@@ -1904,6 +1904,17 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
             onUpdate={onUpdate}
           />
         )}
+
+        {showReagendarModal && (
+          <ReagendarCitaModal
+            prospecto={prospecto}
+            onClose={() => setShowReagendarModal(false)}
+            onUpdate={(updatedProspecto) => {
+              onUpdate();
+              cargarReagendamientos();
+            }}
+          />
+        )}
       </div>
     </div>
   );
