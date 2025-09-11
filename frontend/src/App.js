@@ -3164,8 +3164,22 @@ const ReagendarCitaModal = ({ prospecto, onClose, onUpdate }) => {
               fontSize: '0.95rem',
               margin: '0 0 1rem 0'
             }}>
-              <strong>{prospecto.nombre}</strong> - Fecha actual: {new Date(prospecto.fecha_cita).toLocaleString('es-ES')}
+              <strong>{prospecto.nombre}</strong> - Fecha actual: {prospecto.fecha_cita ? new Date(prospecto.fecha_cita).toLocaleString('es-ES') : 'Sin fecha asignada'}
             </p>
+            
+            {/* Debug info (solo visible en desarrollo) */}
+            {process.env.NODE_ENV === 'development' && (
+              <div style={{
+                background: '#f3f4f6',
+                padding: '0.75rem',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                color: '#6b7280',
+                marginBottom: '1rem'
+              }}>
+                <strong>Debug:</strong> ID: {prospecto.id}, fecha_cita: {prospecto.fecha_cita || 'undefined'}
+              </div>
+            )}
           </div>
 
           {/* Nueva Fecha y Hora */}
