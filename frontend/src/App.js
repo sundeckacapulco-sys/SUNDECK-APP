@@ -192,12 +192,18 @@ function AppContent() {
         return <RegistroProspecto onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
       case 'citas':
         return <CitasHoy onNavigate={setCurrentView} />;
+      case 'tareas':
+        return <TareasPendientes onNavigate={setCurrentView} onNavigateToProspecto={navegarAProspecto} />;
+      case 'metricas':
+        return <DashboardMetricas onNavigate={setCurrentView} />;
+      case 'escalaciones':
+        return <GestionEscalaciones onNavigate={setCurrentView} />;
+      case 'exportar':
+        return <ExportacionDatos onNavigate={setCurrentView} />;
       case 'sundeck360':
         return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} selectedProspecto={prospectoSelected} onClearSelection={() => setProspectoSelected(null)} />;
       case 'embudo360':
         return <Embudo360 onNavigate={setCurrentView} />;
-      case 'tareas':
-        return <TareasPendientes onNavigate={setCurrentView} onNavigateToProspecto={navegarAProspecto} />;
       default:
         return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} />;
     }
