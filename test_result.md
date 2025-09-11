@@ -431,11 +431,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Phase 2.2: Automatic overdue management with escalation"
-    - "Phase 2.2: Advanced metrics and Excel export"
-  stuck_tasks: []
+    - "Phase 2.2: Advanced Metrics timezone fix needed"
+  stuck_tasks:
+    - "Phase 2.2: Advanced Metrics and KPIs"
   test_all: false
-  test_priority: "phase_2_2_features"
+  test_priority: "phase_2_2_metrics_fix"
 
 backend:
   - task: "Fix Embudo 360 API endpoint URL issue"
