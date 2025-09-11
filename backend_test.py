@@ -3149,6 +3149,154 @@ class ProspectosAPITester:
         
         return success and escalation_success
 
+    def test_phase_22_advanced_metrics_timezone_fix(self):
+        """Test Phase 2.2 Advanced Metrics timezone fix specifically"""
+        print("\n🔍 Testing Phase 2.2 Advanced Metrics - TIMEZONE FIX")
+        
+        # Test 1: Daily period (should work)
+        success1, response1 = self.run_test(
+            "Advanced Metrics - Daily Period",
+            "GET",
+            "recordatorios/metricas/avanzadas",
+            200,
+            params={"periodo": "diario"}
+        )
+        
+        if success1:
+            # Validate response structure
+            required_fields = ['periodo', 'fecha_inicio', 'fecha_fin', 'metricas_generales', 'metricas_conversion', 'distribucion_estados', 'graficas']
+            for field in required_fields:
+                if field not in response1:
+                    print(f"   ❌ Missing field in daily response: {field}")
+                    success1 = False
+                else:
+                    print(f"   ✅ Daily response field present: {field}")
+            
+            if success1:
+                print("   ✅ Daily period working correctly")
+        
+        # Test 2: Weekly period (previously failed with timezone error)
+        success2, response2 = self.run_test(
+            "Advanced Metrics - Weekly Period (TIMEZONE FIX TEST)",
+            "GET",
+            "recordatorios/metricas/avanzadas",
+            200,
+            params={"periodo": "semanal"}
+        )
+        
+        if success2:
+            # Validate response structure
+            for field in required_fields:
+                if field not in response2:
+                    print(f"   ❌ Missing field in weekly response: {field}")
+                    success2 = False
+            
+            if success2:
+                print("   ✅ Weekly period TIMEZONE FIX WORKING!")
+                # Validate chart-ready data structures
+                graficas = response2.get('graficas', {})
+                if 'estados_para_pastel' in graficas and 'tipos_para_barras' in graficas:
+                    print("   ✅ Chart-ready data structures present")
+                else:
+                    print("   ❌ Chart-ready data structures missing")
+                    success2 = False
+        else:
+            print("   ❌ Weekly period still failing - timezone fix not working")
+        
+        # Test 3: Monthly period (previously failed with timezone error)
+        success3, response3 = self.run_test(
+            "Advanced Metrics - Monthly Period (TIMEZONE FIX TEST)",
+            "GET",
+            "recordatorios/metricas/avanzadas",
+            200,
+            params={"periodo": "mensual"}
+        )
+        
+        if success3:
+            # Validate response structure
+            for field in required_fields:
+                if field not in response3:
+                    print(f"   ❌ Missing field in monthly response: {field}")
+                    success3 = False
+            
+            if success3:
+                print("   ✅ Monthly period TIMEZONE FIX WORKING!")
+                # Validate conversion metrics structure
+                metricas_conversion = response3.get('metricas_conversion', {})
+                conversion_fields = ['cotizacion_revisada', 'pedido_generado', 'instalacion_confirmada']
+                for field in conversion_fields:
+                    if field not in metricas_conversion:
+                        print(f"   ❌ Missing conversion metric: {field}")
+                        success3 = False
+                    else:
+                        print(f"   ✅ Conversion metric present: {field}")
+        else:
+            print("   ❌ Monthly period still failing - timezone fix not working")
+        
+        # Test 4: Custom date range (previously failed with timezone error)
+        success4, response4 = self.run_test(
+            "Advanced Metrics - Custom Date Range (TIMEZONE FIX TEST)",
+            "GET",
+            "recordatorios/metricas/avanzadas",
+            200,
+            params={
+                "periodo": "custom",
+                "fecha_inicio": "2024-01-01T00:00:00Z",
+                "fecha_fin": "2024-12-31T23:59:59Z"
+            }
+        )
+        
+        if success4:
+            # Validate response structure
+            for field in required_fields:
+                if field not in response4:
+                    print(f"   ❌ Missing field in custom range response: {field}")
+                    success4 = False
+            
+            if success4:
+                print("   ✅ Custom date range TIMEZONE FIX WORKING!")
+                # Validate that fecha_inicio and fecha_fin are properly handled
+                fecha_inicio = response4.get('fecha_inicio')
+                fecha_fin = response4.get('fecha_fin')
+                if fecha_inicio and fecha_fin:
+                    print(f"   ✅ Date range properly processed: {fecha_inicio} to {fecha_fin}")
+                else:
+                    print("   ❌ Date range not properly processed")
+                    success4 = False
+        else:
+            print("   ❌ Custom date range still failing - timezone fix not working")
+        
+        # Test 5: Edge case - date strings without timezone
+        success5, response5 = self.run_test(
+            "Advanced Metrics - Date Strings Without Timezone",
+            "GET",
+            "recordatorios/metricas/avanzadas",
+            200,
+            params={
+                "periodo": "custom",
+                "fecha_inicio": "2024-06-01T00:00:00",  # No Z suffix
+                "fecha_fin": "2024-06-30T23:59:59"     # No Z suffix
+            }
+        )
+        
+        if success5:
+            print("   ✅ Date strings without timezone handled correctly")
+        else:
+            print("   ❌ Date strings without timezone not handled properly")
+        
+        overall_success = success1 and success2 and success3 and success4 and success5
+        
+        if overall_success:
+            print("\n   🎉 TIMEZONE FIX VERIFICATION COMPLETE - ALL TESTS PASSED!")
+            print("   ✅ No 'can't compare offset-naive and offset-aware datetimes' errors")
+            print("   ✅ All periods (diario, semanal, mensual) working correctly")
+            print("   ✅ Custom date ranges working correctly")
+            print("   ✅ Response structure remains correct after fix")
+        else:
+            print("\n   ❌ TIMEZONE FIX VERIFICATION FAILED - Some tests still failing")
+        
+        return overall_success
+
     def test_phase_2_2_advanced_metrics(self):
         """Test Phase 2.2 Advanced Metrics and KPIs"""
         print("\n🔍 Testing Phase 2.2 - Advanced Metrics and KPIs")
