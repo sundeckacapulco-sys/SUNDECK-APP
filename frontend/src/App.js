@@ -201,6 +201,8 @@ function AppContent() {
         return <GestionEscalaciones onNavigate={setCurrentView} />;
       case 'exportar':
         return <ExportacionDatos onNavigate={setCurrentView} />;
+      case 'reportes':
+        return <ReporteSupervision onNavigate={setCurrentView} />;
       case 'sundeck360':
         return <KanbanDashboard onUpdate={cargarProspectos} onNavigate={setCurrentView} selectedProspecto={prospectoSelected} onClearSelection={() => setProspectoSelected(null)} />;
       case 'embudo360':
