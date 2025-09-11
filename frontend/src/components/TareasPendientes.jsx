@@ -94,7 +94,31 @@ const TareasPendientes = ({ onNavigate, onNavigateToProspecto }) => {
       }
     } catch (error) {
       console.error('Error reprogramando recordatorio:', error);
-      alert('❌ Error al reprogramar recordatorio: ' + (error.response?.data?.detail || error.message));
+      
+      let errorMessage = '❌ Error al reprogramar recordatorio';
+      
+      if (error.response) {
+        // Error de respuesta del servidor
+        if (error.response.data && error.response.data.detail) {
+          errorMessage += ': ' + error.response.data.detail;
+        } else if (error.response.status === 404) {
+          errorMessage += ': Recordatorio no encontrado';
+        } else if (error.response.status === 400) {
+          errorMessage += ': Datos inválidos en la solicitud';
+        } else if (error.response.status === 500) {
+          errorMessage += ': Error interno del servidor';
+        } else {
+          errorMessage += ': Error del servidor (' + error.response.status + ')';
+        }
+      } else if (error.request) {
+        // Error de red
+        errorMessage += ': No se pudo conectar con el servidor';
+      } else {
+        // Otro error
+        errorMessage += ': ' + error.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
