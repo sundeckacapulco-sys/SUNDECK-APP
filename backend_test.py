@@ -4181,6 +4181,313 @@ class ProspectosAPITester:
         
         return success and success2 and success3
 
+    def test_critical_rescheduling_bug_investigation(self):
+        """CRITICAL BUG INVESTIGATION - Comprehensive rescheduling endpoint testing"""
+        print("\n🚨 CRITICAL BUG INVESTIGATION - Appointment Rescheduling Error")
+        print("   Testing POST /api/prospectos/{prospecto_id}/reagendar-cita endpoint")
+        
+        # Create test prospect for rescheduling tests
+        test_data = {
+            "nombre": "Critical Rescheduling Test",
+            "telefono": "+56900000999",
+            "producto_solicitado": "Deck Critical Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Prospect for Critical Rescheduling Test",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if not success:
+            print("❌ CRITICAL: Failed to create test prospect")
+            return False
+        
+        prospect_id = response.get('id')
+        if not prospect_id:
+            print("❌ CRITICAL: No prospect ID returned")
+            return False
+        
+        print(f"   ✅ Test prospect created: {prospect_id}")
+        
+        # Test 1: Valid rescheduling data
+        print("\n   🔍 Test 1: Valid rescheduling data")
+        valid_reschedule = {
+            "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+            "motivo": "cliente_pidio",
+            "comentarios": "Cliente solicitó cambio por compromiso familiar",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success1, response1 = self.run_test(
+            "CRITICAL - Valid Rescheduling",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=valid_reschedule
+        )
+        
+        if success1:
+            # Validate response structure
+            required_fields = ['message', 'reagendamiento_id', 'fecha_original', 'fecha_nueva', 'fecha_ajustada', 'motivo', 'usuario']
+            missing_fields = []
+            for field in required_fields:
+                if field not in response1:
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                print(f"   ❌ CRITICAL: Missing response fields: {missing_fields}")
+                success1 = False
+            else:
+                print("   ✅ All required response fields present")
+                print(f"   ✅ Reagendamiento ID: {response1.get('reagendamiento_id')}")
+                print(f"   ✅ New date: {response1.get('fecha_nueva')}")
+        
+        # Test 2: Non-existent prospecto_id
+        print("\n   🔍 Test 2: Non-existent prospecto_id")
+        success2, response2 = self.run_test(
+            "CRITICAL - Non-existent Prospect ID",
+            "POST",
+            "prospectos/non-existent-12345/reagendar-cita",
+            404,
+            json_data=valid_reschedule
+        )
+        
+        if success2:
+            print("   ✅ Non-existent prospect correctly returns 404")
+        else:
+            print("   ❌ CRITICAL: Should return 404 for non-existent prospect")
+        
+        # Test 3: Invalid date formats
+        print("\n   🔍 Test 3: Invalid date formats")
+        invalid_date_reschedule = {
+            "nueva_fecha": "invalid-date-format",
+            "motivo": "cliente_pidio",
+            "comentarios": "Testing invalid date",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success3, response3 = self.run_test(
+            "CRITICAL - Invalid Date Format",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            422,  # Validation error
+            json_data=invalid_date_reschedule
+        )
+        
+        if success3:
+            print("   ✅ Invalid date format correctly returns 422")
+        else:
+            print("   ❌ CRITICAL: Should return 422 for invalid date format")
+        
+        # Test 4: Missing required fields
+        print("\n   🔍 Test 4: Missing required fields")
+        missing_fields_tests = [
+            {
+                "name": "Missing nueva_fecha",
+                "data": {
+                    "motivo": "cliente_pidio",
+                    "comentarios": "Missing date",
+                    "usuario_reagendo": "admin_test"
+                }
+            },
+            {
+                "name": "Missing motivo",
+                "data": {
+                    "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
+                    "comentarios": "Missing motivo",
+                    "usuario_reagendo": "admin_test"
+                }
+            },
+            {
+                "name": "Missing usuario_reagendo",
+                "data": {
+                    "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
+                    "motivo": "cliente_pidio",
+                    "comentarios": "Missing user"
+                }
+            }
+        ]
+        
+        missing_field_success = True
+        for test_case in missing_fields_tests:
+            success_temp, response_temp = self.run_test(
+                f"CRITICAL - {test_case['name']}",
+                "POST",
+                f"prospectos/{prospect_id}/reagendar-cita",
+                422,  # Validation error
+                json_data=test_case['data']
+            )
+            
+            if success_temp:
+                print(f"   ✅ {test_case['name']} correctly returns 422")
+            else:
+                print(f"   ❌ CRITICAL: {test_case['name']} should return 422")
+                missing_field_success = False
+        
+        # Test 5: Invalid motivo values
+        print("\n   🔍 Test 5: Invalid motivo values")
+        invalid_motivo = {
+            "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
+            "motivo": "invalid_motivo_value",
+            "comentarios": "Testing invalid motivo",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success5, response5 = self.run_test(
+            "CRITICAL - Invalid Motivo Value",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            422,  # Validation error
+            json_data=invalid_motivo
+        )
+        
+        if success5:
+            print("   ✅ Invalid motivo correctly returns 422")
+        else:
+            print("   ❌ CRITICAL: Should return 422 for invalid motivo")
+        
+        # Test 6: Business day validation
+        print("\n   🔍 Test 6: Business day validation")
+        # Find next weekend date
+        weekend_date = datetime.now(timezone.utc) + timedelta(days=1)
+        while weekend_date.weekday() < 5:  # 0-4 are Monday-Friday
+            weekend_date += timedelta(days=1)
+        
+        weekend_reschedule = {
+            "nueva_fecha": weekend_date.isoformat(),
+            "motivo": "cliente_pidio",
+            "comentarios": "Testing weekend adjustment",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success6, response6 = self.run_test(
+            "CRITICAL - Weekend Date (Business Day Validation)",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=weekend_reschedule
+        )
+        
+        if success6:
+            fecha_ajustada = response6.get('fecha_ajustada', False)
+            if fecha_ajustada:
+                print("   ✅ Weekend date correctly adjusted to business day")
+            else:
+                print("   ⚠️  Weekend date not adjusted (may be expected behavior)")
+        
+        # Test 7: Database integration - Check if records are created
+        print("\n   🔍 Test 7: Database integration verification")
+        # This would require checking the reagendamientos collection
+        # For now, we'll verify the response indicates successful database operation
+        if success1 and response1.get('reagendamiento_id'):
+            print("   ✅ Database integration appears successful (reagendamiento_id returned)")
+        else:
+            print("   ❌ CRITICAL: Database integration may have failed")
+        
+        # Test 8: All valid motivos
+        print("\n   🔍 Test 8: All valid motivos")
+        valid_motivos = [
+            "cliente_pidio",
+            "instalador_retrasado", 
+            "clima_adverso",
+            "emergencia_cliente",
+            "problema_tecnico",
+            "otro"
+        ]
+        
+        motivo_success = True
+        for motivo in valid_motivos:
+            motivo_test = {
+                "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=1, hours=1)).isoformat(),
+                "motivo": motivo,
+                "comentarios": f"Testing motivo: {motivo}",
+                "usuario_reagendo": "admin_test"
+            }
+            
+            success_motivo, response_motivo = self.run_test(
+                f"CRITICAL - Valid Motivo: {motivo}",
+                "POST",
+                f"prospectos/{prospect_id}/reagendar-cita",
+                200,
+                json_data=motivo_test
+            )
+            
+            if success_motivo:
+                print(f"   ✅ Motivo '{motivo}' accepted")
+            else:
+                print(f"   ❌ CRITICAL: Motivo '{motivo}' rejected")
+                motivo_success = False
+        
+        # Test 9: Check for missing functions/imports
+        print("\n   🔍 Test 9: Function dependencies verification")
+        # This test will help identify if required functions are missing
+        # We'll do this by checking if the endpoint responds correctly to basic requests
+        
+        dependency_test = {
+            "nueva_fecha": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            "motivo": "cliente_pidio",
+            "comentarios": "Testing function dependencies",
+            "usuario_reagendo": "admin_test"
+        }
+        
+        success9, response9 = self.run_test(
+            "CRITICAL - Function Dependencies Check",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=dependency_test
+        )
+        
+        if success9:
+            print("   ✅ All required functions appear to be available")
+            # Check if business day functions are working
+            if 'fecha_ajustada' in response9:
+                print("   ✅ Business day calculation functions working")
+            else:
+                print("   ⚠️  Business day calculation may have issues")
+        else:
+            print("   ❌ CRITICAL: Missing function definitions or imports")
+        
+        # Clean up
+        self.run_test("Cleanup Critical Rescheduling Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+        
+        # Summary
+        print("\n🔍 CRITICAL BUG INVESTIGATION SUMMARY:")
+        test_results = [
+            ("Valid rescheduling", success1),
+            ("Non-existent prospect handling", success2),
+            ("Invalid date format handling", success3),
+            ("Missing required fields", missing_field_success),
+            ("Invalid motivo handling", success5),
+            ("Business day validation", success6),
+            ("All valid motivos", motivo_success),
+            ("Function dependencies", success9)
+        ]
+        
+        passed_tests = sum(1 for _, result in test_results if result)
+        total_tests = len(test_results)
+        
+        print(f"   Tests passed: {passed_tests}/{total_tests}")
+        
+        for test_name, result in test_results:
+            status = "✅ PASS" if result else "❌ FAIL"
+            print(f"   {status}: {test_name}")
+        
+        overall_success = all(result for _, result in test_results)
+        
+        if overall_success:
+            print("\n🎉 CRITICAL BUG INVESTIGATION: ALL TESTS PASSED")
+            print("   The rescheduling endpoint appears to be working correctly")
+        else:
+            print("\n🚨 CRITICAL BUG INVESTIGATION: ISSUES FOUND")
+            print("   The rescheduling endpoint has critical issues that need immediate attention")
+        
+        return overall_success
+
     def test_supervision_comments(self):
         """Test supervision comments endpoints (POST and GET)"""
         print("\n🔍 Testing Prospect Detail Optimization - Supervision Comments")
