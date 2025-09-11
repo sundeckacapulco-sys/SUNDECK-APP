@@ -1677,7 +1677,7 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
     if (!nuevoComentario.trim()) return;
     
     try {
-      await axios.post(`${API}/api/prospectos/${prospecto.id}/comentarios-supervision`, {
+      await axios.post(`${API}/prospectos/${prospecto.id}/comentarios-supervision`, {
         comentario: nuevoComentario,
         usuario_comenta: 'Usuario Actual', // En producción: obtener del contexto de usuario
         tipo_comentario: tipoComentario
