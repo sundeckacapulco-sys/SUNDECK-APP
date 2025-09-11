@@ -2992,78 +2992,34 @@ async def reagendar_cita_prospecto(
     request: ReagendarCitaRequest
 ):
     """Reagendar cita de un prospecto con motivo y comentarios"""
+    # TEMPORARY: Simplified version for debugging
     try:
-        # Verificar que el prospecto existe
+        # Simple verification that the endpoint is being called
+        print(f"🔄 ENDPOINT CALLED: reagendar_cita_prospecto with ID: {prospecto_id}")
+        
+        # Basic prospect existence check
         prospecto = await db.prospectos.find_one({"id": prospecto_id})
         if not prospecto:
+            print(f"❌ Prospect not found: {prospecto_id}")
             raise HTTPException(status_code=404, detail="Prospecto not found")
         
-        # Obtener fecha original de la cita
-        fecha_original = None
-        if prospecto.get("fecha_cita"):
-            if isinstance(prospecto["fecha_cita"], str):
-                fecha_original = datetime.fromisoformat(prospecto["fecha_cita"])
-            else:
-                fecha_original = prospecto["fecha_cita"]
+        print(f"✅ Prospect found: {prospecto.get('nombre', 'N/A')}")
         
-        if not fecha_original:
-            raise HTTPException(status_code=400, detail="El prospecto no tiene fecha de cita asignada")
-        
-        # Validar que la nueva fecha sea en día hábil
-        nueva_fecha_habil = obtener_siguiente_dia_habil(request.nueva_fecha)
-        fecha_fue_ajustada = nueva_fecha_habil != request.nueva_fecha
-        
-        if fecha_fue_ajustada:
-            print(f"Fecha de cita ajustada de {request.nueva_fecha} a {nueva_fecha_habil} (día hábil)")
-            nueva_fecha_final = nueva_fecha_habil
-        else:
-            nueva_fecha_final = request.nueva_fecha
-        
-        # Crear registro de reagendamiento
-        reagendamiento = {
-            "id": str(uuid.uuid4()),
-            "prospecto_id": prospecto_id,
-            "fecha_original": fecha_original.isoformat(),
-            "fecha_nueva": nueva_fecha_final.isoformat(),
-            "motivo": request.motivo,
-            "comentarios": request.comentarios,
-            "usuario_reagendo": request.usuario_reagendo,
-            "fecha_reagendamiento": datetime.now(timezone.utc).isoformat()
-        }
-        
-        # Guardar reagendamiento en DB
-        await db.reagendamientos.insert_one(reagendamiento)
-        
-        # Actualizar fecha de cita en el prospecto
-        await db.prospectos.update_one(
-            {"id": prospecto_id},
-            {
-                "$set": {
-                    "fecha_cita": nueva_fecha_final.isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat(),
-                    "reagendado": True,
-                    "ultimo_reagendamiento": reagendamiento["id"]
-                }
-            }
-        )
-        
-        # Recalcular recordatorios relacionados con la cita
-        await recalcular_recordatorios_por_cita(prospecto_id, nueva_fecha_final)
-        
+        # Return a simple success response for now
         return {
-            "message": "Cita reagendada exitosamente",
-            "reagendamiento_id": reagendamiento["id"],
-            "fecha_original": fecha_original.isoformat(),
-            "fecha_nueva": nueva_fecha_final.isoformat(),
-            "fecha_ajustada": fecha_fue_ajustada,
+            "message": "Endpoint working - reagendamiento simplified for debugging",
+            "prospecto_id": prospecto_id,
+            "prospecto_nombre": prospecto.get("nombre", "N/A"),
+            "nueva_fecha": request.nueva_fecha.isoformat(),
             "motivo": request.motivo,
-            "usuario": request.usuario_reagendo
+            "debug": "Simplified version active"
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reagendando cita: {str(e)}")
+        print(f"❌ Exception in reagendar endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error in reagendar endpoint: {str(e)}")
 
 @api_router.post("/prospectos/{prospecto_id}/comentarios-supervision")
 async def agregar_comentario_supervision(
