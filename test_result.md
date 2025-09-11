@@ -434,11 +434,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Phase 2.2: Advanced Metrics timezone fix needed"
-  stuck_tasks:
-    - "Phase 2.2: Advanced Metrics and KPIs"
+    - "Phase 2.2: Advanced Metrics timezone fix completed successfully"
+  stuck_tasks: []
   test_all: false
-  test_priority: "phase_2_2_metrics_fix"
+  test_priority: "phase_2_2_metrics_fixed"
 
 backend:
   - task: "Fix Embudo 360 API endpoint URL issue"
