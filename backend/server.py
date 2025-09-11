@@ -2283,12 +2283,19 @@ async def obtener_metricas_avanzadas(
                 fecha_fin = fecha_inicio + timedelta(days=1)
             elif periodo == "semanal":
                 dias_desde_lunes = fecha_actual.weekday()
-                fecha_inicio = (fecha_actual - timedelta(days=dias_desde_lunes)).replace(hour=0, minute=0, second=0, microsecond=0)
+                # Preserve timezone when using replace()
+                fecha_inicio_naive = (fecha_actual - timedelta(days=dias_desde_lunes)).replace(hour=0, minute=0, second=0, microsecond=0)
+                fecha_inicio = fecha_inicio_naive.replace(tzinfo=fecha_actual.tzinfo)
                 fecha_fin = fecha_inicio + timedelta(days=7)
             else:  # mensual
-                fecha_inicio = fecha_actual.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-                siguiente_mes = fecha_inicio.replace(month=fecha_inicio.month + 1) if fecha_inicio.month < 12 else fecha_inicio.replace(year=fecha_inicio.year + 1, month=1)
-                fecha_fin = siguiente_mes
+                # Preserve timezone when using replace()
+                fecha_inicio_naive = fecha_actual.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                fecha_inicio = fecha_inicio_naive.replace(tzinfo=fecha_actual.tzinfo)
+                if fecha_inicio.month < 12:
+                    siguiente_mes_naive = fecha_inicio.replace(month=fecha_inicio.month + 1)
+                else:
+                    siguiente_mes_naive = fecha_inicio.replace(year=fecha_inicio.year + 1, month=1)
+                fecha_fin = siguiente_mes_naive.replace(tzinfo=fecha_actual.tzinfo)
         else:
             # Asegurar que las fechas personalizadas sean timezone-aware
             if isinstance(fecha_inicio, str):
