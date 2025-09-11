@@ -1914,8 +1914,12 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
             prospecto={prospecto}
             onClose={() => setShowReagendarModal(false)}
             onUpdate={(updatedProspecto) => {
-              onUpdate();
-              cargarReagendamientos();
+              onUpdate(); // Actualizar el prospecto individual
+              cargarReagendamientos(); // Recargar reagendamientos
+              // Disparar actualización global para refrescar "Citas Hoy" y dashboard
+              if (window.globalUpdateProspectos) {
+                window.globalUpdateProspectos();
+              }
             }}
           />
         )}
