@@ -2266,13 +2266,13 @@ async def gestionar_recordatorios_vencidos():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error managing overdue recordatorios: {str(e)}")
 
-@api_router.get("/recordatorios/metricas")
-async def obtener_metricas_recordatorios(
+@api_router.get("/recordatorios/metricas/avanzadas")
+async def obtener_metricas_avanzadas(
     periodo: str = "semanal",  # diario, semanal, mensual
     fecha_inicio: str = None,
     fecha_fin: str = None
 ):
-    """Obtener métricas de rendimiento del sistema de recordatorios"""
+    """Obtener métricas avanzadas y KPIs del sistema de recordatorios"""
     try:
         # Calcular fechas por defecto según período
         fecha_actual = datetime.now(timezone.utc)
@@ -2301,16 +2301,17 @@ async def obtener_metricas_recordatorios(
             }
         }).to_list(length=None)
         
-        # Calcular métricas
+        # Métricas básicas
         total = len(recordatorios)
         completados = len([r for r in recordatorios if r.get("estado") == "completado"])
-        vencidos = len([r for r in recordatorios if r.get("estado") == "pendiente" and r.get("fecha_limite", "") < datetime.now(timezone.utc).isoformat()])
+        vencidos = len([r for r in recordatorios if r.get("fecha_limite", "") < fecha_actual.isoformat() and r.get("estado") == "pendiente"])
         reprogramados = len([r for r in recordatorios if r.get("reprogramado")])
+        escalados = len([r for r in recordatorios if r.get("escalado_at")])
         
-        # Calcular recordatorios completados a tiempo vs tarde
+        # Calcular tiempo promedio de resolución
+        tiempos_resolucion = []
         completados_tiempo = 0
         completados_tarde = 0
-        tiempos_resolucion = []
         
         for recordatorio in recordatorios:
             if recordatorio.get("estado") == "completado" and recordatorio.get("fecha_completado"):
@@ -2326,31 +2327,153 @@ async def obtener_metricas_recordatorios(
                 tiempo_resolucion = (fecha_completado - fecha_limite).total_seconds() / 3600
                 tiempos_resolucion.append(abs(tiempo_resolucion))
         
-        tasa_cumplimiento = (completados / total * 100) if total > 0 else 0
         tiempo_promedio = sum(tiempos_resolucion) / len(tiempos_resolucion) if tiempos_resolucion else 0
+        tasa_cumplimiento = (completados_tiempo / total * 100) if total > 0 else 0
+        
+        # Métricas de conversión
+        conversion_cotizacion = await calcular_conversion_cotizacion(recordatorios)
+        conversion_pedido = await calcular_conversion_pedido(recordatorios)
+        conversion_instalacion = await calcular_conversion_instalacion(recordatorios)
+        
+        # Distribución por estado
+        distribucion_estados = {
+            "pendiente": len([r for r in recordatorios if r.get("estado") == "pendiente"]),
+            "completado": completados,
+            "vencido": vencidos,
+            "escalado": escalados,
+            "reprogramado": reprogramados
+        }
+        
+        # Distribución por tipo de recordatorio
+        distribucion_tipos = {}
+        for recordatorio in recordatorios:
+            tipo = recordatorio.get("tipo", "desconocido")
+            distribucion_tipos[tipo] = distribucion_tipos.get(tipo, 0) + 1
+        
+        # Métricas por usuario (si hay asignaciones)
+        metricas_usuarios = {}
+        usuarios = list(set([r.get("usuario_asignado") for r in recordatorios if r.get("usuario_asignado")]))
+        
+        for usuario in usuarios:
+            user_recordatorios = [r for r in recordatorios if r.get("usuario_asignado") == usuario]
+            user_completados = len([r for r in user_recordatorios if r.get("estado") == "completado"])
+            user_total = len(user_recordatorios)
+            
+            metricas_usuarios[usuario] = {
+                "total": user_total,
+                "completados": user_completados,
+                "tasa_cumplimiento": (user_completados / user_total * 100) if user_total > 0 else 0,
+                "vencidos": len([r for r in user_recordatorios if r.get("fecha_limite", "") < fecha_actual.isoformat() and r.get("estado") == "pendiente"])
+            }
         
         return {
             "periodo": periodo,
             "fecha_inicio": fecha_inicio.isoformat(),
             "fecha_fin": fecha_fin.isoformat(),
-            "metricas": {
+            "metricas_generales": {
                 "total_recordatorios": total,
                 "completados_tiempo": completados_tiempo,
                 "completados_tarde": completados_tarde,
                 "vencidos": vencidos,
                 "reprogramados": reprogramados,
+                "escalados": escalados,
                 "tasa_cumplimiento": round(tasa_cumplimiento, 2),
                 "tiempo_promedio_resolucion": round(tiempo_promedio, 2)
             },
-            "kpis": {
-                "efectividad": f"{round(tasa_cumplimiento, 1)}%",
-                "puntualidad": f"{round((completados_tiempo / completados * 100) if completados > 0 else 0, 1)}%",
-                "productividad": f"{round(completados / 7 if periodo == 'semanal' else completados, 1)} por día"
+            "metricas_conversion": {
+                "cotizacion_revisada": round(conversion_cotizacion, 2),
+                "pedido_generado": round(conversion_pedido, 2),
+                "instalacion_confirmada": round(conversion_instalacion, 2)
+            },
+            "distribucion_estados": distribucion_estados,
+            "distribucion_tipos": distribucion_tipos,
+            "metricas_usuarios": metricas_usuarios,
+            "graficas": {
+                "estados_para_pastel": [
+                    {"name": "Completados", "value": completados, "color": "#22c55e"},
+                    {"name": "Pendientes", "value": distribucion_estados['pendiente'], "color": "#f59e0b"},
+                    {"name": "Vencidos", "value": vencidos, "color": "#ef4444"},
+                    {"name": "Escalados", "value": escalados, "color": "#8b5cf6"}
+                ],
+                "tipos_para_barras": [
+                    {"tipo": k, "cantidad": v} for k, v in distribucion_tipos.items()
+                ]
             }
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error calculating metrics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error calculating advanced metrics: {str(e)}")
+
+async def calcular_conversion_cotizacion(recordatorios: List[dict]) -> float:
+    """Calcular % de conversión de recordatorios a cotización revisada"""
+    try:
+        # Recordatorios de tipo cotización
+        recordatorios_cotizacion = [r for r in recordatorios if r.get("tipo") == "cotizacion_24h"]
+        if not recordatorios_cotizacion:
+            return 0.0
+        
+        # Verificar cuántos llevaron a etapas posteriores
+        conversiones = 0
+        for recordatorio in recordatorios_cotizacion:
+            prospecto_id = recordatorio.get("prospecto_id")
+            if prospecto_id:
+                prospecto = await db.prospectos.find_one({"id": prospecto_id})
+                if prospecto and prospecto.get("etapas"):
+                    # Si tiene más de una etapa, significa que avanzó
+                    if len(prospecto["etapas"]) > 1:
+                        conversiones += 1
+        
+        return (conversiones / len(recordatorios_cotizacion)) * 100
+    except Exception as e:
+        print(f"Error calculando conversión cotización: {str(e)}")
+        return 0.0
+
+async def calcular_conversion_pedido(recordatorios: List[dict]) -> float:
+    """Calcular % de conversión de recordatorios a pedido generado"""
+    try:
+        # Recordatorios de seguimiento
+        recordatorios_seguimiento = [r for r in recordatorios if "seguimiento" in r.get("tipo", "")]
+        if not recordatorios_seguimiento:
+            return 0.0
+        
+        conversiones = 0
+        for recordatorio in recordatorios_seguimiento:
+            prospecto_id = recordatorio.get("prospecto_id")
+            if prospecto_id:
+                prospecto = await db.prospectos.find_one({"id": prospecto_id})
+                if prospecto and prospecto.get("etapas"):
+                    # Verificar si llegó a etapa de Pedido
+                    etapas_nombres = [etapa.get("nombre_etapa", "") for etapa in prospecto["etapas"]]
+                    if "Pedido" in etapas_nombres:
+                        conversiones += 1
+        
+        return (conversiones / len(recordatorios_seguimiento)) * 100
+    except Exception as e:
+        print(f"Error calculando conversión pedido: {str(e)}")
+        return 0.0
+
+async def calcular_conversion_instalacion(recordatorios: List[dict]) -> float:
+    """Calcular % de conversión de recordatorios a instalación confirmada"""
+    try:
+        todos_recordatorios = recordatorios
+        if not todos_recordatorios:
+            return 0.0
+        
+        conversiones = 0
+        for recordatorio in todos_recordatorios:
+            prospecto_id = recordatorio.get("prospecto_id")
+            if prospecto_id:
+                prospecto = await db.prospectos.find_one({"id": prospecto_id})
+                if prospecto and prospecto.get("etapas"):
+                    # Verificar si llegó a etapas finales
+                    etapas_nombres = [etapa.get("nombre_etapa", "") for etapa in prospecto["etapas"]]
+                    if any(stage in etapas_nombres for stage in ["Instalación en Proceso", "Entrega Final", "Postventa"]):
+                        conversiones += 1
+        
+        return (conversiones / len(todos_recordatorios)) * 100
+    except Exception as e:
+        print(f"Error calculando conversión instalación: {str(e)}")
+        return 0.0
 
 # ==========================================
 # ENDPOINTS PLANTILLAS WHATSAPP
