@@ -326,6 +326,51 @@ class MetricasRendimiento(BaseModel):
     conversion_pedido: float
     conversion_instalacion: float
 
+# Modelos para optimizaciones de detalle de prospecto
+class MotivoReagendamiento(str, Enum):
+    CLIENTE_PIDIO = "cliente_pidio"
+    INSTALADOR_RETRASADO = "instalador_retrasado"
+    CLIMA_ADVERSO = "clima_adverso"
+    EMERGENCIA_CLIENTE = "emergencia_cliente"
+    PROBLEMA_TECNICO = "problema_tecnico"
+    OTRO = "otro"
+
+class ReagendamientoCita(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    prospecto_id: str
+    fecha_original: datetime
+    fecha_nueva: datetime
+    motivo: MotivoReagendamiento
+    comentarios: Optional[str] = None
+    usuario_reagendo: str
+    fecha_reagendamiento: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ComentarioSupervision(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    prospecto_id: str
+    comentario: str
+    usuario_comenta: str
+    fecha_comentario: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    tipo_comentario: Optional[str] = "general"  # general, puntualidad, calidad, etc.
+
+class ReagendarCitaRequest(BaseModel):
+    nueva_fecha: datetime
+    motivo: MotivoReagendamiento
+    comentarios: Optional[str] = None
+    usuario_reagendo: str
+
+class ComentarioSupervisionRequest(BaseModel):
+    comentario: str
+    usuario_comenta: str
+    tipo_comentario: Optional[str] = "general"
+
+class ReporteDiarioRequest(BaseModel):
+    fecha_inicio: datetime
+    fecha_fin: datetime
+    incluir_reagendamientos: bool = True
+    incluir_comentarios: bool = True
+    formato: str = "excel"  # excel o csv
+
 class ExportacionRequest(BaseModel):
     formato: str = "excel"  # "excel" o "csv"
     fecha_inicio: Optional[datetime] = None
