@@ -2030,12 +2030,16 @@ async def obtener_dashboard_recordatorios():
 # ENDPOINTS FASE 2 - GESTIÓN AVANZADA
 # ==========================================
 
+# Modelo para request de reprogramación
+class RescheduleRequest(BaseModel):
+    nueva_fecha: datetime
+    motivo: MotivosReprogramacion
+    notas: Optional[str] = None
+
 @api_router.post("/recordatorios/{recordatorio_id}/reprogramar")
 async def reprogramar_recordatorio(
     recordatorio_id: str,
-    nueva_fecha: datetime,
-    motivo: MotivosReprogramacion,
-    notas: str = None
+    request: RescheduleRequest
 ):
     """Reprogramar un recordatorio con motivo y nueva fecha"""
     try:
@@ -2045,19 +2049,22 @@ async def reprogramar_recordatorio(
             raise HTTPException(status_code=404, detail="Recordatorio not found")
         
         # Validar que la nueva fecha sea un día hábil
-        nueva_fecha_habil = obtener_siguiente_dia_habil(nueva_fecha)
-        if nueva_fecha_habil != nueva_fecha:
-            print(f"Fecha ajustada de {nueva_fecha} a {nueva_fecha_habil} (día hábil)")
-            nueva_fecha = nueva_fecha_habil
+        nueva_fecha_habil = obtener_siguiente_dia_habil(request.nueva_fecha)
+        fecha_fue_ajustada = nueva_fecha_habil != request.nueva_fecha
+        if fecha_fue_ajustada:
+            print(f"Fecha ajustada de {request.nueva_fecha} a {nueva_fecha_habil} (día hábil)")
+            nueva_fecha_final = nueva_fecha_habil
+        else:
+            nueva_fecha_final = request.nueva_fecha
         
         # Crear registro de reprogramación
         reprogramacion = {
             "id": str(uuid.uuid4()),
             "recordatorio_id": recordatorio_id,
             "fecha_original": recordatorio["fecha_limite"],
-            "fecha_nueva": nueva_fecha.isoformat(),
-            "motivo": motivo,
-            "notas": notas,
+            "fecha_nueva": nueva_fecha_final.isoformat(),
+            "motivo": request.motivo,
+            "notas": request.notas,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
@@ -2069,18 +2076,18 @@ async def reprogramar_recordatorio(
             {"id": recordatorio_id},
             {
                 "$set": {
-                    "fecha_limite": nueva_fecha.isoformat(),
+                    "fecha_limite": nueva_fecha_final.isoformat(),
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                     "reprogramado": True,
-                    "motivo_reprogramacion": motivo
+                    "motivo_reprogramacion": request.motivo
                 }
             }
         )
         
         return {
             "message": "Recordatorio reprogramado exitosamente",
-            "nueva_fecha": nueva_fecha.isoformat(),
-            "fecha_ajustada": nueva_fecha_habil != datetime.fromisoformat(recordatorio["fecha_limite"]) if isinstance(recordatorio["fecha_limite"], str) else nueva_fecha_habil != recordatorio["fecha_limite"]
+            "nueva_fecha": nueva_fecha_final.isoformat(),
+            "fecha_ajustada": fecha_fue_ajustada
         }
         
     except HTTPException:
