@@ -634,6 +634,174 @@ async def enviar_notificacion_escalacion(escalacion: dict, recordatorio: dict, p
     except Exception as e:
         print(f"❌ Error enviando notificación de escalación: {str(e)}")
         return False
+
+@api_router.post("/reportes/supervision-diario")
+async def generar_reporte_supervision_diario(request: ReporteDiarioRequest):
+    """Generar reporte diario de supervisión con reagendamientos y comentarios"""
+    try:
+        fecha_inicio = request.fecha_inicio
+        fecha_fin = request.fecha_fin
+        
+        # Validar fechas
+        if fecha_inicio > fecha_fin:
+            raise HTTPException(status_code=400, detail="Fecha inicio no puede ser mayor que fecha fin")
+        
+        datos_reporte = []
+        
+        # Obtener todos los prospectos con actividad en el período
+        if request.incluir_reagendamientos:
+            # Obtener reagendamientos en el período
+            reagendamientos = await db.reagendamientos.find({
+                "fecha_reagendamiento": {
+                    "$gte": fecha_inicio.isoformat(),
+                    "$lte": fecha_fin.isoformat()
+                }
+            }).to_list(length=None)
+            
+            for reagendamiento in reagendamientos:
+                # Obtener datos del prospecto
+                prospecto = await db.prospectos.find_one({"id": reagendamiento["prospecto_id"]})
+                
+                if prospecto:
+                    # Traducir motivo del reagendamiento
+                    motivos_traducidos = {
+                        "cliente_pidio": "Cliente lo pidió",
+                        "instalador_retrasado": "Instalador retrasado", 
+                        "clima_adverso": "Clima adverso",
+                        "emergencia_cliente": "Emergencia del cliente",
+                        "problema_tecnico": "Problema técnico",
+                        "otro": "Otro motivo"
+                    }
+                    
+                    motivo_traducido = motivos_traducidos.get(
+                        reagendamiento["motivo"], 
+                        reagendamiento["motivo"]
+                    )
+                    
+                    # Formatear fechas
+                    fecha_original = datetime.fromisoformat(reagendamiento["fecha_original"])
+                    fecha_nueva = datetime.fromisoformat(reagendamiento["fecha_nueva"])
+                    fecha_reagendamiento = datetime.fromisoformat(reagendamiento["fecha_reagendamiento"])
+                    
+                    datos_reporte.append({
+                        "Tipo_Actividad": "Reagendamiento",
+                        "Cliente": prospecto.get("nombre", "N/A"),
+                        "Telefono": prospecto.get("telefono", "N/A"),
+                        "Producto": prospecto.get("producto_solicitado", "N/A"),
+                        "Fecha_Cita_Original": fecha_original.strftime("%d/%m/%Y %H:%M"),
+                        "Fecha_Cita_Reprogramada": fecha_nueva.strftime("%d/%m/%Y %H:%M"),
+                        "Motivo_Cambio": motivo_traducido,
+                        "Usuario_Reagendo": reagendamiento.get("usuario_reagendo", "N/A"),
+                        "Fecha_Reagendamiento": fecha_reagendamiento.strftime("%d/%m/%Y %H:%M"),
+                        "Comentarios_Reagendamiento": reagendamiento.get("comentarios", ""),
+                        "Comentarios_Supervision": "",
+                        "Usuario_Comento": "",
+                        "Fecha_Comentario": ""
+                    })
+        
+        if request.incluir_comentarios:
+            # Obtener comentarios en el período
+            comentarios = await db.comentarios_supervision.find({
+                "fecha_comentario": {
+                    "$gte": fecha_inicio.isoformat(),
+                    "$lte": fecha_fin.isoformat()
+                }
+            }).to_list(length=None)
+            
+            for comentario in comentarios:
+                # Obtener datos del prospecto
+                prospecto = await db.prospectos.find_one({"id": comentario["prospecto_id"]})
+                
+                if prospecto:
+                    fecha_comentario = datetime.fromisoformat(comentario["fecha_comentario"])
+                    
+                    datos_reporte.append({
+                        "Tipo_Actividad": "Comentario Supervisión",
+                        "Cliente": prospecto.get("nombre", "N/A"),
+                        "Telefono": prospecto.get("telefono", "N/A"),
+                        "Producto": prospecto.get("producto_solicitado", "N/A"),
+                        "Fecha_Cita_Original": prospecto.get("fecha_cita", "N/A"),
+                        "Fecha_Cita_Reprogramada": "",
+                        "Motivo_Cambio": "",
+                        "Usuario_Reagendo": "",
+                        "Fecha_Reagendamiento": "",
+                        "Comentarios_Reagendamiento": "",
+                        "Comentarios_Supervision": comentario["comentario"],
+                        "Usuario_Comento": comentario["usuario_comenta"],
+                        "Fecha_Comentario": fecha_comentario.strftime("%d/%m/%Y %H:%M")
+                    })
+        
+        if not datos_reporte:
+            raise HTTPException(status_code=404, detail="No se encontraron datos para el período seleccionado")
+        
+        # Crear DataFrame y exportar
+        df = pd.DataFrame(datos_reporte)
+        
+        # Ordenar por fecha (más reciente primero)
+        df['Fecha_Ordenamiento'] = pd.to_datetime(
+            df['Fecha_Reagendamiento'].fillna('') + df['Fecha_Comentario'].fillna(''),
+            format='%d/%m/%Y %H:%M',
+            errors='coerce'
+        )
+        df = df.sort_values('Fecha_Ordenamiento', ascending=False)
+        df = df.drop('Fecha_Ordenamiento', axis=1)
+        
+        # Generar archivo según formato
+        if request.formato.lower() == "excel":
+            # Crear archivo Excel
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Reporte_Supervision', index=False)
+                
+                # Formatear hoja
+                worksheet = writer.sheets['Reporte_Supervision']
+                
+                # Auto-ajustar ancho de columnas
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+            
+            buffer.seek(0)
+            archivo_base64 = base64.b64encode(buffer.getvalue()).decode()
+            nombre_archivo = f"reporte-supervision-{fecha_inicio.strftime('%Y%m%d')}-{fecha_fin.strftime('%Y%m%d')}.xlsx"
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            
+        else:  # CSV
+            buffer = BytesIO()
+            df.to_csv(buffer, index=False, encoding='utf-8-sig')
+            buffer.seek(0)
+            archivo_base64 = base64.b64encode(buffer.getvalue()).decode()
+            nombre_archivo = f"reporte-supervision-{fecha_inicio.strftime('%Y%m%d')}-{fecha_fin.strftime('%Y%m%d')}.csv"
+            content_type = "text/csv"
+        
+        return {
+            "archivo_base64": archivo_base64,
+            "nombre_archivo": nombre_archivo,
+            "content_type": content_type,
+            "total_registros": len(datos_reporte),
+            "fecha_generacion": datetime.now(timezone.utc).isoformat(),
+            "periodo": {
+                "fecha_inicio": fecha_inicio.isoformat(),
+                "fecha_fin": fecha_fin.isoformat()
+            },
+            "incluye": {
+                "reagendamientos": request.incluir_reagendamientos,
+                "comentarios": request.incluir_comentarios
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generando reporte de supervisión: {str(e)}")
     """Optimizar recordatorios basado en patrones de comportamiento"""
     try:
         fecha_actual = datetime.now(timezone.utc)
