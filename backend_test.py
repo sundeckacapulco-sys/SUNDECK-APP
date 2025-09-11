@@ -5154,6 +5154,382 @@ class ProspectosAPITester:
         
         return business_day_test and reminder_test and motivo_test and success4
 
+    # CRITICAL DEBUG TESTS - FECHA_CITA FIELD INVESTIGATION
+    def test_fecha_cita_field_investigation(self):
+        """CRITICAL: Investigate fecha_cita field in existing prospects"""
+        print("\n🔍 CRITICAL DEBUG - Investigating fecha_cita field in existing prospects")
+        
+        # First, get all prospects to examine their structure
+        success, response = self.run_test(
+            "Get All Prospects for fecha_cita Investigation",
+            "GET",
+            "prospectos",
+            200,
+            params={"limit": 50}  # Get more prospects to investigate
+        )
+        
+        if not success:
+            print("❌ Failed to get prospects for investigation")
+            return False
+        
+        prospectos = response.get('prospectos', [])
+        total_prospectos = len(prospectos)
+        
+        print(f"   📊 Found {total_prospectos} prospects to investigate")
+        
+        if total_prospectos == 0:
+            print("   ⚠️  No prospects found in database - creating test prospect")
+            return self._create_test_prospect_for_fecha_cita_investigation()
+        
+        # Analyze fecha_cita field presence
+        prospects_with_fecha_cita = []
+        prospects_without_fecha_cita = []
+        fecha_cita_field_analysis = {}
+        
+        for prospect in prospectos:
+            prospect_id = prospect.get('id', 'unknown')
+            nombre = prospect.get('nombre', 'unknown')
+            
+            if 'fecha_cita' in prospect:
+                fecha_cita = prospect['fecha_cita']
+                prospects_with_fecha_cita.append({
+                    'id': prospect_id,
+                    'nombre': nombre,
+                    'fecha_cita': fecha_cita,
+                    'fecha_cita_type': type(fecha_cita).__name__
+                })
+                
+                # Analyze fecha_cita field type and format
+                fecha_type = type(fecha_cita).__name__
+                if fecha_type not in fecha_cita_field_analysis:
+                    fecha_cita_field_analysis[fecha_type] = 0
+                fecha_cita_field_analysis[fecha_type] += 1
+                
+            else:
+                prospects_without_fecha_cita.append({
+                    'id': prospect_id,
+                    'nombre': nombre
+                })
+        
+        # Report findings
+        print(f"   ✅ Prospects WITH fecha_cita field: {len(prospects_with_fecha_cita)}")
+        print(f"   ❌ Prospects WITHOUT fecha_cita field: {len(prospects_without_fecha_cita)}")
+        
+        if fecha_cita_field_analysis:
+            print("   📊 fecha_cita field type analysis:")
+            for field_type, count in fecha_cita_field_analysis.items():
+                print(f"      - {field_type}: {count} prospects")
+        
+        # Show examples of prospects with and without fecha_cita
+        if prospects_with_fecha_cita:
+            print("   📋 Examples of prospects WITH fecha_cita:")
+            for i, prospect in enumerate(prospects_with_fecha_cita[:3]):  # Show first 3
+                print(f"      {i+1}. ID: {prospect['id'][:8]}..., Name: {prospect['nombre']}, fecha_cita: {prospect['fecha_cita']} ({prospect['fecha_cita_type']})")
+        
+        if prospects_without_fecha_cita:
+            print("   📋 Examples of prospects WITHOUT fecha_cita:")
+            for i, prospect in enumerate(prospects_without_fecha_cita[:3]):  # Show first 3
+                print(f"      {i+1}. ID: {prospect['id'][:8]}..., Name: {prospect['nombre']}")
+        
+        # Test rescheduling with prospects that have fecha_cita
+        rescheduling_test_results = []
+        if prospects_with_fecha_cita:
+            print("\n   🔄 Testing rescheduling with prospects that HAVE fecha_cita...")
+            test_prospect = prospects_with_fecha_cita[0]
+            rescheduling_result = self._test_rescheduling_with_prospect(test_prospect['id'], "HAS fecha_cita")
+            rescheduling_test_results.append(rescheduling_result)
+        
+        # Test rescheduling with prospects that don't have fecha_cita
+        if prospects_without_fecha_cita:
+            print("\n   🔄 Testing rescheduling with prospects that DON'T HAVE fecha_cita...")
+            test_prospect = prospects_without_fecha_cita[0]
+            rescheduling_result = self._test_rescheduling_with_prospect(test_prospect['id'], "MISSING fecha_cita")
+            rescheduling_test_results.append(rescheduling_result)
+        
+        # Summary of investigation
+        print(f"\n   📊 INVESTIGATION SUMMARY:")
+        print(f"      Total prospects analyzed: {total_prospectos}")
+        print(f"      Prospects with fecha_cita: {len(prospects_with_fecha_cita)} ({len(prospects_with_fecha_cita)/total_prospectos*100:.1f}%)")
+        print(f"      Prospects without fecha_cita: {len(prospects_without_fecha_cita)} ({len(prospects_without_fecha_cita)/total_prospectos*100:.1f}%)")
+        
+        if len(prospects_without_fecha_cita) > 0:
+            print(f"   🚨 CRITICAL FINDING: {len(prospects_without_fecha_cita)} prospects are missing the fecha_cita field!")
+            print(f"      This is likely the root cause of rescheduling errors.")
+        
+        # Test results summary
+        if rescheduling_test_results:
+            print(f"\n   🔄 RESCHEDULING TEST RESULTS:")
+            for result in rescheduling_test_results:
+                status = "✅ PASSED" if result['success'] else "❌ FAILED"
+                print(f"      {result['type']}: {status} - {result['message']}")
+        
+        return True
+    
+    def _create_test_prospect_for_fecha_cita_investigation(self):
+        """Create a test prospect when no prospects exist"""
+        print("   🔧 Creating test prospect for fecha_cita investigation...")
+        
+        test_data = {
+            "nombre": "Test Fecha Cita Investigation",
+            "telefono": "+56999000111",
+            "producto_solicitado": "Deck Investigation Test",
+            "fecha_cita": datetime.now(timezone.utc).isoformat()
+        }
+        
+        success, response = self.run_test(
+            "Create Test Prospect for Investigation",
+            "POST",
+            "prospectos",
+            200,
+            data=test_data
+        )
+        
+        if success:
+            prospect_id = response.get('id')
+            print(f"   ✅ Created test prospect: {prospect_id}")
+            
+            # Test rescheduling with this new prospect
+            rescheduling_result = self._test_rescheduling_with_prospect(prospect_id, "NEWLY CREATED")
+            
+            # Clean up
+            self.run_test("Cleanup Investigation Test Prospect", "DELETE", f"prospectos/{prospect_id}", 200)
+            
+            return rescheduling_result['success']
+        
+        return False
+    
+    def _test_rescheduling_with_prospect(self, prospect_id, prospect_type):
+        """Test rescheduling with a specific prospect"""
+        print(f"      Testing rescheduling with prospect {prospect_id[:8]}... ({prospect_type})")
+        
+        # First, get the prospect details to see its current structure
+        success, prospect_response = self.run_test(
+            f"Get Prospect Details for Rescheduling Test ({prospect_type})",
+            "GET",
+            f"prospectos/{prospect_id}",
+            200
+        )
+        
+        if not success:
+            return {
+                'success': False,
+                'type': prospect_type,
+                'message': f"Failed to get prospect details: {prospect_id}"
+            }
+        
+        prospect_data = prospect_response
+        print(f"         Prospect structure: {list(prospect_data.keys())}")
+        
+        if 'fecha_cita' in prospect_data:
+            print(f"         fecha_cita present: {prospect_data['fecha_cita']} (type: {type(prospect_data['fecha_cita']).__name__})")
+        else:
+            print(f"         ❌ fecha_cita field is MISSING from prospect data")
+        
+        # Try to reschedule this prospect
+        nueva_fecha = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
+        reschedule_data = {
+            "nueva_fecha": nueva_fecha,
+            "motivo": "cliente_pidio",
+            "comentarios": f"Test rescheduling for {prospect_type} prospect",
+            "usuario_reagendo": "test_user"
+        }
+        
+        success, reschedule_response = self.run_test(
+            f"Test Rescheduling ({prospect_type})",
+            "POST",
+            f"prospectos/{prospect_id}/reagendar-cita",
+            200,
+            json_data=reschedule_data
+        )
+        
+        if success:
+            return {
+                'success': True,
+                'type': prospect_type,
+                'message': f"Rescheduling successful for {prospect_type} prospect"
+            }
+        else:
+            # Get the error details
+            error_message = "Unknown error"
+            try:
+                # The error should be in the last test output
+                error_message = f"Rescheduling failed for {prospect_type} prospect"
+            except:
+                pass
+            
+            return {
+                'success': False,
+                'type': prospect_type,
+                'message': error_message
+            }
+    
+    def test_database_schema_investigation(self):
+        """Investigate the database schema structure of prospects"""
+        print("\n🔍 CRITICAL DEBUG - Database Schema Investigation")
+        
+        # Get a sample of prospects to analyze their schema
+        success, response = self.run_test(
+            "Get Prospects for Schema Analysis",
+            "GET",
+            "prospectos",
+            200,
+            params={"limit": 10}
+        )
+        
+        if not success:
+            print("❌ Failed to get prospects for schema analysis")
+            return False
+        
+        prospectos = response.get('prospectos', [])
+        
+        if not prospectos:
+            print("   ⚠️  No prospects found for schema analysis")
+            return True
+        
+        # Analyze the schema of all prospects
+        all_fields = set()
+        field_frequency = {}
+        field_types = {}
+        
+        for prospect in prospectos:
+            for field, value in prospect.items():
+                all_fields.add(field)
+                
+                # Count frequency
+                if field not in field_frequency:
+                    field_frequency[field] = 0
+                field_frequency[field] += 1
+                
+                # Track types
+                field_type = type(value).__name__
+                if field not in field_types:
+                    field_types[field] = {}
+                if field_type not in field_types[field]:
+                    field_types[field][field_type] = 0
+                field_types[field][field_type] += 1
+        
+        total_prospects = len(prospectos)
+        
+        print(f"   📊 Schema analysis of {total_prospects} prospects:")
+        print(f"   📋 All fields found: {sorted(all_fields)}")
+        
+        print(f"\n   📊 Field frequency analysis:")
+        for field in sorted(field_frequency.keys()):
+            frequency = field_frequency[field]
+            percentage = (frequency / total_prospects) * 100
+            print(f"      {field}: {frequency}/{total_prospects} ({percentage:.1f}%)")
+            
+            # Show types for this field
+            if field in field_types:
+                types_info = []
+                for field_type, count in field_types[field].items():
+                    types_info.append(f"{field_type}({count})")
+                print(f"         Types: {', '.join(types_info)}")
+        
+        # Specifically focus on fecha_cita field
+        if 'fecha_cita' in field_frequency:
+            fecha_cita_count = field_frequency['fecha_cita']
+            missing_count = total_prospects - fecha_cita_count
+            print(f"\n   🎯 FECHA_CITA FIELD ANALYSIS:")
+            print(f"      Present in: {fecha_cita_count}/{total_prospects} prospects ({(fecha_cita_count/total_prospects)*100:.1f}%)")
+            print(f"      Missing in: {missing_count}/{total_prospects} prospects ({(missing_count/total_prospects)*100:.1f}%)")
+            
+            if missing_count > 0:
+                print(f"   🚨 CRITICAL: {missing_count} prospects are missing the fecha_cita field!")
+                print(f"      This explains why rescheduling fails for some prospects.")
+        else:
+            print(f"\n   🚨 CRITICAL: NO prospects have the fecha_cita field!")
+            print(f"      This is a major schema issue that needs to be addressed.")
+        
+        return True
+    
+    def test_specific_prospect_rescheduling_debug(self):
+        """Test rescheduling with specific prospect IDs if available"""
+        print("\n🔍 CRITICAL DEBUG - Specific Prospect Rescheduling Debug")
+        
+        # Get prospects and try to find one suitable for testing
+        success, response = self.run_test(
+            "Get Prospects for Specific Rescheduling Test",
+            "GET",
+            "prospectos",
+            200,
+            params={"limit": 5}
+        )
+        
+        if not success:
+            print("❌ Failed to get prospects for specific rescheduling test")
+            return False
+        
+        prospectos = response.get('prospectos', [])
+        
+        if not prospectos:
+            print("   ⚠️  No prospects available for specific rescheduling test")
+            return True
+        
+        # Test rescheduling with each prospect to identify patterns
+        for i, prospect in enumerate(prospectos):
+            prospect_id = prospect.get('id', 'unknown')
+            nombre = prospect.get('nombre', 'unknown')
+            has_fecha_cita = 'fecha_cita' in prospect
+            
+            print(f"\n   🔄 Testing rescheduling with prospect {i+1}/{len(prospectos)}:")
+            print(f"      ID: {prospect_id}")
+            print(f"      Name: {nombre}")
+            print(f"      Has fecha_cita: {has_fecha_cita}")
+            
+            if has_fecha_cita:
+                print(f"      fecha_cita value: {prospect['fecha_cita']}")
+                print(f"      fecha_cita type: {type(prospect['fecha_cita']).__name__}")
+            
+            # Attempt rescheduling
+            nueva_fecha = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
+            reschedule_data = {
+                "nueva_fecha": nueva_fecha,
+                "motivo": "cliente_pidio",
+                "comentarios": f"Debug test for prospect {nombre}",
+                "usuario_reagendo": "debug_user"
+            }
+            
+            success, reschedule_response = self.run_test(
+                f"Reschedule Prospect {i+1} ({nombre[:20]}...)",
+                "POST",
+                f"prospectos/{prospect_id}/reagendar-cita",
+                200,
+                json_data=reschedule_data
+            )
+            
+            if success:
+                print(f"      ✅ Rescheduling SUCCESSFUL for prospect {nombre}")
+                print(f"         Response: {json.dumps(reschedule_response, indent=2, default=str)[:300]}...")
+            else:
+                print(f"      ❌ Rescheduling FAILED for prospect {nombre}")
+                print(f"         This prospect likely has the issue we're investigating")
+        
+        return True
+
+    def run_critical_fecha_cita_investigation(self):
+        """Run only the critical fecha_cita investigation tests"""
+        print("🚨 CRITICAL DEBUG - FECHA_CITA FIELD INVESTIGATION")
+        print("="*80)
+        print(f"   Base URL: {self.base_url}")
+        
+        # Run only the critical debug tests
+        self.test_fecha_cita_field_investigation()
+        self.test_database_schema_investigation()
+        self.test_specific_prospect_rescheduling_debug()
+        
+        print("\n" + "="*80)
+        print("📊 FECHA_CITA INVESTIGATION COMPLETE")
+        print("="*80)
+        
+        # Print summary
+        print(f"\n📊 Investigation Summary:")
+        print(f"   Tests run: {self.tests_run}")
+        print(f"   Tests passed: {self.tests_passed}")
+        print(f"   Tests failed: {self.tests_run - self.tests_passed}")
+        
+        return True
+
 def main():
     print("🚀 Starting Prospectos Sundeck API Tests - PHASE 2.1 TESTING")
     print("=" * 70)
@@ -5332,4 +5708,10 @@ def main():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Check if we should run only the critical investigation
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "fecha_cita":
+        tester = ProspectosAPITester()
+        tester.run_critical_fecha_cita_investigation()
+    else:
+        sys.exit(main())
