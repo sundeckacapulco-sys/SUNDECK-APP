@@ -144,8 +144,7 @@ const determinarTipoWhatsApp = (prospecto) => {
 };
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-// Don't add /api suffix since REACT_APP_BACKEND_URL already includes it
-const API = BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 // Componente principal envuelto con UserProvider
 function App() {
