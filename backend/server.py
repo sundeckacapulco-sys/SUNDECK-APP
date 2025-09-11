@@ -805,6 +805,8 @@ async def generar_reporte_supervision_diario(request: ReporteDiarioRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generando reporte de supervisión: {str(e)}")
+
+async def optimizar_recordatorios_inteligente():
     """Optimizar recordatorios basado en patrones de comportamiento"""
     try:
         fecha_actual = datetime.now(timezone.utc)
