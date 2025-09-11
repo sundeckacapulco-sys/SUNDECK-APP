@@ -1665,7 +1665,7 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
   // Cargar historial de reagendamientos
   const cargarReagendamientos = async () => {
     try {
-      const response = await axios.get(`${API}/api/prospectos/${prospecto.id}/historial-reagendamientos`);
+      const response = await axios.get(`${API}/prospectos/${prospecto.id}/historial-reagendamientos`);
       setReagendamientos(response.data.reagendamientos || []);
     } catch (error) {
       console.error('Error cargando reagendamientos:', error);
