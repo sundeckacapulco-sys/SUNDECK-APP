@@ -1710,9 +1710,29 @@ const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
                 </div>
                 <div className="info-item">
                   <span className="info-label">Fecha de Cita:</span>
-                  <span className="info-value">
-                    {new Date(prospecto.fecha_cita).toLocaleString('es-ES')}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span className="info-value">
+                      {new Date(prospecto.fecha_cita).toLocaleString('es-ES')}
+                    </span>
+                    <button
+                      onClick={() => setShowReagendarModal(true)}
+                      style={{
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                    >
+                      🔄 Reagendar
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
