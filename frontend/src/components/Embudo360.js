@@ -62,23 +62,53 @@ const Embudo360 = ({ onNavigate }) => {
       
       const response = await axios.get(`${API}/api/embudo-360/export?${params}`);
       
-      // Crear y descargar archivo
-      const dataStr = JSON.stringify(response.data, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `embudo-360-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      alert('¡Datos exportados exitosamente!');
+      // Verificar si la respuesta contiene archivo en base64
+      if (response.data.archivo_base64) {
+        // Crear archivo desde base64
+        const byteCharacters = atob(response.data.archivo_base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: response.data.content_type });
+        
+        // Crear enlace de descarga
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = response.data.nombre_archivo;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        alert(`✅ Archivo ${formato.toUpperCase()} exportado exitosamente\n📄 ${response.data.nombre_archivo}\n📊 ${response.data.total_registros} registros`);
+      } else {
+        // Fallback para formato JSON (compatibilidad)
+        const dataStr = JSON.stringify(response.data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `embudo-360-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        alert('¡Datos exportados en formato JSON (fallback)!');
+      }
     } catch (error) {
       console.error('Error exportando datos:', error);
-      alert('Error al exportar los datos');
+      if (error.response?.status === 404) {
+        alert('⚠️ No hay datos para exportar con los filtros seleccionados');
+      } else {
+        alert('❌ Error al exportar los datos: ' + (error.response?.data?.detail || error.message));
+      }
     }
   };
 
