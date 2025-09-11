@@ -1798,14 +1798,95 @@ async def exportar_embudo_data(
                 "Tasa_Conversion_%": conversion["tasa"]
             })
         
+        # Combinar datos para exportación
+        datos_combinados = []
+        
+        # Agregar datos de etapas
+        for item in export_data:
+            datos_combinados.append({
+                "Tipo": "Etapa",
+                "Nombre": item["Etapa"],
+                "Cantidad": item["Cantidad"],
+                "Tiempo_Promedio_Dias": item["Tiempo_Promedio_Dias"],
+                "Desde": "",
+                "Hacia": "",
+                "Tasa_Conversion_%": ""
+            })
+        
+        # Agregar datos de conversiones
+        for item in conversion_data:
+            datos_combinados.append({
+                "Tipo": "Conversión",
+                "Nombre": f"{item['Desde']} → {item['Hacia']}",
+                "Cantidad": "",
+                "Tiempo_Promedio_Dias": "",
+                "Desde": item["Desde"],
+                "Hacia": item["Hacia"],
+                "Tasa_Conversion_%": item["Tasa_Conversion_%"]
+            })
+        
+        if not datos_combinados:
+            raise HTTPException(status_code=404, detail="No hay datos para exportar")
+        
+        # Crear DataFrame
+        df = pd.DataFrame(datos_combinados)
+        
+        # Generar archivo según formato
+        if formato.lower() == "excel":
+            # Crear archivo Excel
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                # Crear hojas separadas
+                df_etapas = pd.DataFrame(export_data)
+                df_conversiones = pd.DataFrame(conversion_data)
+                
+                df_etapas.to_excel(writer, sheet_name='Etapas', index=False)
+                df_conversiones.to_excel(writer, sheet_name='Conversiones', index=False)
+                
+                # Formatear hojas
+                for sheet_name in writer.sheets:
+                    worksheet = writer.sheets[sheet_name]
+                    for column in worksheet.columns:
+                        max_length = 0
+                        column_letter = column[0].column_letter
+                        for cell in column:
+                            try:
+                                if len(str(cell.value)) > max_length:
+                                    max_length = len(str(cell.value))
+                            except:
+                                pass
+                        adjusted_width = min(max_length + 2, 50)
+                        worksheet.column_dimensions[column_letter].width = adjusted_width
+            
+            buffer.seek(0)
+            archivo_base64 = base64.b64encode(buffer.getvalue()).decode()
+            nombre_archivo = f"embudo-360-{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            
+        else:  # CSV
+            buffer = BytesIO()
+            df.to_csv(buffer, index=False, encoding='utf-8-sig')
+            buffer.seek(0)
+            archivo_base64 = base64.b64encode(buffer.getvalue()).decode()
+            nombre_archivo = f"embudo-360-{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            content_type = "text/csv"
+        
         return {
-            "datos_etapas": export_data,
-            "datos_conversiones": conversion_data,
-            "metricas_generales": embudo_data["metricas"],
+            "archivo_base64": archivo_base64,
+            "nombre_archivo": nombre_archivo,
+            "content_type": content_type,
             "formato": formato,
-            "fecha_generacion": datetime.now(timezone.utc).isoformat()
+            "total_registros": len(datos_combinados),
+            "fecha_generacion": datetime.now(timezone.utc).isoformat(),
+            "filtros_aplicados": {
+                "fecha_inicio": fecha_inicio,
+                "fecha_fin": fecha_fin,
+                "responsable": responsable
+            }
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error exporting embudo data: {str(e)}")
 
