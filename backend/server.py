@@ -286,14 +286,29 @@ class ReprogramacionRecordatorio(BaseModel):
     usuario_que_reprograma: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# Enums para escalación avanzada
+class NivelPrioridad(str, Enum):
+    NORMAL = "normal"
+    URGENTE = "urgente"
+    CRITICO = "critico"
+
+class AccionEscalacion(str, Enum):
+    RECORDATORIO_URGENTE = "recordatorio_urgente"
+    ESCALADO_COORDINADORA = "escalado_coordinadora"
+    ESCALADO_ADMIN_CEO = "escalado_admin_ceo"
+    CAMBIO_RESPONSABLE = "cambio_responsable"
+
 class EscalacionVencido(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     recordatorio_id: str
     dias_vencido: int
-    accion_tomada: str  # 'escalado_supervisor', 'recordatorio_urgente', 'cambio_responsable'
-    supervisor_asignado: Optional[str] = None
+    nivel_prioridad: NivelPrioridad
+    accion_tomada: AccionEscalacion
+    supervisor_asignado: Optional[str] = None  # "abigail", "admin", "ceo"
+    notificaciones_enviadas: List[str] = Field(default_factory=list)  # emails notificados
     fecha_escalacion: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     resuelto: bool = False
+    notas_escalacion: Optional[str] = None
 
 class MetricasRendimiento(BaseModel):
     periodo: str  # 'diario', 'semanal', 'mensual'
@@ -304,9 +319,19 @@ class MetricasRendimiento(BaseModel):
     completados_tarde: int
     vencidos: int
     reprogramados: int
+    escalados: int
     tasa_cumplimiento: float
     tiempo_promedio_resolucion: float  # en horas
-    archivo_levantamiento_url: Optional[str] = None
+    conversion_cotizacion: float
+    conversion_pedido: float
+    conversion_instalacion: float
+
+class ExportacionRequest(BaseModel):
+    formato: str = "excel"  # "excel" o "csv"
+    fecha_inicio: Optional[datetime] = None
+    fecha_fin: Optional[datetime] = None
+    estado_filtro: Optional[str] = None
+    usuario_filtro: Optional[str] = None
 
 # Cloudinary service functions
 def upload_to_cloudinary(file_content, filename: str):
