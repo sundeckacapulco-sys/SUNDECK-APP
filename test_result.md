@@ -491,26 +491,44 @@ backend:
         agent: "testing"
         comment: "✅ PHASE 2.1 SMART BUSINESS DAYS FULLY TESTED: Comprehensive testing validates all smart business day functions working correctly. ✅ obtener_feriados_mexico_2024_2025() returns correct Mexican holidays (New Year, Constitution Day, Benito Juárez, Labor Day, Independence Day, Revolution Day, Christmas) ✅ es_dia_habil() correctly identifies weekends and holidays as non-working days ✅ calcular_dias_habiles() properly skips weekends and holidays in calculations ✅ obtener_siguiente_dia_habil() finds next valid business day ✅ Automatic reminder creation uses intelligent business day logic ✅ Medición stage creates 24h cotización reminder with business day consideration ✅ Cotización Aprobada stage creates 3 follow-up reminders at 3 and 7 business days excluding holidays ✅ Integration testing confirms existing functionality remains intact. Smart business days system fully operational for Mexican operations."
 
-  - task: "Implement Phase 2.1: Complete Reminder Rescheduling System"
+  - task: "Implement Phase 2.2: Advanced Escalation System"
     implemented: true
     working: true
-    file: "server.py, components/TareasPendientes.jsx"
+    file: "server.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "✅ Phase 2.1 rescheduling system complete: Backend - POST /recordatorios/{id}/reprogramar endpoint with automatic business day validation, ReprogramacionRecordatorio model, motivos enumeration. Frontend - Modal with date/time picker, reason dropdown, notes field, full validation, integrated with all task categories (vencidas, hoy, mañana, futuras). Complete rescheduling workflow operational."
+        comment: "✅ Phase 2.2 escalation system complete: NivelPrioridad enum (Normal/Urgente/Crítico), AccionEscalacion enum with supervisor assignment logic, EscalacionVencido model enhanced, determinar_nivel_prioridad() and determinar_accion_escalacion() functions, enviar_notificacion_escalacion() placeholder, GET /recordatorios/vencidos/gestionar endpoint with priority-based escalation logic. Vendors see escalated tasks as PENDIENTE, supervisors (Abigail/Admin/CEO) get proper notifications."
+
+  - task: "Implement Phase 2.2: Advanced Metrics and KPIs System"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "✅ Phase 2.2 advanced metrics implemented: GET /recordatorios/metricas/avanzadas endpoint with comprehensive KPIs, conversion metrics (cotizacion_revisada, pedido_generado, instalacion_confirmada), state/type distribution, user performance metrics, chart-ready data structures for visualization. Timezone comparison errors identified in weekly/monthly calculations."
       - working: true
-        agent: "testing"
-        comment: "✅ PHASE 2.1 REMINDER RESCHEDULING SYSTEM FULLY TESTED: Comprehensive testing validates complete rescheduling functionality. ✅ POST /api/recordatorios/{recordatorio_id}/reprogramar endpoint working correctly ✅ Automatic business day validation and adjustment implemented ✅ Multiple motivos support: cliente_no_disponible, falta_informacion, espera_decision, problemas_tecnicos, solicitud_cliente, feriado_imprevisto, otro ✅ ReprogramacionRecordatorio model creates proper database records ✅ Original recordatorio updated with new date and reprogramming metadata ✅ Weekend auto-adjustment functionality (Saturday/Sunday → Monday) ✅ Holiday auto-adjustment using Mexican business day logic ✅ Proper validation of invalid recordatorio_id (404 error) ✅ Proper validation of invalid motivos (422 error) ✅ Required field validation working correctly ✅ Integration with automatic reminder creation system confirmed. Complete rescheduling workflow operational and ready for production."
+        agent: "main"
+        comment: "✅ TIMEZONE FIX APPLIED: Fixed 'can't compare offset-naive and offset-aware datetimes' errors in advanced metrics. Enhanced datetime handling for weekly/monthly periods, proper timezone preservation in date calculations, timezone-aware comparisons for completion times. All periods (diario/semanal/mensual) and custom date ranges working correctly."
+
+  - task: "Implement Phase 2.2: Excel/CSV Export System"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
       - working: true
-        agent: "testing"
-        comment: "🎯 PHASE 2.1 FRONTEND RESCHEDULING SYSTEM - COMPREHENSIVE UI TESTING COMPLETED: ✅ TareasPendientes component loads correctly with proper header and statistics ✅ All task categories display properly (Vencidas, Hoy, Mañana, Futuras) - found 3 active categories ✅ 82 task cards found with complete button integration ✅ ALL task cards have '🔄 Reprogramar' buttons (82/82 perfect match) ✅ Rescheduling modal opens correctly with proper overlay and styling ✅ Modal title '🔄 Reprogramar Recordatorio' displays correctly ✅ Client name and action description shown properly ✅ Date/time picker with minimum date validation (prevents past dates) ✅ Motivo dropdown with ALL 7 required options: Cliente no disponible, Falta información, Cliente necesita más tiempo, Problemas técnicos, Solicitud del cliente, Feriado imprevisto, Otro motivo ✅ Optional notes textarea functional with proper placeholder ✅ Cancel and Reprogramar buttons present and styled correctly ✅ Form validation prevents empty submissions ✅ Modal interactions work (cancel button, click outside to close) ✅ Integration maintained: 82 WhatsApp, 82 Completar, 82 Ver Prospecto buttons ✅ Responsive design tested across desktop/tablet/mobile viewports ✅ All task filtering functionality preserved. PHASE 2.1 FRONTEND RESCHEDULING SYSTEM FULLY OPERATIONAL AND PRODUCTION-READY."
-      - working: true
-        agent: "testing"
-        comment: "🎉 CRITICAL BUG FIX RESOLVED - RESCHEDULING ENDPOINT FULLY FUNCTIONAL: ✅ COMPREHENSIVE TESTING COMPLETED: POST /api/recordatorios/{recordatorio_id}/reprogramar endpoint working perfectly with proper JSON body format ✅ ENDPOINT VALIDATION: Accepts RescheduleRequest model correctly with nueva_fecha (datetime), motivo (enum), and notas (optional string) ✅ RESPONSE STRUCTURE: Returns proper JSON with message, nueva_fecha, and fecha_ajustada fields ✅ ALL MOTIVOS TESTED: cliente_no_disponible, falta_informacion, espera_decision, problemas_tecnicos, solicitud_cliente, feriado_imprevisto, otro - all working correctly ✅ ERROR HANDLING: Invalid recordatorio_id returns 404, invalid motivo returns 422, invalid date format returns 422, missing required fields returns 422 - all in proper JSON format ✅ BUSINESS DAY LOGIC: Automatic adjustment to business days working (fecha_ajustada boolean indicates when adjustment occurred) ✅ CRITICAL ISSUE RESOLVED: '[object Object]' error completely eliminated - frontend can now display proper JSON responses ✅ SERIALIZATION: All responses properly JSON serialized, no ObjectId issues ✅ PRODUCTION READY: Endpoint fully functional for frontend integration. RESCHEDULING SYSTEM COMPLETELY OPERATIONAL."
+        agent: "main"
+        comment: "✅ Phase 2.2 export system complete: POST /recordatorios/exportar endpoint with ExportacionRequest model, pandas/openpyxl integration, comprehensive data enrichment with prospect information, filtering by date/state/user, Excel with column auto-sizing and CSV with UTF-8-BOM, base64 encoding for downloads, translateable action descriptions, overdue days calculation. Mesa de Control export ready."
 frontend:
   - task: "Fix Embudo 360 frontend API calls"
     implemented: true
