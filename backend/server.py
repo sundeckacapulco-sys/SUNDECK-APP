@@ -3363,9 +3363,6 @@ async def generar_mensaje_template(template_id: str, prospecto_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating message: {str(e)}")
 
-# Include the router in the main app
-app.include_router(api_router)
-
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
@@ -3390,3 +3387,6 @@ async def startup_db():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# CRITICAL: Include the router AFTER all endpoints are defined
+app.include_router(api_router)
