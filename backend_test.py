@@ -4864,6 +4864,13 @@ def main():
         tester.test_phase_2_2_excel_csv_export,
         tester.test_phase_2_2_integration,
         
+        # NEW: Prospect Detail Optimization tests
+        tester.test_prospect_appointment_rescheduling,
+        tester.test_supervision_comments,
+        tester.test_rescheduling_history,
+        tester.test_daily_supervision_reports,
+        tester.test_integration_features,
+        
         # PHASE 2.1 TESTS - VALIDATION (Ensure still working)
         tester.test_phase_2_1_smart_business_days,
         tester.test_phase_2_1_reminder_rescheduling_system,
