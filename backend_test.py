@@ -4853,10 +4853,13 @@ def main():
     
     tester = ProspectosAPITester()
     
-    # Run all tests in sequence - focusing on PHASE 2.2 functionality
+    # Run all tests in sequence - focusing on CRITICAL BUG INVESTIGATION
     tests = [
         tester.test_health_check,
         tester.test_create_prospect,
+        
+        # CRITICAL BUG INVESTIGATION - PRIORITY (Current Request)
+        tester.test_critical_rescheduling_bug_investigation,
         
         # PHASE 2.2 TESTS - PRIORITY (Current Request)
         tester.test_phase_2_2_escalation_system,
