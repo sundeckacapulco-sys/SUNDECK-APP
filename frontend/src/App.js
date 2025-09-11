@@ -1626,6 +1626,58 @@ const CitasHoy = ({ onNavigate }) => {
 // Modal de Detalles del Prospecto
 const ProspectoModal = ({ prospecto, onClose, onUpdate }) => {
   const [showAgregarEtapa, setShowAgregarEtapa] = useState(false);
+  const [showReagendarModal, setShowReagendarModal] = useState(false);
+  const [comentarios, setComentarios] = useState([]);
+  const [nuevoComentario, setNuevoComentario] = useState('');
+  const [tipoComentario, setTipoComentario] = useState('general');
+  const [reagendamientos, setReagendamientos] = useState([]);
+  
+  // Cargar comentarios y reagendamientos al abrir el modal
+  useEffect(() => {
+    cargarComentarios();
+    cargarReagendamientos();
+  }, [prospecto.id]);
+
+  // Cargar comentarios de supervisión
+  const cargarComentarios = async () => {
+    try {
+      const response = await axios.get(`${API}/api/prospectos/${prospecto.id}/comentarios-supervision`);
+      setComentarios(response.data.comentarios || []);
+    } catch (error) {
+      console.error('Error cargando comentarios:', error);
+    }
+  };
+
+  // Cargar historial de reagendamientos
+  const cargarReagendamientos = async () => {
+    try {
+      const response = await axios.get(`${API}/api/prospectos/${prospecto.id}/historial-reagendamientos`);
+      setReagendamientos(response.data.reagendamientos || []);
+    } catch (error) {
+      console.error('Error cargando reagendamientos:', error);
+    }
+  };
+
+  // Agregar comentario de supervisión
+  const agregarComentario = async () => {
+    if (!nuevoComentario.trim()) return;
+    
+    try {
+      await axios.post(`${API}/api/prospectos/${prospecto.id}/comentarios-supervision`, {
+        comentario: nuevoComentario,
+        usuario_comenta: 'Usuario Actual', // En producción: obtener del contexto de usuario
+        tipo_comentario: tipoComentario
+      });
+      
+      setNuevoComentario('');
+      setTipoComentario('general');
+      cargarComentarios();
+      alert('✅ Comentario agregado exitosamente');
+    } catch (error) {
+      console.error('Error agregando comentario:', error);
+      alert('❌ Error al agregar comentario');
+    }
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
