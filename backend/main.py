@@ -10,13 +10,22 @@ from pydantic import BaseModel, Field
 import motor.motor_asyncio
 from bson import ObjectId
 import os
+from dotenv import load_dotenv
 from openai import AsyncOpenAI
+
+load_dotenv()
+
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-ai_client = AsyncOpenAI()
+if OPENAI_API_KEY:
+    ai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+else:
+    ai_client = AsyncOpenAI()
 
-client = motor.motor_asyncio.AsyncIOMotorClient("mongodb://localhost:27017")
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_URI)
 db = client.sundeck
 prospectos_collection = db.prospectos
 etapas_collection = db.etapas
